@@ -14,6 +14,7 @@ import {
   type AffixV2Instance,
 } from '../data/affixV2'
 import type { TriggerSpec, EffectSpec, TargetSelector, ConditionSpec, SkillFilter, ScaleByTag, ScaleCountSource } from '../data/affixV2Trigger'
+import { scopePosAnchor, triggerPosAnchor } from '../data/keyboardTopology'
 import { SECTION_TAG_NAMES_ZH, SECTION_TAG_NAMES_EN, type Tag, type SectionTag } from '../data/affixTags'
 import { getLocale } from '../demo/demo-i18n'
 import { listAllEquipped, getEnchant, previewCountScaleSource } from '../systems/affixV2Equipped'
@@ -79,7 +80,7 @@ function lv1Amount(resource: string, ratio: number): string {
 // Trigger → 人读文字
 // ============================================
 
-export function formatTriggerDescription(trigger: TriggerSpec): string {
+export function formatTriggerDescription(trigger: TriggerSpec, host?: HostCtx): string {
   const zh = isZh()
   switch (trigger.type) {
     case 'passive':       return zh ? '常驻' : 'Always-on'
@@ -105,7 +106,9 @@ export function formatTriggerDescription(trigger: TriggerSpec): string {
         parts.push(zh ? `层态 ${trigger.filter.stack_state}` : `stack: ${trigger.filter.stack_state}`)
       }
       if (trigger.filter.posRel !== undefined) {
-        parts.push(zh ? `${locRel(trigger.filter.posRel)}位置` : `${locRel(trigger.filter.posRel)} pos`)
+        // 已绑定技能 → 显示该技能的 trigger 锚（预览=实际）；未绑定 → 显示 rolled posRel
+        const rel = host?.skillId ? triggerPosAnchor(host.skillId) : trigger.filter.posRel
+        parts.push(zh ? `${locRel(rel)}位置` : `${locRel(rel)} pos`)
       }
       if (trigger.filter.rarity !== undefined) {
         parts.push(zh ? `${locRarity(trigger.filter.rarity)}技能` : `${locRarity(trigger.filter.rarity)} skill`)
@@ -123,8 +126,8 @@ export function formatTriggerDescription(trigger: TriggerSpec): string {
       return scope.type === 'self'
         ? (zh ? '本技能获得极速时' : 'When this skill gains haste')
         : (zh
-          ? `${formatSelector(scope)}获得极速时`
-          : `When ${formatSelector(scope)} gains haste`)
+          ? `${formatSelector(scope, host)}获得极速时`
+          : `When ${formatSelector(scope, host)} gains haste`)
     }
     case 'on_battle_start': return zh ? '战斗开始时' : 'On battle start'
     case 'on_battle_end': {
@@ -149,15 +152,17 @@ export function formatTriggerDescription(trigger: TriggerSpec): string {
 // Selector → 人读文字
 // ============================================
 
-function formatSelector(sel: TargetSelector): string {
+function formatSelector(sel: TargetSelector, host?: HostCtx): string {
   const zh = isZh()
   const pick = (sel as { pick?: string }).pick
   const pickSuffix = sel.type !== 'self' && pick === 'random' ? (zh ? '（随机一个）' : ' (random one)') : ''
   switch (sel.type) {
     case 'self':              return zh ? '本技能' : 'this skill'
-    case 'neighbors':         return zh
-      ? `${locRel(sel.posRel)}位置的技能${pickSuffix}`
-      : `${locRel(sel.posRel)} skills${pickSuffix}`
+    case 'neighbors': {
+      // 已绑定技能 → 显示该技能的 scope 锚（预览=实际）；未绑定 → 显示 rolled posRel
+      const rel = host?.skillId ? scopePosAnchor(host.skillId) : sel.posRel
+      return zh ? `${locRel(rel)}位置的技能${pickSuffix}` : `${locRel(rel)} skills${pickSuffix}`
+    }
     case 'matched_tag':       return zh
       ? `场上${locTag(sel.tag)}类的技能${pickSuffix}`
       : `all ${locTag(sel.tag)} skills on board${pickSuffix}`
@@ -288,14 +293,14 @@ export function formatEffectDescription(effect: EffectSpec, skillResource?: stri
         ? `${lv1Amount(skillResource, scaledRatio)} ${locResource(skillResource)}`
         : zh ? `${Math.round(scaledRatio * 100) / 100}×Lv1 底分` : `${Math.round(scaledRatio * 100) / 100}×Lv1 base`
       // selector 缺省 = self；非 self 显式标 scope（add 写 per-skill aggregate）
-      const target = effect.selector ? formatSelector(effect.selector) : (zh ? '本技能' : 'this skill')
+      const target = effect.selector ? formatSelector(effect.selector, host) : (zh ? '本技能' : 'this skill')
       return (zh
         ? `${target}产出 +${v}（叠加、出关重置）`
         : `${target} output +${v} (stacks, resets each battle)`) + formatScaleSuffix(effect.scale)
     }
     case 'multiply': {
       const pct = Math.round(effect.amount * liveScaleFactor(effect.scale, host) * 1000) / 10
-      const target = effect.selector ? formatSelector(effect.selector) : (zh ? '本技能' : 'this skill')
+      const target = effect.selector ? formatSelector(effect.selector, host) : (zh ? '本技能' : 'this skill')
       return (zh
         ? `${target}产出 +${pct}%（叠加、出关重置）`
         : `${target} output +${pct}% (stacks, resets each battle)`) + formatScaleSuffix(effect.scale)
@@ -330,14 +335,14 @@ export function formatEffectDescription(effect: EffectSpec, skillResource?: stri
       // 每 trigger 固定整数 amount stack（amount 来自 recipe.amount，不再除 freq）
       const n = Math.max(1, Math.round(effect.amount))
       return zh
-        ? `给 ${formatSelector(effect.selector)} +${n} 极速`
-        : `grant ${formatSelector(effect.selector)} +${n} haste`
+        ? `给 ${formatSelector(effect.selector, host)} +${n} 极速`
+        : `grant ${formatSelector(effect.selector, host)} +${n} haste`
     }
     case 'apply_mark':
       // 标记：把 selector 选出的技能设为焦点 → 其它取对象效果优先汇聚（无数值）
       return zh
-        ? `标记 ${formatSelector(effect.selector)} 为焦点（取对象效果优先指向它）`
-        : `mark ${formatSelector(effect.selector)} as focus (targeting effects prefer it)`
+        ? `标记 ${formatSelector(effect.selector, host)} 为焦点（取对象效果优先指向它）`
+        : `mark ${formatSelector(effect.selector, host)} as focus (targeting effects prefer it)`
     case 'composite':
       return effect.effects.map(e => formatEffectDescription(e, skillResource, defSection, host)).join(zh ? '；' : '; ')
     case 'conditional': {
@@ -350,14 +355,14 @@ export function formatEffectDescription(effect: EffectSpec, skillResource?: stri
         : `if ${formatCondition(effect.when)}, then ${thenStr}${elseStr}`
     }
     case 'fire_target':
-      return zh ? `额外触发 ${formatSelector(effect.selector)}` : `extra-fire ${formatSelector(effect.selector)}`
+      return zh ? `额外触发 ${formatSelector(effect.selector, host)}` : `extra-fire ${formatSelector(effect.selector, host)}`
     case 'apply_aura': {
       const mod = effect.modifier
       // inherit_tags：selector 语义为「tag 来源 scope」，接收方是宿主自身 → 单独成句
       if (mod.type === 'inherit_tags') {
         return zh
-          ? `本技能拥有 ${formatSelector(effect.selector)} 的全部 tag`
-          : `this skill gains all tags of ${formatSelector(effect.selector)}`
+          ? `本技能拥有 ${formatSelector(effect.selector, host)} 的全部 tag`
+          : `this skill gains all tags of ${formatSelector(effect.selector, host)}`
       }
       const factor = liveScaleFactor(effect.scale, host)
       const pct = (x: number) => Math.round(x * 1000) / 10
@@ -373,7 +378,7 @@ export function formatEffectDescription(effect: EffectSpec, skillResource?: stri
                  mod.type === 'multi_fire_add' ? `多重释放 +${mfa}` :
                  mod.type === 'rainbow' ? `产出随机资源` :
                  `产出 +${pct(amt)}%`
-        return `给 ${formatSelector(effect.selector)} 加光环：${modStr}` + formatScaleSuffix(effect.scale)
+        return `给 ${formatSelector(effect.selector, host)} 加光环：${modStr}` + formatScaleSuffix(effect.scale)
       } else {
         modStr = mod.type === 'base_add' ? `output +${pct(rat)}% (base bonus)` :
                  mod.type === 'factor_add' ? `output +${pct(amt)}% (multiplier bonus)` :
@@ -381,13 +386,13 @@ export function formatEffectDescription(effect: EffectSpec, skillResource?: stri
                  mod.type === 'multi_fire_add' ? `multi-fire +${mfa}` :
                  mod.type === 'rainbow' ? `produces random resource` :
                  `output +${pct(amt)}%`
-        return `aura on ${formatSelector(effect.selector)}: ${modStr}` + formatScaleSuffix(effect.scale)
+        return `aura on ${formatSelector(effect.selector, host)}: ${modStr}` + formatScaleSuffix(effect.scale)
       }
     }
     case 'apply_status':
       return zh
-        ? `给 ${formatSelector(effect.target)} 附 ${effect.amount} 层 ${effect.status} 状态`
-        : `apply ${effect.amount} ${effect.status} stack(s) to ${formatSelector(effect.target)}`
+        ? `给 ${formatSelector(effect.target, host)} 附 ${effect.amount} 层 ${effect.status} 状态`
+        : `apply ${effect.amount} ${effect.status} stack(s) to ${formatSelector(effect.target, host)}`
     case 'stack_inc':
       return zh ? `本词条 +${effect.amount ?? 1} 层` : `this affix +${effect.amount ?? 1} stack`
     case 'stack_release': {
@@ -408,16 +413,16 @@ export function formatEffectDescription(effect: EffectSpec, skillResource?: stri
     }
     case 'upgrade_skill':
       return zh
-        ? `${formatSelector(effect.selector)}升 ${effect.amount} 级`
-        : `upgrade ${formatSelector(effect.selector)} +${effect.amount} Lv`
+        ? `${formatSelector(effect.selector, host)}升 ${effect.amount} 级`
+        : `upgrade ${formatSelector(effect.selector, host)} +${effect.amount} Lv`
     case 'graft_affix':
       return zh
-        ? `复制 ${formatSelector(effect.from)} 的 1 个词条到本技能`
-        : `graft 1 affix from ${formatSelector(effect.from)} to this skill`
+        ? `复制 ${formatSelector(effect.from, host)} 的 1 个词条到本技能`
+        : `graft 1 affix from ${formatSelector(effect.from, host)} to this skill`
     case 'consume_skill': {
       // 取代：移除 selector 内（满足 filter 的）1 个技能，获得 ratio× 其基础产出（本场移除，下场恢复）
       const filterStr = effect.filter ? formatSkillFilter(effect.filter, defSection) : ''
-      const target = formatSelector(effect.selector)
+      const target = formatSelector(effect.selector, host)
       const nx = `${Math.round(effect.ratio * 100) / 100}×`
       return zh
         ? `移除${target}中 1 个${filterStr}技能（本场），获得其 ${nx} 基础产出`
@@ -530,7 +535,7 @@ export function affixV2DefinitionToTooltipInfo(
   const effect = enchant ? applyEnchantToEffect(def.effect, enchant) : def.effect
   const description = isDefault
     ? def.notes
-    : `${formatTriggerDescription(def.trigger)}${isZh() ? '：' : ': '}${formatEffectDescription(effect, skillResource, def.section, host)}`
+    : `${formatTriggerDescription(def.trigger, host)}${isZh() ? '：' : ': '}${formatEffectDescription(effect, skillResource, def.section, host)}`
   return {
     typeName: enchantPrefix + baseName,
     typeKey: def.id,

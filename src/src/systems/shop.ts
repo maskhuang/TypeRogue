@@ -3338,7 +3338,7 @@ function highlightSkillRange(key: string): void {
       const sel = extractSelectorFromEffect(def.effect);
       if (!sel) continue;
       const color = getV2Color(defId) || defaultColor;
-      for (const k of resolveSelectorToHighlightKeys(sel, allKeys, occupiedSet)) {
+      for (const k of resolveSelectorToHighlightKeys(sel, allKeys, occupiedSet, affixSkill.id)) {
         if (occupiedSet.has(k)) continue;
         addColor(k, color);
       }

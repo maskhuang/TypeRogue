@@ -13,7 +13,7 @@ import type { AffixV2Instance } from '../data/affixV2'
 import { getAffixV2Definition, getAffixV2UseLimit } from '../data/affixV2'
 import { state as gameState } from '../core/state'
 import { BALANCE } from '../core/constants'
-import { hasRelation, getKeysWithRelation } from '../data/keyboardTopology'
+import { hasRelation, getKeysWithRelation, scopePosAnchor } from '../data/keyboardTopology'
 import type { Tag } from '../data/affixTags'
 
 /** 把 (resource)→base 回调按 skill 等级柯里化为 Lv.N 查询 ·
@@ -52,10 +52,11 @@ function collectSkillIdsForScope(
         if (sid === sourceSkillId) srcKeys.push(k)
       }
       if (srcKeys.length === 0) srcKeys.push(sourceKey)
+      const rel = scopePosAnchor(sourceSkillId)  // scope 锚统一（与 resolveSelectorToSkillIds 同口径）
       const out: string[] = []
       for (const [k, sid] of gameState.player.bindings) {
         if (sid === sourceSkillId) continue
-        if (srcKeys.some(sk => hasRelation(sk, k, scope.posRel))) out.push(sid)
+        if (srcKeys.some(sk => hasRelation(sk, k, rel))) out.push(sid)
       }
       return out
     }

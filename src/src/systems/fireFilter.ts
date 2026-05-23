@@ -11,7 +11,7 @@
 //   - stack_state → 直接枚举比较（沿用 onStackEffectTriggered pattern）
 
 import type { FireFilter } from '../data/affixV2Trigger'
-import { hasRelation } from '../data/keyboardTopology'
+import { hasRelation, triggerPosAnchor } from '../data/keyboardTopology'
 import { hasTag, type FireEvent } from './tagQuery'
 import { state } from '../core/state'
 import { skillHasEffectiveTag } from './affixV2InheritedTags'
@@ -55,10 +55,13 @@ export function matchFireFilter(
     const listenerSkillId = state.player.bindings.get(listenerKey)
     let posHit = false
     if (listenerSkillId) {
+      // trigger 锚：listener 技能所有 on_fire{posRel} 统一用其 trigger 锚（忽略 per-affix rolled posRel）
+      const rel = triggerPosAnchor(listenerSkillId)
       for (const [k, sid] of state.player.bindings) {
-        if (sid === listenerSkillId && hasRelation(k, event.sourceKey, filter.posRel)) { posHit = true; break }
+        if (sid === listenerSkillId && hasRelation(k, event.sourceKey, rel)) { posHit = true; break }
       }
     } else {
+      // 未绑定（预览/孤立）→ 无技能锚，退化用 rolled posRel
       posHit = hasRelation(listenerKey, event.sourceKey, filter.posRel)
     }
     if (!posHit) return false

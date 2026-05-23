@@ -38,7 +38,7 @@ vi.mock('../../../src/effects/sound', () => ({ playSound: vi.fn() }))
 vi.mock('../../../src/systems/battle', () => ({ startLevel: vi.fn() }))
 
 import { clearEffectRadiusHighlight, highlightEffectRadius } from '../../../src/ui/shop/shopWorkbench'
-import { getKeysWithRelation } from '../../../src/data/keyboardTopology'
+import { getKeysWithRelation, scopePosAnchor } from '../../../src/data/keyboardTopology'
 import { generateAffixV2, RECIPE_SPEAR_MAKE, RECIPE_GAZE_FOLLOW, RECIPE_IMITATE, RECIPE_TEACH, RECIPE_LEAP } from '../../../src/data/affixV2Generator'
 import { getAffixV2Definition } from '../../../src/data/affixV2'
 
@@ -242,18 +242,19 @@ describe('meta-progression 操纵家族 effect radius', () => {
     })
   }
 
-  function expectAdjacentHighlighted(skillId: string) {
+  // 统一后：邻位高亮用「技能 scope 锚」（确定性派生自 skillId），而非 per-affix rolled posRel
+  function expectAnchorNeighborsHighlighted(skillId: string) {
     const elMap = new Map<string, FakeKeyEl>()
     for (const k of ALL_KEYS) elMap.set(k, makeFakeKey(k))
     fakeDom(elMap)
     highlightEffectRadius('g', skillId)
-    const expected = new Set(getKeysWithRelation('g', PositionRelation.Adjacent))
+    const expected = new Set(getKeysWithRelation('g', scopePosAnchor(skillId)))
     expect(expected.size).toBeGreaterThan(0)
     for (const k of expected) {
       const el = elMap.get(k)
       if (el) expect(el.classList.contains(RADIUS_CLASS)).toBe(true)
     }
-    // anchor 自身不高亮
+    // 宿主自身不高亮
     expect(elMap.get('g')!.classList.contains(RADIUS_CLASS)).toBe(false)
   }
 
@@ -262,7 +263,7 @@ describe('meta-progression 操纵家族 effect radius', () => {
     const def = getAffixV2Definition(defId)! as { effect: { selector: { posRel: string } } }
     def.effect.selector.posRel = PositionRelation.Adjacent
     setupV2Skill('sk_spear', defId)
-    expectAdjacentHighlighted('sk_spear')
+    expectAnchorNeighborsHighlighted('sk_spear')
   })
 
   it('gaze_follow (graft_affix) → 邻位范围高亮', () => {
@@ -270,7 +271,7 @@ describe('meta-progression 操纵家族 effect radius', () => {
     const def = getAffixV2Definition(defId)! as { effect: { from: { posRel: string } } }
     def.effect.from.posRel = PositionRelation.Adjacent
     setupV2Skill('sk_gaze', defId)
-    expectAdjacentHighlighted('sk_gaze')
+    expectAnchorNeighborsHighlighted('sk_gaze')
   })
 
   it('imitate (gain_skill[neighborPosRel]) → 邻位范围高亮', () => {
@@ -278,7 +279,7 @@ describe('meta-progression 操纵家族 effect radius', () => {
     const def = getAffixV2Definition(defId)! as { effect: { filter: { neighborPosRel: string } } }
     def.effect.filter.neighborPosRel = PositionRelation.Adjacent
     setupV2Skill('sk_imitate', defId)
-    expectAdjacentHighlighted('sk_imitate')
+    expectAnchorNeighborsHighlighted('sk_imitate')
   })
 
   it('teach (gain_skill recipe_pool, 无 neighborPosRel) → 不高亮任何键', () => {
@@ -299,6 +300,6 @@ describe('meta-progression 操纵家族 effect radius', () => {
     expect(def.effect.kind).toBe('grant_haste')
     def.effect.selector = { type: 'neighbors', posRel: PositionRelation.Adjacent }
     setupV2Skill('sk_haste', defId)
-    expectAdjacentHighlighted('sk_haste')
+    expectAnchorNeighborsHighlighted('sk_haste')
   })
 })

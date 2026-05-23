@@ -16,7 +16,7 @@ import { random } from '../core/seededRandom'
 
 /** V2 暴击产出倍率 */
 export const V2_CRIT_MULTIPLIER = 2
-import { hasRelation } from '../data/keyboardTopology'
+import { hasRelation, scopePosAnchor } from '../data/keyboardTopology'
 import { RESOURCE_COLORS, INBOX_MAX } from '../core/constants'
 import { showFeedback, updateHUD } from './battle'
 import { getFloatScale } from '../effects/juice'
@@ -379,11 +379,13 @@ function resolveSelectorToSkillIds(
       // 多格技能：邻位关系并集所有占位键（与范围预览 / legacy getExtendedNeighbors 同口径）。
       // 仅用锚点键会漏掉其他格带出的邻位 —— 如 E-R 跨 finger 2/3，从锚点 E 取同指漏掉 R 的同指 T。
       const srcKeys = sourceKeysOf(sourceSkillId, sourceKey)
+      // scope 锚：本技能所有 neighbors 作用域统一用同一 posRel（忽略 per-affix rolled posRel）
+      const rel = scopePosAnchor(sourceSkillId)
       const seen = new Set<string>()
       for (const [key, sid] of bindings) {
         if (sid === sourceSkillId) continue
         if (seen.has(sid)) continue
-        if (srcKeys.some(sk => hasRelation(sk, key, sel.posRel))) {
+        if (srcKeys.some(sk => hasRelation(sk, key, rel))) {
           seen.add(sid)
           candidates.push(sid)
         }
@@ -490,7 +492,7 @@ function selectorMatchesSkill(
     case 'self':              return targetSkillId === sourceSkillId
     case 'neighbors':
       return targetSkillId !== sourceSkillId
-        && sourceKeysOf(sourceSkillId, sourceKey).some(sk => hasRelation(sk, targetKey, sel.posRel))
+        && sourceKeysOf(sourceSkillId, sourceKey).some(sk => hasRelation(sk, targetKey, scopePosAnchor(sourceSkillId)))
     case 'matched_tag':       return skillHasEffectiveTag(targetSkillId, sel.tag)
     case 'matched_resource': {
       const sk = state.affixSkills.get(targetSkillId)

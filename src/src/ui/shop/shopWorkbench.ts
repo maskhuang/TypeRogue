@@ -36,7 +36,7 @@ import {
   applyUnbindKeyToInbox,
 } from '../shapePreview';
 // Story 60.18: 范围词条（splash/echo/aura/relay/war_drum/conduit/amplify 等）键盘高亮
-import { getKeysWithRelation } from '../../data/keyboardTopology';
+import { getKeysWithRelation, triggerPosAnchor } from '../../data/keyboardTopology';
 import { t, getLocale } from '../../demo/demo-i18n';
 import { pickWorkbenchNote, recordShopVisit, getNoteText } from '../../data/narrative/workbenchNotes';
 import type { WordPack } from '../../core/types';
@@ -102,7 +102,7 @@ function getEffectRadiusKeys(skillId: string, hoverKey: string, payloadShapeId?:
     if (!def) continue
     const sel = extractSelectorFromEffect(def.effect)
     if (!sel) continue
-    for (const k of resolveSelectorToHighlightKeys(sel, occupiedKeys, occupiedSet)) {
+    for (const k of resolveSelectorToHighlightKeys(sel, occupiedKeys, occupiedSet, skillId)) {
       if (!occupiedSet.has(k)) radiusKeys.add(k)
     }
   }
@@ -170,8 +170,10 @@ function getTriggerSourceKeys(skillId: string, hoverKey: string, payloadShapeId?
     if (def.trigger.type !== 'on_fire' || !def.trigger.filter) continue
     const f = def.trigger.filter
     if (f.posRel !== undefined) {
+      // trigger 锚：本技能所有 on_fire{posRel} 统一用其 trigger 锚（与 matchFireFilter 同口径，预览=实际）
+      const rel = triggerPosAnchor(skillId)
       for (const ok of occupiedKeys) {
-        for (const k of getKeysWithRelation(ok, f.posRel)) {
+        for (const k of getKeysWithRelation(ok, rel)) {
           if (!occupiedSet.has(k)) out.add(k)
         }
       }

@@ -7,7 +7,7 @@
 
 import type { EffectSpec, TargetSelector } from '../data/affixV2Trigger'
 import { getAffixV2Definition } from '../data/affixV2'
-import { getKeysWithRelation } from '../data/keyboardTopology'
+import { getKeysWithRelation, scopePosAnchor } from '../data/keyboardTopology'
 import { state } from '../core/state'
 
 /** 递归提取 effect 中的 TargetSelector（aura / fire_target / apply_status / add / multiply
@@ -47,19 +47,22 @@ export function extractSelectorFromEffect(effect: EffectSpec): TargetSelector | 
 }
 
 /** TargetSelector → 高亮键列表（与 affixV2BattleIntegration.resolveSelectorToSkillIds 同语义）。
- *  occupiedKeys/occupiedSet = 该技能自身占据的键（多格技能含全部占位键）。 */
+ *  occupiedKeys/occupiedSet = 该技能自身占据的键（多格技能含全部占位键）。
+ *  hostSkillId 提供时，neighbors 用该技能的 scope 锚（与 resolve 同口径，预览=实际）；缺省退化用 sel.posRel。 */
 export function resolveSelectorToHighlightKeys(
   sel: TargetSelector,
   occupiedKeys: string[],
   occupiedSet: Set<string>,
+  hostSkillId?: string,
 ): string[] {
   switch (sel.type) {
     case 'self':
       return []   // self 即占位本身，不额外高亮
     case 'neighbors': {
+      const rel = hostSkillId ? scopePosAnchor(hostSkillId) : sel.posRel
       const out = new Set<string>()
       for (const ok of occupiedKeys) {
-        for (const k of getKeysWithRelation(ok, sel.posRel)) out.add(k)
+        for (const k of getKeysWithRelation(ok, rel)) out.add(k)
       }
       return Array.from(out)
     }

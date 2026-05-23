@@ -18,7 +18,7 @@ import { random } from '../core/seededRandom'
 import { state as gameState } from '../core/state'
 import { getAffixV2Definition } from '../data/affixV2'
 import { getLocale } from '../demo/demo-i18n'
-import { hasRelation, type PositionRelation } from '../data/keyboardTopology'
+import { hasRelation, scopePosAnchor, type PositionRelation } from '../data/keyboardTopology'
 
 // ============================================
 // SkillSeed · 候选种子
@@ -151,13 +151,15 @@ export function filterByNeighborPosRel(
     }
   }
   if (hostKeys.length === 0) hostKeys.push(hostKey)
+  // scope 锚统一：宿主已绑定时用其 scope 锚（忽略 per-affix rolled posRel）；未绑定退化用传入 posRel
+  const rel = hostSkillId ? scopePosAnchor(hostSkillId) : posRel
   return pool.filter(seed => {
     if (!seed.templateSkill) return false
     const targetId = seed.templateSkill.id
     // 找该 skill 当前绑定到哪些键位 · 候选任一格与宿主任一格满足 posRel 即过
     for (const [k, sid] of gameState.player.bindings) {
       if (sid !== targetId) continue
-      if (hostKeys.some(hk => hasRelation(hk, k, posRel))) return true
+      if (hostKeys.some(hk => hasRelation(hk, k, rel))) return true
     }
     return false
   })

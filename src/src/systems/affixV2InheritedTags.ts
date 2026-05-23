@@ -15,7 +15,7 @@ import type { Tag } from '../data/affixTags'
 import type { TargetSelector } from '../data/affixV2Trigger'
 import { state } from '../core/state'
 import { getAffixV2Definition } from '../data/affixV2'
-import { hasRelation } from '../data/keyboardTopology'
+import { hasRelation, scopePosAnchor } from '../data/keyboardTopology'
 import { listActiveAuras } from './affixV2State'
 
 /**
@@ -50,10 +50,11 @@ function resolveSourceScopeSkillIds(sel: TargetSelector, hostSkillId: string, ho
         if (sid === hostSkillId) hostKeys.push(k)
       }
       if (hostKeys.length === 0) hostKeys.push(hostKey)
+      const rel = scopePosAnchor(hostSkillId)  // scope 锚统一（与 resolveSelectorToSkillIds 同口径）
       const out: string[] = []
       for (const [k, sid] of state.player.bindings) {
         if (sid === hostSkillId) continue
-        if (hostKeys.some(hk => hasRelation(hk, k, sel.posRel))) out.push(sid)
+        if (hostKeys.some(hk => hasRelation(hk, k, rel))) out.push(sid)
       }
       return out
     }

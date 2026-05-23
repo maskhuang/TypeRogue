@@ -20,6 +20,29 @@ export enum PositionRelation {
   Symmetric = 'symmetric',
 }
 
+// === 技能级 posRel 锚（trigger / scope 各自统一）===
+// 同一技能上所有「拓扑型」trigger（on_fire{posRel}）各自统一到 triggerPosAnchor，
+// 所有「拓扑型」scope（neighbors{posRel}）各自统一到 scopePosAnchor —— 两锚相互独立。
+// 由 skillId 确定性派生（FNV-1a 哈希），跨存档稳定、无需持久化、无 roll-timing 问题。
+// self / matched_* / all_skills / hasted / marked 等非拓扑作用域不受影响。
+const _POSREL_ANCHOR_VALUES: readonly PositionRelation[] = [
+  PositionRelation.Adjacent, PositionRelation.SameRow, PositionRelation.SameColumn,
+  PositionRelation.SameHand, PositionRelation.SameFinger, PositionRelation.Symmetric,
+];
+function _hashStr(s: string): number {
+  let h = 2166136261;
+  for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); }
+  return h >>> 0;
+}
+/** 技能 scope 邻位锚 · 该技能所有 neighbors 作用域统一用此 posRel */
+export function scopePosAnchor(skillId: string): PositionRelation {
+  return _POSREL_ANCHOR_VALUES[_hashStr(skillId + '·scope') % _POSREL_ANCHOR_VALUES.length];
+}
+/** 技能 trigger 邻位锚 · 该技能所有 on_fire{posRel} 统一用此 posRel（与 scope 锚独立）*/
+export function triggerPosAnchor(skillId: string): PositionRelation {
+  return _POSREL_ANCHOR_VALUES[_hashStr(skillId + '·trigger') % _POSREL_ANCHOR_VALUES.length];
+}
+
 // === 静态拓扑表（来自 JSON，schema 校验后冻结） ===
 export const COLUMN_MAP: Readonly<Record<string, number>> = KEYBOARD_TOPOLOGY_DATA.columnMap;
 export const ROW_MAP: Readonly<Record<string, number>> = KEYBOARD_TOPOLOGY_DATA.rowMap;
