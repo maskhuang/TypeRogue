@@ -14,6 +14,7 @@ import type { FireFilter } from '../data/affixV2Trigger'
 import { hasRelation } from '../data/keyboardTopology'
 import { hasTag, type FireEvent } from './tagQuery'
 import { state } from '../core/state'
+import { skillHasEffectiveTag } from './affixV2InheritedTags'
 
 // re-export 方便调用方一站式 import
 export type { FireFilter, FireEvent }
@@ -35,11 +36,13 @@ export function matchFireFilter(
   listenerKey: string,
 ): boolean {
   // ── tag 维度 ──
+  // 命中条件：来源词条 def 携带该 tag，或来源 skill 经 inherit_tags 继承到该 tag
+  // （宿主「拥有」继承 tag → 其 fire 视为带该 tag，on_fire(tag) 监听者随之触发）。
   if (filter.tag !== undefined) {
     const tags = Array.isArray(filter.tag) ? filter.tag : [filter.tag]
     let tagHit = false
     for (const t of tags) {
-      if (hasTag(event.sourceAffixId, t)) { tagHit = true; break }
+      if (hasTag(event.sourceAffixId, t) || skillHasEffectiveTag(event.sourceSkillId, t)) { tagHit = true; break }
     }
     if (!tagHit) return false
   }

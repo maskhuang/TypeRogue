@@ -71,7 +71,7 @@ describe('chant generator · scale roll', () => {
     expect(pctWithScaleCount).toBeGreaterThan(0)
   })
 
-  it('tag source 的 tag = recipe.section；source 含全部 4 种变体', () => {
+  it('tag source 的 tag = recipe.section；source 含 tag/resource/rarity/empty/targetScore 变体', () => {
     setSeededMode(99)
     const bys = new Set<string>()
     for (let i = 0; i < 600; i++) {
@@ -83,8 +83,8 @@ describe('chant generator · scale roll', () => {
       bys.add(scale.source.by)
       if (scale.source.by === 'tag') expect(scale.source.tag).toBe(RECIPE_PILOERECTION.section)  // 'posture'
     }
-    // 4 种 source 变体都应被抽到
-    for (const by of ['tag', 'resource', 'rarity', 'empty']) expect(bys.has(by)).toBe(true)
+    // 非门控的 source 变体都应被抽到（hasted 受需求门控，不在此断言）
+    for (const by of ['tag', 'resource', 'rarity', 'empty', 'targetScore']) expect(bys.has(by)).toBe(true)
   })
 
   it('tool 段 recipe 生成时 roll maxUses（[MIN, MAX] 闭区间整数）', () => {
@@ -149,7 +149,8 @@ describe('chant generator · scale roll', () => {
       const id = generateAffixV2(RECIPE_PILOERECTION)
       const def = getAffixV2Definition(id)
       if (def?.effect.kind !== 'apply_aura') continue
-      if (def.effect.modifier.type === 'rainbow') continue
+      // rainbow / inherit_tags 无 amount → 永不挂 scale，排除以测「scale-eligible 内 ≈30%」
+      if (def.effect.modifier.type === 'rainbow' || def.effect.modifier.type === 'inherit_tags') continue
       nonRainbow++
       const scale = (def.effect as { scale?: unknown }).scale
       if (scale) nonRainbowWithScale++
@@ -158,5 +159,36 @@ describe('chant generator · scale roll', () => {
     const rate = nonRainbowWithScale / nonRainbow
     expect(rate).toBeGreaterThan(0.22)
     expect(rate).toBeLessThan(0.38)
+  })
+})
+
+describe('chant generator · inherit_tags 随机可抽', () => {
+  it('多 seed 跑能抽到 inherit_tags · 无 scale/amount', () => {
+    setSeededMode(7)
+    let count = 0
+    for (let i = 0; i < 600; i++) {
+      const def = getAffixV2Definition(generateAffixV2(RECIPE_PILOERECTION))
+      if (def?.effect.kind !== 'apply_aura') continue
+      if (def.effect.modifier.type !== 'inherit_tags') continue
+      count++
+      expect('scale' in def.effect && def.effect.scale).toBeFalsy()  // 无 scale
+      expect('amount' in def.effect.modifier).toBe(false)            // 无 amount 字段
+    }
+    expect(count).toBeGreaterThan(0)
+  })
+
+  it('inherit_tags 来源 scope 不为 self / hasted；含 workbench 变体', () => {
+    setSeededMode(99)
+    const scopes = new Set<string>()
+    for (let i = 0; i < 800; i++) {
+      const def = getAffixV2Definition(generateAffixV2(RECIPE_PILOERECTION))
+      if (def?.effect.kind !== 'apply_aura') continue
+      if (def.effect.modifier.type !== 'inherit_tags') continue
+      scopes.add(def.effect.selector.type)
+    }
+    expect(scopes.size).toBeGreaterThan(0)
+    expect(scopes.has('self')).toBe(false)     // 继承自身 = no-op，已排除
+    expect(scopes.has('hasted')).toBe(false)   // 继承不挂靠战斗极速态，已排除
+    expect(scopes.has('workbench')).toBe(true) // IN-tray 签名来源在池内
   })
 })

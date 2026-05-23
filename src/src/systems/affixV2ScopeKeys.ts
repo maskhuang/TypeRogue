@@ -95,6 +95,9 @@ export function resolveSelectorToHighlightKeys(
     case 'hasted':
       // 运行时动态范围（依赖战斗内 haste 状态）· 预览无战斗态，不高亮
       return []
+    case 'workbench':
+      // IN-tray 未装配技能不在键盘上 · 无对应键位可高亮
+      return []
     case 'matched_rarity': {
       const out: string[] = []
       for (const [k, sid] of state.player.bindings) {

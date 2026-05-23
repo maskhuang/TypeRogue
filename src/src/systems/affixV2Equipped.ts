@@ -12,6 +12,7 @@
 import type { AffixV2Instance } from '../data/affixV2'
 import { getAffixV2Definition, getAffixV2UseLimit } from '../data/affixV2'
 import { state as gameState } from '../core/state'
+import { BALANCE } from '../core/constants'
 import { hasRelation, getKeysWithRelation } from '../data/keyboardTopology'
 import type { Tag } from '../data/affixTags'
 
@@ -70,6 +71,9 @@ function collectSkillIdsForScope(
         .map(([sid]) => sid)
     case 'all_skills':
       return [...gameState.affixSkills.keys()]
+    case 'workbench':
+      // IN-tray 未装配技能（已拥有但未绑键）· 主用作 inherit_tags 的 tag 来源
+      return [...gameState.player.inbox]
     case 'hasted':
       // 装备态/预览无战斗态，无法判定极速 · effect 目标解析走 _selectorResolver（战斗态），不经此 stub；
       // 此处仅 scale-tag 计数会调用，而 SCALE_SCOPE_POOL 不含 hasted → 返空安全
@@ -79,7 +83,7 @@ function collectSkillIdsForScope(
 
 /** tooltip 预览用：统计 scale source 在 scope 内的单位数（与运行时 countScaleSource 同口径）·
  *  tag → scope 内含 tag 的词条数；resource/rarity → scope 内匹配的技能数；
- *  empty → 与宿主 posRel 的空键位数（需宿主 key）。
+ *  empty → 与宿主 posRel 的空键位数（需宿主 key）；targetScore → 当前关目标分数档（全程可预览）。
  *  无法在当前上下文解析时返 null（neighbors/empty 缺宿主键位、self/hasted）→ 预览只显规则。*/
 export function previewCountScaleSource(
   source: ScaleCountSource,
@@ -95,6 +99,7 @@ export function previewCountScaleSource(
     }
     return n
   }
+  if (source.by === 'targetScore') return Math.round(gameState.targetScore / BALANCE.TARGET_BASE)
   if (source.by === 'hasted') return null   // 极速数运行时动态 · 预览无战斗态 → 只显规则不显数
   const sc: TargetSelector = scope ?? { type: 'all_skills' }
   if (sc.type === 'self' || sc.type === 'hasted') return null

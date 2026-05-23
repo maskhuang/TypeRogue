@@ -131,13 +131,23 @@ interface AuraEntry {
   readonly sourceInstanceId: string
   readonly selector: TargetSelector
   readonly modifier: AuraModifier
+  /** 来源（宿主）skill / 键位 · inherit_tags 需用它定位宿主，避免反查 _equipped 造成 import 环 ·
+   *  旧调用（测试 stub）不传时 undefined，仅依赖宿主的 modifier（如 inherit_tags）失效 */
+  readonly sourceSkillId?: string
+  readonly sourceKey?: string
 }
 
 const _auras: AuraEntry[] = []
 
-/** 添加 aura（apply_aura 调用） */
-export function addAura(sourceInstanceId: string, selector: TargetSelector, modifier: AuraModifier): void {
-  _auras.push({ sourceInstanceId, selector, modifier })
+/** 添加 aura（apply_aura 调用）· sourceSkillId/sourceKey 由战斗集成层透传宿主上下文 */
+export function addAura(
+  sourceInstanceId: string,
+  selector: TargetSelector,
+  modifier: AuraModifier,
+  sourceSkillId?: string,
+  sourceKey?: string,
+): void {
+  _auras.push({ sourceInstanceId, selector, modifier, sourceSkillId, sourceKey })
 }
 
 /** 列出全部活跃 aura（resolver 计算 buff 用） */

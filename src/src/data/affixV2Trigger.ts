@@ -75,9 +75,10 @@ export type TriggerSpec = Phase1TriggerSpec | Phase2TriggerSpec
 // 「scale by count」· 两层正交：
 //   curve（type）：count — 乘性连续 factor = 1 + n × factor（n=0 → ×1 全产出）
 //                  per_n — 步进整数 factor = floor(n / perN)（n<perN → 0，门控）
-//   source       ：数 scope 内的什么单位 —— 词条(tag) / 资源(resource) / 稀有度(rarity) / 空位(empty)
+//   source       ：数 scope 内的什么单位 —— 词条(tag) / 资源(resource) / 稀有度(rarity) /
+//                  空位(empty) / 极速(hasted) / 目标分数档(targetScore)
 // 都按"乘性 scale 因子"接入 add / multiply / gain_resource / apply_aura。
-// scope 决定计数范围（缺省 all_skills）；empty 例外——用自身 posRel（数与宿主成该关系的空键位）。
+// scope 决定计数范围（缺省 all_skills）；empty / hasted / targetScore 例外——不使用 scope（见各 source 注释）。
 
 /** scale 计数来源 · 决定"数 scope 内的什么" */
 export type ScaleCountSource =
@@ -91,6 +92,8 @@ export type ScaleCountSource =
   | { readonly by: 'empty'; readonly posRel: PositionRelation }
   /** 极速：场上当前处于极速态（haste 层数 ≥ 1）的技能数 · 运行时动态 · 全局计数，不使用 scope */
   | { readonly by: 'hasted' }
+  /** 目标分数：当前关目标分数档 = round(targetScore / TARGET_BASE) · 越深入 run 目标越高 → 数越大 · 全局计数，不使用 scope */
+  | { readonly by: 'targetScore' }
 
 export type ScaleByTag =
   | {
@@ -127,6 +130,12 @@ export type TargetSelector =
   | { type: 'hasted'; pick?: 'all' | 'random' }
   /** 指定稀有度（= V2 词条数量 0-3）的技能 · 精确匹配，复合范围交由 composite */
   | { type: 'matched_rarity'; rarity: number; pick?: 'all' | 'random' }
+  /**
+   * IN-tray（工作台未装配）技能 · = state.player.inbox（已拥有但未绑键）。
+   * 现有 all_skills 已涵盖全量 affixSkills（绑键 + IN-tray），故本 scope 专取「仅未绑键」
+   * 这一既有 selector 无法单独圈出的集合。这些技能不参战，主用作 inherit_tags 的 tag 来源。
+   */
+  | { type: 'workbench'; pick?: 'all' | 'random' }
 
 // ===== AuraModifier (apply_aura 用) =====
 
@@ -143,6 +152,15 @@ export type AuraModifier =
   | { type: 'multi_fire_add'; amount: number }
   /** 彩虹 · 目标 skill 基础产出改为随机资源（按目标资源 Lv1 base 重缩放，每次 fire 重抽）*/
   | { type: 'rainbow' }
+  /**
+   * 继承 tag · 宿主 skill（= 携带此 aura 的 skill）拥有 scope 内所有技能 tag 的并集。
+   * 此处 apply_aura.selector 语义反转为「tag 来源 scope」（而非接收方）——接收方恒为宿主自身。
+   * 继承的是技能层 tag 成员资格（own tag 并集），消费方：matched_tag 选取 + on_fire tag filter
+   * 把宿主视为携带这些 tag。一跳继承（只取来源的 own tag，不取来源的继承 tag），不会递归。
+   * 不创造幻影词条——故 count(tag) / scale-by-tag 计数不变（数的是真实词条数）。
+   * 无数值字段 → scale 透传。
+   */
+  | { type: 'inherit_tags' }
 
 // ===== StatusKeyword (apply_status 占位 · K4 D' 决议)
 // 词表暂未敲定（推迟到 narrative status register 决议），运行时 stub。

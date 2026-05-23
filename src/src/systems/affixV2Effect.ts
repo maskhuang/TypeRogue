@@ -21,6 +21,7 @@ import type {
 import type { Tag } from '../data/affixTags'
 import type { AffixSkillInstance } from '../data/affixes'
 import { state as gameState } from '../core/state'
+import { BALANCE } from '../core/constants'
 import { getKeysWithRelation } from '../data/keyboardTopology'
 import {
   getInstanceState,
@@ -281,7 +282,7 @@ function resolveInto(spec: EffectSpec, ctx: ResolveContext, result: ResolveResul
     case 'apply_aura': {
       const factor = applyScale(spec.scale, ctx)
       const scaledModifier = scaleAuraModifier(spec.modifier, factor)
-      addAura(ctx.instanceId, spec.selector, scaledModifier)
+      addAura(ctx.instanceId, spec.selector, scaledModifier, ctx.skillId, ctx.key)
       result.aurasApplied.push({
         sourceInstanceId: ctx.instanceId,
         selector: spec.selector,
@@ -428,6 +429,7 @@ function applyScale(scale: ScaleByTag | undefined, ctx: ResolveContext): number 
  *   - resource → scope 内主产该资源的技能数（scope→skillIds × gameState.affixSkills）
  *   - rarity   → scope 内该稀有度的技能数（同上）
  *   - empty    → 与宿主键位成该 posRel 的空键位数（getKeysWithRelation − bindings · 不用 scope）
+ *   - targetScore → 当前关目标分数档 round(targetScore / TARGET_BASE)（全局 · 不用 scope）
  */
 function countScaleSource(source: ScaleCountSource, scope: TargetSelector | undefined, ctx: ResolveContext): number {
   switch (source.by) {
@@ -468,6 +470,9 @@ function countScaleSource(source: ScaleCountSource, scope: TargetSelector | unde
         : []
       return new Set(ids).size
     }
+    case 'targetScore':
+      // 当前关目标分数档 · 越深入 run 目标越高 → scale 越大 · 全局，与 scope 无关
+      return Math.round(gameState.targetScore / BALANCE.TARGET_BASE)
   }
 }
 
@@ -479,7 +484,8 @@ function scaleAuraModifier(mod: AuraModifier, factor: number): AuraModifier {
   if (factor === 1) return mod
   switch (mod.type) {
     case 'rainbow':
-      return mod
+    case 'inherit_tags':
+      return mod   // 无数值字段 · 透传
     case 'base_add':
       return { ...mod, ratio: mod.ratio * factor }
     case 'factor_add':

@@ -33,7 +33,6 @@ import {
   type SourcedResult,
 } from './affixV2Equipped'
 import { listActiveAuras, peekInstanceState, getSkillCumBase, getSkillCumFactor, getFireTargetWaitMs, tryFireTargetQuota, consumeHasteOne, getHaste } from './affixV2State'
-import { getAffixV2Definition } from '../data/affixV2'
 import { BASE_VALUES, createSkillRuntimeState } from '../data/affixes'
 import { getAscendBaseScale } from '../data/affixTrigger'
 import { triggerSkill, recordSkillTrigger } from './skills'
@@ -47,6 +46,7 @@ import {
 import type { ResourceProduction } from './affixV2Effect'
 import type { FireEvent } from './fireFilter'
 import type { TargetSelector } from '../data/affixV2Trigger'
+import { skillHasEffectiveTag } from './affixV2InheritedTags'
 
 // ============================================
 // 资源 Lv1 base 查询
@@ -283,13 +283,13 @@ function resolveSelectorToSkillIds(
     }
 
     case 'matched_tag': {
+      // 绑键技能里有效 tag（own ∪ 继承）命中者 · 含 inherit_tags 宿主
       const seen = new Set<string>()
-      for (const entry of listAllEquipped()) {
-        const def = getAffixV2Definition(entry.defId)
-        if (!def) continue
-        if (def.tags.includes(sel.tag) && !seen.has(entry.skillId)) {
-          seen.add(entry.skillId)
-          candidates.push(entry.skillId)
+      for (const sid of state.player.bindings.values()) {
+        if (seen.has(sid)) continue
+        if (skillHasEffectiveTag(sid, sel.tag)) {
+          seen.add(sid)
+          candidates.push(sid)
         }
       }
       break
@@ -304,6 +304,12 @@ function resolveSelectorToSkillIds(
 
     case 'all_skills': {
       candidates = [...state.affixSkills.keys()]
+      break
+    }
+
+    case 'workbench': {
+      // IN-tray 未装配技能（不参战，主用作 inherit_tags 来源；作 fire_target 目标时由 caller 过滤）
+      candidates = [...state.player.inbox]
       break
     }
 
@@ -341,14 +347,7 @@ function selectorMatchesSkill(
   switch (sel.type) {
     case 'self':              return targetSkillId === sourceSkillId
     case 'neighbors':         return targetSkillId !== sourceSkillId && hasRelation(sourceKey, targetKey, sel.posRel)
-    case 'matched_tag': {
-      for (const entry of listAllEquipped()) {
-        if (entry.skillId !== targetSkillId) continue
-        const def = getAffixV2Definition(entry.defId)
-        if (def?.tags.includes(sel.tag)) return true
-      }
-      return false
-    }
+    case 'matched_tag':       return skillHasEffectiveTag(targetSkillId, sel.tag)
     case 'matched_resource': {
       const sk = state.affixSkills.get(targetSkillId)
       return sk?.resource === sel.resource
@@ -356,6 +355,7 @@ function selectorMatchesSkill(
     case 'all_skills':        return true
     case 'hasted':            return getHaste(targetSkillId) > 0
     case 'matched_rarity':    return state.affixSkills.get(targetSkillId)?.rarity === sel.rarity
+    case 'workbench':         return state.player.inbox.includes(targetSkillId)
   }
 }
 

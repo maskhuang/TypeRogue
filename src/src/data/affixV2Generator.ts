@@ -109,21 +109,22 @@ const CHANT_TAG_PER_N_MIN = 2
 const CHANT_TAG_PER_N_MAX = 4
 const CHANT_TAG_COUNT_FACTOR = 0.1
 
-/** 抽 scale 计数来源（变体）· 词条 50% / 资源 18% / 稀有度 14% / 极速 8% / 空位 10%。
- *  资源用宿主资源（"数同资源技能"，无则随机）；稀有度 0-3 随机；极速数全局动态；空位随机锁 posRel。
- *  by:'hasted' 受需求门控——被关掉则回退 empty（非极速来源）。 */
+/** 抽 scale 计数来源（变体）· 词条 48% / 资源 16% / 稀有度 13% / 极速 8% / 目标分数 7% / 空位 8%。
+ *  资源用宿主资源（"数同资源技能"，无则随机）；稀有度 0-3 随机；极速数全局动态；目标分数读当前关目标档；空位随机锁 posRel。
+ *  by:'hasted' 受需求门控——被关掉则回退 targetScore/empty（非极速来源）。 */
 function pickScaleSource(section: SectionTag, skillResource?: ResourceType, kind?: string): ScaleCountSource {
   const roll = random()
-  if (roll < 0.50) return { by: 'tag', tag: section }
-  if (roll < 0.68) return { by: 'resource', resource: skillResource ?? pickRandom(MATCHED_RESOURCE_POOL) }
-  if (roll < 0.82) return { by: 'rarity', rarity: Math.floor(random() * 4) }
-  if (roll < 0.90 && admitDemand(kind)) return { by: 'hasted' }
+  if (roll < 0.48) return { by: 'tag', tag: section }
+  if (roll < 0.64) return { by: 'resource', resource: skillResource ?? pickRandom(MATCHED_RESOURCE_POOL) }
+  if (roll < 0.77) return { by: 'rarity', rarity: Math.floor(random() * 4) }
+  if (roll < 0.85 && admitDemand(kind)) return { by: 'hasted' }
+  if (roll < 0.92) return { by: 'targetScore' }
   return { by: 'empty', posRel: pickRandom(POSREL_VALUES) }
 }
 
-/** 给定 source 选 scope：empty 用自身 posRel、hasted 全局数极速技能（均 top-level scope 留空）；其余从 SCALE_SCOPE_POOL 抽。 */
+/** 给定 source 选 scope：empty 用自身 posRel、hasted 全局数极速技能、targetScore 读关目标（均 top-level scope 留空）；其余从 SCALE_SCOPE_POOL 抽。 */
 function pickScaleScope(source: ScaleCountSource): TargetSelector | undefined {
-  return (source.by === 'empty' || source.by === 'hasted') ? undefined : pickWeightedScope(SCALE_SCOPE_POOL).selector
+  return (source.by === 'empty' || source.by === 'hasted' || source.by === 'targetScore') ? undefined : pickWeightedScope(SCALE_SCOPE_POOL).selector
 }
 
 /**
@@ -136,7 +137,7 @@ function pickChantScale(
   section: SectionTag,
   kind: string,
 ): ScaleByTag | undefined {
-  if (modifierType === 'rainbow') return undefined
+  if (modifierType === 'rainbow' || modifierType === 'inherit_tags') return undefined  // 无 amount
   if (random() >= CHANT_SCALE_PROBABILITY) return undefined
   const source = pickScaleSource(section, undefined, kind)
   const scope = pickScaleScope(source)
@@ -328,6 +329,14 @@ const FULL_SCOPE_POOL: readonly ScopeEntry[] = [
   })),
 ]
 
+/** inherit_tags 的「tag 来源 scope」池（apply_aura.selector 在此 modifier 下语义反转为来源）·
+ *  排除 self（继承自身 = no-op）与 hasted（继承不挂靠战斗极速态，resolveSourceScope 对其返空）·
+ *  额外纳入 workbench（IN-tray 是 inherit_tags 的签名来源）。其余沿用 FULL_SCOPE_POOL 权重。*/
+const INHERIT_TAGS_SOURCE_POOL: readonly ScopeEntry[] = [
+  { selector: { type: 'workbench' }, weight: 25 },
+  ...FULL_SCOPE_POOL.filter(e => e.selector.type !== 'self' && e.selector.type !== 'hasted'),
+]
+
 /** scale-by-tag 的 scope 池 · 决定 scale 计数的范围（"仅监听 scope 内的同 tag 词条数"）·
  *  all_skills 占主（广域基线），辅以 neighbors（键位拓扑）/ matched_resource / matched_rarity 做变化。
  *  neighbors 需宿主键位：已绑定 skill 的 tooltip 可精确预览；shop 未绑定预览只显规则。
@@ -513,25 +522,32 @@ export function rollAffixV2Spec(
   } else if (recipe.kind === 'chant') {
     // chant: trigger 固定 passive；scope 与 modifier 加权随机；amount 不按 size 缩放
     triggerSpec = { type: 'passive' }
-    const sel = pickGatedScope(FULL_SCOPE_POOL, recipe.kind)
     // base_add / factor_add 暂无消费端，从随机池剔除（类型仍保留供 handwritten 使用）
     const modifierType = pickRandom([
-      'crit_chance_add', 'output_bonus_pct', 'multi_fire_add', 'rainbow',
+      'crit_chance_add', 'output_bonus_pct', 'multi_fire_add', 'rainbow', 'inherit_tags',
     ] as const)
-    const amount = recipe.T_byModifier[modifierType]
-    let modifier: AuraModifier
-    switch (modifierType) {
-      case 'crit_chance_add':  modifier = { type: 'crit_chance_add', amount };        break
-      case 'output_bonus_pct': modifier = { type: 'output_bonus_pct', amount };       break
-      case 'multi_fire_add':   modifier = { type: 'multi_fire_add', amount };         break
-      case 'rainbow':          modifier = { type: 'rainbow' };                        break
+    if (modifierType === 'inherit_tags') {
+      // inherit_tags：selector = tag 来源 scope（语义反转，接收方恒为宿主自身）·
+      // 无 amount / scale · 来源走专用池（排除 self/hasted no-op，含 workbench=IN-tray）
+      const sel = pickGatedScope(INHERIT_TAGS_SOURCE_POOL, recipe.kind)
+      effect = { kind: 'apply_aura', selector: sel, modifier: { type: 'inherit_tags' } }
+    } else {
+      const sel = pickGatedScope(FULL_SCOPE_POOL, recipe.kind)
+      const amount = recipe.T_byModifier[modifierType]
+      let modifier: AuraModifier
+      switch (modifierType) {
+        case 'crit_chance_add':  modifier = { type: 'crit_chance_add', amount };        break
+        case 'output_bonus_pct': modifier = { type: 'output_bonus_pct', amount };       break
+        case 'multi_fire_add':   modifier = { type: 'multi_fire_add', amount };         break
+        case 'rainbow':          modifier = { type: 'rainbow' };                        break
+      }
+      // 30% 概率挂 scale · rainbow 跳过（无 amount 字段，scale 无意义）
+      // 曲线：multi_fire_add → per_n（整数步进）；% 类型 → count（连续）· 来源(词条/资源/稀有度/空位)随机
+      const scale = pickChantScale(modifierType, recipe.section, recipe.kind)
+      effect = scale
+        ? { kind: 'apply_aura', selector: sel, modifier, scale }
+        : { kind: 'apply_aura', selector: sel, modifier }
     }
-    // 30% 概率挂 scale · rainbow 跳过（无 amount 字段，scale 无意义）
-    // 曲线：multi_fire_add → per_n（整数步进）；% 类型 → count（连续）· 来源(词条/资源/稀有度/空位)随机
-    const scale = pickChantScale(modifierType, recipe.section, recipe.kind)
-    effect = scale
-      ? { kind: 'apply_aura', selector: sel, modifier, scale }
-      : { kind: 'apply_aura', selector: sel, modifier }
   } else if (recipe.kind === 'convert') {
     // convert: scope 固定 self · source 固定为词条所在 skill 资源 · target 随机（必不同）
     const ratio = scaleMagnitude(recipe.T, triggerEntry.freq)
@@ -743,6 +759,7 @@ export const RECIPE_PILOERECTION: ChantRecipe = {
     factor_add:        0,    // 暂无消费端，从随机池剔除（占位仅满足 Record 完整性）
     multi_fire_add:    1,    // +1 释放（self → 2x；adjacent 4 邻 → 每邻位 +1 各自双发）
     rainbow:           0,    // rainbow 无 amount，值仅占位
+    inherit_tags:      0,    // inherit_tags 无 amount（值仅占位）；可被随机池抽中，来源走 INHERIT_TAGS_SOURCE_POOL
   },
 }
 

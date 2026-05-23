@@ -167,6 +167,9 @@ function formatSelector(sel: TargetSelector): string {
     case 'matched_rarity':    return zh
       ? `${sel.rarity} 词条的技能${pickSuffix}`
       : `rarity-${sel.rarity} skills${pickSuffix}`
+    case 'workbench':         return zh
+      ? `IN-tray 未装配的技能${pickSuffix}`
+      : `IN-tray (unequipped) skills${pickSuffix}`
   }
 }
 
@@ -228,7 +231,7 @@ function liveScaleFactor(scale: ScaleByTag | undefined, host?: HostCtx): number 
   return live ? live.factor : 1
 }
 
-/** scale 计数单位的人读名 · 词条/资源/稀有度/空位 */
+/** scale 计数单位的人读名 · 词条/资源/稀有度/空位/极速/目标分数档 */
 function scaleSourceUnit(source: ScaleCountSource): string {
   const zh = isZh()
   switch (source.by) {
@@ -244,6 +247,8 @@ function scaleSourceUnit(source: ScaleCountSource): string {
       return zh ? `「${locRel(source.posRel)}」空位` : `${locRel(source.posRel)} empty slot`
     case 'hasted':
       return zh ? `极速技能` : `hasted skill`
+    case 'targetScore':
+      return zh ? `目标分数档` : `target-score tier`
   }
 }
 
@@ -313,6 +318,12 @@ export function formatEffectDescription(effect: EffectSpec, skillResource?: stri
       return zh ? `额外触发 ${formatSelector(effect.selector)}` : `extra-fire ${formatSelector(effect.selector)}`
     case 'apply_aura': {
       const mod = effect.modifier
+      // inherit_tags：selector 语义为「tag 来源 scope」，接收方是宿主自身 → 单独成句
+      if (mod.type === 'inherit_tags') {
+        return zh
+          ? `本技能拥有 ${formatSelector(effect.selector)} 的全部 tag`
+          : `this skill gains all tags of ${formatSelector(effect.selector)}`
+      }
       const factor = liveScaleFactor(effect.scale, host)
       const pct = (x: number) => Math.round(x * 1000) / 10
       // 把当前场上因子直接折进光环数值（multi_fire 数量可能为 0 = 暂未生效）

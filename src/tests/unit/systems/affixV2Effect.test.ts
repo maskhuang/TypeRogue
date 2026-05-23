@@ -2,9 +2,11 @@
 // 打字肉鸽 - affixV2 Effect Resolver 单元测试
 // ============================================
 
-import { describe, it, expect, beforeEach } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import { resolveEffect, evaluateCondition, type ResolveContext } from '../../../src/systems/affixV2Effect'
 import { resetAllAffixV2State, peekInstanceState, listActiveAuras, listStatuses, getInstanceState } from '../../../src/systems/affixV2State'
+import { state as gameState } from '../../../src/core/state'
+import { BALANCE } from '../../../src/core/constants'
 
 const baseCtx: ResolveContext = {
   instanceId: 'inst_1',
@@ -325,6 +327,41 @@ describe('ScaleByTag · tag_per_n（步进整数）', () => {
       scale: { type: 'per_n', source: { by: 'tag', tag: 'vocal' }, perN: 0 },
     }, ctxQ)
     expect(r.resourceProduced[0].amount).toBe(0)
+  })
+})
+
+describe('ScaleByTag · targetScore（目标分数档 · 全局 · 不用 scope）', () => {
+  const origTarget = gameState.targetScore
+  afterEach(() => { gameState.targetScore = origTarget })
+
+  it('count 曲线 · n = round(targetScore / TARGET_BASE)', () => {
+    gameState.targetScore = BALANCE.TARGET_BASE * 4   // n = 4
+    const r = resolveEffect({
+      kind: 'gain_resource', resource: 'score', ratio: 1,
+      scale: { type: 'count', source: { by: 'targetScore' }, factor: 0.1 },
+    }, baseCtx)
+    // 1 × 11 × (1 + 4×0.1) = 15.4
+    expect(r.resourceProduced[0].amount).toBeCloseTo(15.4, 5)
+  })
+
+  it('档位四舍五入 · target = 3.4 档 → n = 3', () => {
+    gameState.targetScore = BALANCE.TARGET_BASE * 3.4
+    const r = resolveEffect({
+      kind: 'gain_resource', resource: 'score', ratio: 1,
+      scale: { type: 'count', source: { by: 'targetScore' }, factor: 0.1 },
+    }, baseCtx)
+    // n = round(3.4) = 3 → 11 × 1.3 = 14.3
+    expect(r.resourceProduced[0].amount).toBeCloseTo(14.3, 5)
+  })
+
+  it('per_n 曲线 · floor(n / perN)', () => {
+    gameState.targetScore = BALANCE.TARGET_BASE * 7   // n = 7
+    const r = resolveEffect({
+      kind: 'gain_resource', resource: 'score', ratio: 1,
+      scale: { type: 'per_n', source: { by: 'targetScore' }, perN: 3 },
+    }, baseCtx)
+    // floor(7/3) = 2 → 11 × 2 = 22
+    expect(r.resourceProduced[0].amount).toBe(22)
   })
 })
 
