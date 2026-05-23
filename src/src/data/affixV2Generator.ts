@@ -296,7 +296,23 @@ export interface GazeFollowRecipe {
   readonly name_en: string
 }
 
-export type AffixV2Recipe = DripRecipe | GrowthRecipe | EscalateRecipe | ChantRecipe | ChainRecipe | ConvertRecipe | MetabolizeRecipe | HasteRecipe | TeachRecipe | ImitateRecipe | SpearMakeRecipe | GazeFollowRecipe
+/** crack 系：on_self_fire + per-use 大额 gain_resource · 消耗型「工具」（用完消失）·
+ *  与 drip 区别：(1) trigger 固定 on_self_fire（玩家 fire 宿主技能 = 砸一次）;
+ *  (2) per-use 固定大额 amount —— 不按 freq 缩放，总产出由 maxUses 上限封顶而非每战 T;
+ *  (3) usesRange 覆盖 tool 段默认 maxUses（坚果耐砸，次数多于一般工具）。
+ *  resource 在生成时从 resourcePool 随机抽。*/
+export interface CrackRecipe {
+  readonly kind: 'crack'
+  readonly id: string
+  readonly section: SectionTag
+  readonly name_zh: string
+  readonly name_en: string
+  readonly resourcePool: readonly ResourceType[]
+  readonly amount: number                          // per-use ratio（× resource Lv1 base）· 大额单次产出
+  readonly usesRange: readonly [number, number]    // 覆盖 tool 段默认 maxUses（闭区间整数）
+}
+
+export type AffixV2Recipe = DripRecipe | GrowthRecipe | EscalateRecipe | ChantRecipe | ChainRecipe | ConvertRecipe | MetabolizeRecipe | HasteRecipe | TeachRecipe | ImitateRecipe | SpearMakeRecipe | GazeFollowRecipe | CrackRecipe
 
 // ============================================
 // Scope 池 · 加权抽样 · 范围越广越稀有
@@ -666,6 +682,12 @@ export function rollAffixV2Spec(
       kind: 'graft_affix',
       from: { type: 'neighbors', posRel: rolledPosRel, pick: 'all' },
     }
+  } else if (recipe.kind === 'crack') {
+    // crack: trigger 固定 on_self_fire（玩家 fire 宿主技能 = 砸一次坚果）·
+    // per-use 固定大额产出（不除 freq —— 总量由 maxUses 封顶）· 资源生成时随机抽
+    triggerSpec = { type: 'on_self_fire' }
+    const resource = pickRandom(recipe.resourcePool)
+    effect = { kind: 'gain_resource', resource, ratio: recipe.amount }
   } else if (recipe.kind === 'teach') {
     // teach: trigger 固定 on_battle_end(any) · 胜败都触发
     // filter 三维度复合 · 生成时独立 roll · 每个实例锁死：
@@ -701,6 +723,12 @@ export function rollAffixV2Spec(
   return { trigger: triggerSpec, effect }
 }
 
+/** tool 段词条的 maxUses roll 区间 · crack recipe 用 usesRange 覆盖默认 [MIN, MAX] */
+function toolUsesRange(recipe: AffixV2Recipe): readonly [number, number] {
+  if (recipe.kind === 'crack') return recipe.usesRange
+  return [TOOL_AFFIX_USES_MIN, TOOL_AFFIX_USES_MAX]
+}
+
 /**
  * 从 recipe 生成一个动态 AffixV2Definition，并注册到运行时索引。返回 def.id（可塞进 skill.v2Ids）。
  * 首次调用时惰性标定极速供需预算（见 ensureHasteCalibrated）。
@@ -724,6 +752,14 @@ export function generateAffixV2(
   const nonce = random().toString(36).slice(2, 8)
   const id = `gen_${recipe.id}_${nonce}`
 
+  // tool/认知段词条生成时 roll 使用次数上限（闭区间整数 · 用完消失）·
+  // crack recipe 用 usesRange 覆盖默认 [MIN, MAX]（坚果耐砸 · 次数多于一般工具）
+  let maxUses: number | undefined
+  if (recipe.section === 'tool') {
+    const [usesLo, usesHi] = toolUsesRange(recipe)
+    maxUses = usesLo + Math.floor(random() * (usesHi - usesLo + 1))
+  }
+
   const def: AffixV2Definition = {
     id,
     name_zh: recipe.name_zh,
@@ -733,10 +769,7 @@ export function generateAffixV2(
     phase: 'P1',
     trigger: triggerSpec,
     effect,
-    // tool/认知段词条生成时 roll 使用次数上限（[MIN, MAX] 闭区间整数 · 用完消失）
-    ...(recipe.section === 'tool'
-      ? { maxUses: TOOL_AFFIX_USES_MIN + Math.floor(random() * (TOOL_AFFIX_USES_MAX - TOOL_AFFIX_USES_MIN + 1)) }
-      : {}),
+    ...(maxUses !== undefined ? { maxUses } : {}),
   }
   registerDynamicAffixV2(def)
   return id
@@ -840,6 +873,18 @@ export const RECIPE_WADGE: GrowthRecipe = {
   T: 2.8,                   // 关末累计底分 ≈ 2.8 × 宿主资源 Lv1 base（颊囊食团：关内累积、战后清空）
 }
 
+export const RECIPE_NUT_CRACK: CrackRecipe = {
+  kind: 'crack',
+  id: 'nut_crack',
+  section: 'tool',
+  name_zh: '砸坚果',
+  name_en: 'nut-crack',
+  // 大额单次产出 · 资源生成时随机抽（与 feed 同池）
+  resourcePool: ['score', 'gold', 'shield', 'time', 'multiplier', 'base'],
+  amount: 1.2,              // per-use 大额（全套里最大的单次 gain_resource · ≈ 12× feed 单 tick）
+  usesRange: [6, 10],       // 比一般工具（默认 2-4）耐砸 · 战中多次大额但有限，用完即弃
+}
+
 export const RECIPE_TEACH: TeachRecipe = {
   kind: 'teach',
   id: 'teach',
@@ -883,6 +928,7 @@ export const ALL_RECIPES: readonly AffixV2Recipe[] = [
   RECIPE_REGURGITATE,
   RECIPE_LEAP,
   RECIPE_WADGE,
+  RECIPE_NUT_CRACK,
   RECIPE_TEACH,
   RECIPE_IMITATE,
   RECIPE_SPEAR_MAKE,

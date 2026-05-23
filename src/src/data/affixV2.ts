@@ -129,6 +129,7 @@ const RECIPE_COLORS: Record<string, string> = {
   imitate:      '#b5651d',  // 铜/赤陶 · 镜像复制
   spear_make:   '#6e4b2a',  // 深锻棕 · 制造/锻造
   gaze_follow:  '#a98f5c',  // 砂驼 · 注视跟随
+  nut_crack:    '#9c6b30',  // 坚果壳棕 · 大额单次产出（消耗型）
 }
 
 /** 从 defId 提取 recipe id：gen_<recipeId>_<nonce> · recipeId 可含下划线（如 spear_make）·

@@ -3,7 +3,7 @@
 // ============================================
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
-import { generateAffixV2, pickRecipeForSkill, META_RECIPE_KINDS, RECIPE_PILOERECTION, RECIPE_GAZE_FOLLOW, RECIPE_IMITATE, RECIPE_REGURGITATE, RECIPE_FEED } from '../../../src/data/affixV2Generator'
+import { generateAffixV2, pickRecipeForSkill, META_RECIPE_KINDS, ALL_RECIPES, RECIPE_PILOERECTION, RECIPE_GAZE_FOLLOW, RECIPE_IMITATE, RECIPE_REGURGITATE, RECIPE_FEED, RECIPE_NUT_CRACK } from '../../../src/data/affixV2Generator'
 import { getAffixV2Definition, TOOL_AFFIX_USES_MIN, TOOL_AFFIX_USES_MAX } from '../../../src/data/affixV2'
 import { setSeededMode, setNormalMode } from '../../../src/core/seededRandom'
 
@@ -116,6 +116,44 @@ describe('chant generator · scale roll', () => {
     expect(scopes.has('all_skills')).toBe(true)   // all_skills 仍是常见基线
     expect(scopes.has('neighbors')).toBe(true)    // neighbors（键位拓扑）已纳入池
     expect(scopes.size).toBeGreaterThan(1)         // 不再恒为 all_skills
+  })
+
+  describe('crack 系 · nut_crack 大额单次产出（消耗型工具）', () => {
+    it('已注册进 ALL_RECIPES', () => {
+      expect(ALL_RECIPES).toContain(RECIPE_NUT_CRACK)
+    })
+
+    it('生成 on_self_fire + gain_resource（ratio = 固定大额 amount · 资源在池内）', () => {
+      setSeededMode(11)
+      const pool = new Set<string>()
+      for (let i = 0; i < 100; i++) {
+        const def = getAffixV2Definition(generateAffixV2(RECIPE_NUT_CRACK))
+        expect(def?.section).toBe('tool')
+        expect(def?.trigger.type).toBe('on_self_fire')
+        expect(def?.effect.kind).toBe('gain_resource')
+        const eff = def!.effect as { kind: 'gain_resource'; resource: string; ratio: number }
+        expect(eff.ratio).toBe(RECIPE_NUT_CRACK.amount)              // per-use 不按 freq 缩放
+        expect(RECIPE_NUT_CRACK.resourcePool).toContain(eff.resource)
+        pool.add(eff.resource)
+      }
+      expect(pool.size).toBeGreaterThan(1)                          // 资源确实随机抽（非固定单值）
+    })
+
+    it('maxUses 落在 usesRange [6,10]（覆盖 tool 段默认 2-4 · 多于一般工具）', () => {
+      setSeededMode(11)
+      const [lo, hi] = RECIPE_NUT_CRACK.usesRange
+      const seen = new Set<number>()
+      for (let i = 0; i < 100; i++) {
+        const def = getAffixV2Definition(generateAffixV2(RECIPE_NUT_CRACK))
+        expect(def?.maxUses).toBeDefined()
+        expect(Number.isInteger(def!.maxUses)).toBe(true)
+        expect(def!.maxUses!).toBeGreaterThanOrEqual(lo)
+        expect(def!.maxUses!).toBeLessThanOrEqual(hi)
+        seen.add(def!.maxUses!)
+      }
+      expect(lo).toBeGreaterThan(4)                                  // 确实"更多"——超出默认 tool 上限
+      expect(seen.size).toBeGreaterThan(1)                           // 随机非常量
+    })
   })
 
   it('非 tool 段 recipe 不赋 maxUses（无限制）', () => {

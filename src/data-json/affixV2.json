@@ -119,7 +119,7 @@
 
     { "id": "termite_fish", "name_zh": "钓白蚁", "name_en": "termite-fish", "section": "tool", "phase": "P1", "notes": "Goodall 经典" },
     { "id": "ant_dip", "name_zh": "蘸蚁", "name_en": "ant-dip", "section": "tool", "phase": "P1", "notes": "蓄势-爆发" },
-    { "id": "nut_crack", "name_zh": "砸坚果", "name_en": "nut-crack", "section": "tool", "phase": "P2", "notes": "占位 · 原 growth 实装已迁至 wadge（maintenance）" },
+    { "id": "nut_crack", "name_zh": "砸坚果", "name_en": "nut-crack", "section": "tool", "phase": "P1", "notes": "recipe_pool 实装（RECIPE_NUT_CRACK · crack 系）· on_self_fire → gain_resource 大额单次产出 · maxUses 6-10（耐砸·多于一般工具默认 2-4）· 静态 JSON id 为 noop 占位（原 growth 实装已迁至 wadge）" },
     { "id": "hammer_anvil", "name_zh": "锤砧", "name_en": "hammer & anvil", "section": "tool", "phase": "P1", "notes": "双件套联动" },
     { "id": "leaf_sponge", "name_zh": "叶海绵", "name_en": "leaf-sponge", "section": "tool", "phase": "P1", "notes": "吸收/储存" },
     { "id": "stone_throw", "name_zh": "投石", "name_en": "stone-throw", "section": "tool", "phase": "P2", "notes": "远程攻击" },
