@@ -278,7 +278,11 @@ let gl: WebGLRenderingContext | null = null;
 let compiled: CompiledProgram | null = null;
 let currentStyle: StyleName = 'cells';
 let rafId: number | null = null;
-const t0 = performance.now();
+// 累积式动画时间：每帧按 speedMul 缩放后的 dt 累加。
+// 用累积相位（而非 performance.now()*speed）使 speedMul 变化只改速率、不跳相位，
+// 避免张力联动时背景图案瞬移；同时让标签页失焦后回来不会大跳（dt 被 clamp）。
+let warpedTime = 0;
+let lastFrameMs = 0;
 
 // 用户在设置里选的模式：'off' = 关闭背景，'random' = 主菜单时随机抽，
 // 其它 = 强制锁定到指定 style。setRandomStyle() 会尊重这个选择。
@@ -366,11 +370,14 @@ function resize() {
 function frame() {
   if (!gl || !compiled || !canvas) return;
   resize();
-  const t = (performance.now() - t0) / 1000;
+  const now = performance.now();
+  const dt = lastFrameMs === 0 ? 0 : Math.min(0.1, (now - lastFrameMs) / 1000);
+  lastFrameMs = now;
+  warpedTime += dt * state.speedMul;
   const u = compiled.uniforms;
   if (u.resolution) gl.uniform2f(u.resolution, canvas.width, canvas.height);
-  if (u.time)       gl.uniform1f(u.time, t);
-  if (u.speed)      gl.uniform1f(u.speed, state.speed * state.speedMul);
+  if (u.time)       gl.uniform1f(u.time, warpedTime);
+  if (u.speed)      gl.uniform1f(u.speed, state.speed);
   if (u.spin)       gl.uniform1f(u.spin, state.spin);
   if (u.contrast)   gl.uniform1f(u.contrast, state.contrast);
   if (u.lBias)      gl.uniform1f(u.lBias, state.lBias);
@@ -508,7 +515,7 @@ export function setLightnessBias(v: number): void {
   state.lBias = Math.max(0, Math.min(0.2, v));
 }
 
-/** 时间加速→背景动效速度倍率（夹在 0.5..4.0）。1.0 = 默认。 */
+/** 背景动效速度倍率（夹在 0.5..4.0）。1.0 = 默认；由战斗张力 / 叙事驱动。 */
 export function setSpeedMultiplier(v: number): void {
   state.speedMul = Math.max(0.5, Math.min(4.0, v));
 }

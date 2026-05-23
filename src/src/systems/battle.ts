@@ -149,6 +149,8 @@ export function advanceCycle(): void {
 // === 计时器 ===
 let timerInterval: ReturnType<typeof setInterval> | null = null;
 let battlePaused = false;
+// 视觉张力（背景动效速度 + 单词凸起）平滑跟随 BGM 张力等级，避免离散跳变
+let _visualTension = 1;
 
 // 引导暂停：冻结/恢复计时器
 eventBus.on('battle:pause', () => { battlePaused = true; });
@@ -1845,6 +1847,7 @@ function startTimer(): void {
   state.resources.time = state.time; // 同步资源
   if (timerInterval) clearInterval(timerInterval);
   _isBoss = getStageType(state.level) === 'boss'; // Story 42.4: 模块级缓存
+  _visualTension = _isBoss ? 3 : 1; // 起手即对齐 BGM 张力基线，避免开场爬升
 
   timerInterval = setInterval(() => {
     if (state.phase !== 'battle') {
@@ -1911,6 +1914,12 @@ function startTimer(): void {
     else if (ratio < 0.3) tension = Math.max(tension, 2);
     else if (ratio >= 0.3) tension = Math.max(tension, 1);
     updateBGMTension(tension);
+
+    // 背景动效速度 + 单词凸起深度跟随张力（与 BGM 同源），平滑插值避免离散跳变
+    _visualTension += (tension - _visualTension) * 0.18;
+    const tNorm = Math.min(1, Math.max(0, _visualTension - 1) / 3); // 张力 1→0，4→1
+    setBgSpeedMul(1.0 + tNorm * 1.1);    // 1.0(平静) → 2.1(临界)：液态背景搅动加速
+    setLetterRaiseDepth(7 + tNorm * 10); // 7px(基线) → 17px：目标词浮雕拔高，把视线钉回中心
 
     if (state.time <= 0) {
       state.time = 0;
