@@ -134,7 +134,7 @@
     { "id": "pacing", "name_zh": "踱步", "name_en": "pacing", "section": "abnormal", "phase": "P2", "notes": "自循环" },
     { "id": "rocking", "name_zh": "摇晃·刻板", "name_en": "rocking", "section": "abnormal", "phase": "P2", "notes": "与 sway 区分（异常侧）" },
     { "id": "rr", "name_zh": "反吐再食", "name_en": "regurgitation-reingestion (R/R)", "section": "abnormal", "phase": "P1", "notes": "RECIPE_RR 实装（metabolize sourceMode=host）· 参考反刍但 from 锁定宿主自身产出资源（病态自我消耗）· abnormal 段首个实装 · 静态 JSON id 为命名占位" },
-    { "id": "coprophagy", "name_zh": "食粪", "name_en": "coprophagy", "section": "abnormal", "phase": "P2", "notes": "极端 recycle" },
+    { "id": "coprophagy", "name_zh": "食粪", "name_en": "coprophagy", "section": "abnormal", "phase": "P1", "notes": "RECIPE_COPROPHAGY 实装（coprophagy·on_resource_consumed → reclaim_consumed）· 反应式回收被排泄资源的 30%（rr 的反应式孪生）· 静态 JSON id 为命名占位" },
     { "id": "hair_pluck", "name_zh": "拔毛", "name_en": "hair-pluck", "section": "abnormal", "phase": "P2", "notes": "自损 trigger" },
     { "id": "sib", "name_zh": "自伤", "name_en": "self-injurious behavior", "section": "abnormal", "phase": "P2", "notes": "自损强" },
     { "id": "floating_limb", "name_zh": "浮肢", "name_en": "floating-limb", "section": "abnormal", "phase": "P2", "notes": "脱节状态" },

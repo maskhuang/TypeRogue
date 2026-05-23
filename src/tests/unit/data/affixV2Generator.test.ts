@@ -3,7 +3,7 @@
 // ============================================
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
-import { generateAffixV2, pickRecipeForSkill, META_RECIPE_KINDS, ALL_RECIPES, RECIPE_PILOERECTION, RECIPE_ARM_RAISE, RECIPE_BIPEDAL_SWAGGER, RECIPE_SUPINE, RECIPE_HUDDLE, RECIPE_GAZE_FOLLOW, RECIPE_IMITATE, RECIPE_REGURGITATE, RECIPE_RR, RECIPE_FEED, RECIPE_NUT_CRACK } from '../../../src/data/affixV2Generator'
+import { generateAffixV2, pickRecipeForSkill, META_RECIPE_KINDS, ALL_RECIPES, RECIPE_PILOERECTION, RECIPE_ARM_RAISE, RECIPE_BIPEDAL_SWAGGER, RECIPE_SUPINE, RECIPE_HUDDLE, RECIPE_GAZE_FOLLOW, RECIPE_IMITATE, RECIPE_REGURGITATE, RECIPE_RR, RECIPE_COPROPHAGY, RECIPE_FEED, RECIPE_NUT_CRACK } from '../../../src/data/affixV2Generator'
 import { getAffixV2Definition, TOOL_AFFIX_USES_MIN, TOOL_AFFIX_USES_MAX } from '../../../src/data/affixV2'
 import { setSeededMode, setNormalMode } from '../../../src/core/seededRandom'
 
@@ -283,6 +283,22 @@ describe('metabolize generator · 反刍/regurgitate', () => {
         expect(def.effect.from).toBe(host)               // from = 宿主自身产出资源（base/multiplier 现已入池）
         expect(RECIPE_RR.resourcePool).toContain(def.effect.to)
         expect(def.effect.from).not.toBe(def.effect.to)  // to = resourcePool − from
+      }
+    }
+  })
+
+  it('coprophagy 食粪 · 固定 on_resource_consumed + reclaim_consumed(fraction)', () => {
+    setSeededMode(505)
+    expect(ALL_RECIPES).toContain(RECIPE_COPROPHAGY)
+    for (let i = 0; i < 30; i++) {
+      const def = getAffixV2Definition(generateAffixV2(RECIPE_COPROPHAGY))
+      expect(def?.section).toBe('abnormal')
+      expect(def?.trigger.type).toBe('on_resource_consumed')   // trigger 固定，不随机
+      expect(def?.effect.kind).toBe('reclaim_consumed')
+      if (def?.effect.kind === 'reclaim_consumed') {
+        expect(def.effect.fraction).toBe(RECIPE_COPROPHAGY.fraction)
+        expect(def.effect.fraction).toBeGreaterThan(0)
+        expect(def.effect.fraction).toBeLessThan(1)            // 部分退款 → 不成无限循环
       }
     }
   })

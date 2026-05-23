@@ -503,7 +503,7 @@ describe('hookOnResourceConsumed · on_resource_consumed reactor', () => {
     })
     try {
       equipAffixV2('skill_1', 'K', 'test_react_any')
-      const results = hookOnResourceConsumed('shield', baseResourceLv1, fullResource, NOW)
+      const results = hookOnResourceConsumed('shield', 10, baseResourceLv1, fullResource, NOW)
       expect(results.length).toBe(1)
       expect(results[0].result.resourceProduced[0]).toEqual({ resource: 'score', amount: 11 })
       expect(getGhostLog()[0].trigger).toBe('on_resource_consumed')
@@ -522,8 +522,8 @@ describe('hookOnResourceConsumed · on_resource_consumed reactor', () => {
     })
     try {
       equipAffixV2('skill_1', 'K', 'test_react_shield')
-      expect(hookOnResourceConsumed('gold', baseResourceLv1, fullResource, NOW).length).toBe(0)
-      expect(hookOnResourceConsumed('shield', baseResourceLv1, fullResource, NOW).length).toBe(1)
+      expect(hookOnResourceConsumed('gold', 10, baseResourceLv1, fullResource, NOW).length).toBe(0)
+      expect(hookOnResourceConsumed('shield', 10, baseResourceLv1, fullResource, NOW).length).toBe(1)
     } finally {
       unregisterDynamicAffixV2('test_react_shield')
     }

@@ -8,7 +8,7 @@ import { PILOT_AFFIX_IDS, getPilotSpec } from '../../../src/data/affixV2PilotSpe
 import { getAffixV2Definition } from '../../../src/data/affixV2'
 import { resolveEffect, type ResolveContext } from '../../../src/systems/affixV2Effect'
 import { formatEffectDescription, formatAffixV2Description } from '../../../src/ui/affixV2TooltipAdapter'
-import { generateAffixV2, RECIPE_TEACH, RECIPE_IMITATE, RECIPE_SPEAR_MAKE, RECIPE_GAZE_FOLLOW } from '../../../src/data/affixV2Generator'
+import { generateAffixV2, ALL_RECIPES, RECIPE_TEACH, RECIPE_IMITATE, RECIPE_SPEAR_MAKE, RECIPE_GAZE_FOLLOW } from '../../../src/data/affixV2Generator'
 import { PositionRelation, getKeysWithRelation } from '../../../src/data/keyboardTopology'
 import type { EffectSpec } from '../../../src/data/affixV2Trigger'
 import { getCandidatePool, widenSkillFilter, type SkillSeed } from '../../../src/systems/affixV2SkillFilter'
@@ -732,7 +732,8 @@ describe('Recipe · teach (recipe_pool · 生成时锁 hasTag)', () => {
 
   it('每个生成实例 hasTag 锁定 1 段 · recipe_pool 全部段之一（含 meta 持有的 tool）', () => {
     // recipe_pool 现含 meta → teach 可锁任意段（含 tool）· 锁 tool 时 spawn 出的 meta 词条 effect 被置 noop
-    const recipeSections = new Set(['maintenance', 'locomotion', 'posture', 'agonistic', 'tool'])
+    // 从 ALL_RECIPES 派生，与生成器 recipeSections 同源——新增 recipe 段（vocal/abnormal 等）不会再 stale
+    const recipeSections = new Set(ALL_RECIPES.map(r => r.section))
     for (let i = 0; i < 30; i++) {
       const id = generateAffixV2(RECIPE_TEACH)
       const def = getAffixV2Definition(id)!

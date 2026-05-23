@@ -161,7 +161,7 @@ export function processV2Results(results: readonly SourcedResult[], outputMult =
     // convert_resource 消耗：直接扣除资源池（不经 output bonus / outputMult），再派发 on_resource_consumed 反应链
     for (const cons of sr.result.resourcesConsumed) {
       applyResourceAmount(cons.resource, -cons.amount, sr.sourceKey, sr.sourceSkillId, isCrit)
-      dispatchResourceConsumed(cons.resource)
+      dispatchResourceConsumed(cons.resource, cons.amount)
     }
     for (const ft of sr.result.fireTargetsTriggered) {
       const targetIds = resolveSelectorToSkillIds(ft.selector, sr.sourceSkillId, sr.sourceKey)
@@ -199,12 +199,13 @@ export function processV2Results(results: readonly SourcedResult[], outputMult =
 // （反应深度恒为 1，杜绝 convert→react→convert 无限链；无需 haste 那套供需标定机制）
 let _inConsumeReaction = false
 
-/** 资源被消耗时派发 on_resource_consumed 反应链（深度 1 限流）*/
-function dispatchResourceConsumed(resource: string): void {
+/** 资源被消耗时派发 on_resource_consumed 反应链（深度 1 限流）·
+ *  amount 透传给反应词条（reclaim_consumed 按量回收用）*/
+function dispatchResourceConsumed(resource: string, amount: number): void {
   if (_inConsumeReaction) return
   _inConsumeReaction = true
   try {
-    const reactions = hookOnResourceConsumed(resource, defaultResourceLv1Base, defaultGetPlayerResource, Date.now())
+    const reactions = hookOnResourceConsumed(resource, amount, defaultResourceLv1Base, defaultGetPlayerResource, Date.now())
     processV2Results(reactions)
   } finally {
     _inConsumeReaction = false

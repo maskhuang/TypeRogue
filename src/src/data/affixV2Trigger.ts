@@ -293,6 +293,15 @@ export type EffectSpec =
   | { kind: 'convert_resource'; from: string; to: string; ratio: number }
 
   /**
+   * 回收被消耗的资源（食粪 coprophagy · 反应式）· 仅在 on_resource_consumed 上下文有意义。
+   * 每当任意 affix 消耗（"排泄"）资源 → 回收 fraction × 本次被消耗量，产出同种资源。
+   * 数值：produce = fraction × ctx.consumedAmount（直接按量回收，不经 Lv1 缩放）。
+   * fraction < 1 → 永远是部分退款（消耗家族净变便宜），不成无限循环；
+   * 缺 consumedResource/consumedAmount（非消耗上下文）→ no-op。
+   */
+  | { kind: 'reclaim_consumed'; fraction: number }
+
+  /**
    * 极速 grant · 给 selector 内 skill +amount 极速层（per-skill 累加，floor 后消耗）
    * 消耗时机：玩家按下技能绑定键时，若该 skill 有 ≥1 极速，消耗 1 层 → 额外触发一次
    * 额外触发内容：基础产出 + 该 skill 上 on_self_fire affix 各跑一次 + every_n_keys 全局计数 +1

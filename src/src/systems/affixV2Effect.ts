@@ -79,6 +79,10 @@ export interface ResolveContext {
   readonly selfDefId?: string
   /** 玩家资源池查询（resource_below/above 用）*/
   readonly getPlayerResource: (resource: string) => number
+  /** 本次被消耗的资源类型（reclaim_consumed 用 · 仅 on_resource_consumed 上下文有值）*/
+  readonly consumedResource?: string
+  /** 本次被消耗的绝对数量（reclaim_consumed 用 · 仅 on_resource_consumed 上下文有值）*/
+  readonly consumedAmount?: number
 
   // === scope-aware loadout 查询（运行时集成层注入）===
   /** 单点 scope 查询：返回 scope 内已装备的 affix 视图列表 ·
@@ -271,6 +275,15 @@ function resolveInto(spec: EffectSpec, ctx: ResolveContext, result: ResolveResul
       const frac = consumed / desired
       result.resourcesConsumed.push({ resource: spec.from, amount: consumed })
       result.resourceProduced.push({ resource: spec.to, amount: spec.ratio * toLv1 * frac })
+      return
+    }
+
+    case 'reclaim_consumed': {
+      // 食粪：回收本次被消耗资源的 fraction（按量直退，同种资源）· 缺消耗上下文 → no-op
+      const r = ctx.consumedResource
+      const amt = ctx.consumedAmount
+      if (!r || !amt || amt <= 0 || spec.fraction <= 0) return
+      result.resourceProduced.push({ resource: r, amount: spec.fraction * amt })
       return
     }
 

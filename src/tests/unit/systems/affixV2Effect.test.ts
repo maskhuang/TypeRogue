@@ -530,3 +530,23 @@ describe('resolveEffect · convert_resource（消耗型转化）', () => {
     })
   })
 })
+
+describe('resolveEffect · reclaim_consumed（食粪 · 反应式回收）', () => {
+  it('按量回收被消耗资源的 fraction（同种资源）', () => {
+    // 消耗 10 shield → fraction 0.3 → 回收 3 shield
+    const ctx = { ...baseCtx, consumedResource: 'shield', consumedAmount: 10 }
+    const res = resolveEffect({ kind: 'reclaim_consumed', fraction: 0.3 }, ctx)
+    expect(res.resourceProduced).toEqual([{ resource: 'shield', amount: 3 }])
+    expect(res.resourcesConsumed.length).toBe(0)   // 回收只产出、不消耗
+  })
+
+  it('缺消耗上下文（非 on_resource_consumed）→ no-op', () => {
+    const res = resolveEffect({ kind: 'reclaim_consumed', fraction: 0.3 }, baseCtx)
+    expect(res.resourceProduced.length).toBe(0)
+  })
+
+  it('consumedAmount=0 或 fraction=0 → no-op', () => {
+    expect(resolveEffect({ kind: 'reclaim_consumed', fraction: 0.3 }, { ...baseCtx, consumedResource: 'gold', consumedAmount: 0 }).resourceProduced.length).toBe(0)
+    expect(resolveEffect({ kind: 'reclaim_consumed', fraction: 0 }, { ...baseCtx, consumedResource: 'gold', consumedAmount: 10 }).resourceProduced.length).toBe(0)
+  })
+})

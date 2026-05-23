@@ -321,7 +321,20 @@ export interface CrackRecipe {
   readonly usesRange: readonly [number, number]    // 覆盖 tool 段默认 maxUses（闭区间整数）
 }
 
-export type AffixV2Recipe = DripRecipe | GrowthRecipe | EscalateRecipe | ChantRecipe | ChainRecipe | ConvertRecipe | MetabolizeRecipe | HasteRecipe | TeachRecipe | ImitateRecipe | SpearMakeRecipe | GazeFollowRecipe | CrackRecipe
+/** coprophagy 系：on_resource_consumed + reclaim_consumed · 反应式回收（食粪）·
+ *  trigger 固定 on_resource_consumed（任意 affix 消耗资源即触发）·
+ *  effect 固定 reclaim_consumed：回收 fraction × 本次被消耗量，产出同种资源 ·
+ *  与 rr/metabolize（主动消耗）互补：coprophagy 吃所有人的"排泄物"，闭合消耗循环 */
+export interface CoprophagyRecipe {
+  readonly kind: 'coprophagy'
+  readonly id: string
+  readonly section: SectionTag
+  readonly name_zh: string
+  readonly name_en: string
+  readonly fraction: number   // 回收比例（< 1 → 永远部分退款，不成无限循环）
+}
+
+export type AffixV2Recipe = DripRecipe | GrowthRecipe | EscalateRecipe | ChantRecipe | ChainRecipe | ConvertRecipe | MetabolizeRecipe | HasteRecipe | TeachRecipe | ImitateRecipe | SpearMakeRecipe | GazeFollowRecipe | CrackRecipe | CoprophagyRecipe
 
 // ============================================
 // Scope 池 · 加权抽样 · 范围越广越稀有
@@ -441,7 +454,7 @@ function pickRandom<T>(arr: readonly T[]): T {
 // 因为 S/D_raw 是**实测**而非解析，加任何 recipe/trigger/scope 都被下次标定自动吸收 —— 无需维护修正常数。
 // 登记纪律：① classifyHaste 须能认出每个极速消费特征；② 产 grant_haste 的 recipe.kind 须进 HASTE_GRANT_KINDS。
 
-const HASTE_DEMAND_RATIO = 0.85          // 需求 = 供给 × 此值；S − D = S(1−RATIO) > 0，此即"略高"的旋钮
+const HASTE_DEMAND_RATIO = 0.7           // 需求 = 供给 × 此值；S − D = S(1−RATIO) > 0，此即"略高"的旋钮（0.7 留足余量吸收标定/运行采样方差）
 const HASTE_CALIB_SAMPLES = 8000         // 标定采样数（一次性、确定性）
 const HASTE_CALIB_SEED = 0x48415354      // "HAST" · 固定种子 → 每会话标定结果一致
 /** 产出 grant_haste 的 recipe.kind · 这些 recipe 的需求特征不门控（保留极速自喂回路） */
@@ -733,6 +746,11 @@ export function rollAffixV2Spec(
       levelMode: 'inherit_host',
       fallback: 'widen',
     }
+  } else if (recipe.kind === 'coprophagy') {
+    // coprophagy 食粪：trigger 固定 on_resource_consumed（任意消耗即触发）·
+    // effect 固定 reclaim_consumed（按量回收被消耗资源的 fraction）· 无可消耗上下文则空转
+    triggerSpec = { type: 'on_resource_consumed' }
+    effect = { kind: 'reclaim_consumed', fraction: recipe.fraction }
   } else {
     throw new Error(`unsupported recipe kind: ${(recipe as { kind: string }).kind}`)
   }
@@ -928,6 +946,17 @@ export const RECIPE_RR: MetabolizeRecipe = {
   T: 3,                     // 同反刍：一关产出 ≈ 3 × Lv1[to]
 }
 
+/** coprophagy 食粪（abnormal）· rr 的反应式孪生：on_resource_consumed → 回收被排泄资源的 30% ·
+ *  吃所有人的"排泄物"（含 rr/反刍/砸坚果等消耗），与消耗家族叠成回收引擎（极端 recycle）*/
+export const RECIPE_COPROPHAGY: CoprophagyRecipe = {
+  kind: 'coprophagy',
+  id: 'coprophagy',
+  section: 'abnormal',
+  name_zh: '食粪',
+  name_en: 'coprophagy',
+  fraction: 0.3,            // 回收 30%（< 1 → 部分退款，不成无限循环）
+}
+
 export const RECIPE_LEAP: HasteRecipe = {
   kind: 'haste',
   id: 'leap',
@@ -1005,6 +1034,7 @@ export const ALL_RECIPES: readonly AffixV2Recipe[] = [
   RECIPE_DRINK,
   RECIPE_REGURGITATE,
   RECIPE_RR,
+  RECIPE_COPROPHAGY,
   RECIPE_LEAP,
   RECIPE_WADGE,
   RECIPE_NUT_CRACK,

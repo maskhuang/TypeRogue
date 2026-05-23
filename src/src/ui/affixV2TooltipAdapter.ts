@@ -310,6 +310,13 @@ export function formatEffectDescription(effect: EffectSpec, skillResource?: stri
         ? `消耗 ${fromAmt} ${locResource(effect.from)} → +${toAmt} ${locResource(effect.to)}`
         : `consume ${fromAmt} ${locResource(effect.from)} → +${toAmt} ${locResource(effect.to)}`
     }
+    case 'reclaim_consumed': {
+      // 反应式：每当任意资源被消耗，回收其 fraction（同种资源）
+      const pct = Math.round(effect.fraction * 100)
+      return zh
+        ? `资源被消耗时，回收 ${pct}%（同种资源）`
+        : `when any resource is consumed, reclaim ${pct}% (same resource)`
+    }
     case 'grant_haste': {
       // 每 trigger 固定整数 amount stack（amount 来自 recipe.amount，不再除 freq）
       const n = Math.max(1, Math.round(effect.amount))

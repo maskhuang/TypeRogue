@@ -687,6 +687,7 @@ export function hookOnHasteGranted(
  */
 export function hookOnResourceConsumed(
   consumedResource: string,
+  consumedAmount: number,
   resourceLv1Base: (r: string, level?: number) => number,
   getPlayerResource: (r: string) => number,
   nowMs: number,
@@ -718,6 +719,8 @@ export function hookOnResourceConsumed(
       selfSection: def.section,
       selfDefId: def.id,
       getPlayerResource,
+      consumedResource,
+      consumedAmount,
       resolveSelector: _selectorResolver,
       queryEquipped: buildQueryEquipped(entry),
     }
