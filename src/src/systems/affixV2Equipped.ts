@@ -83,13 +83,15 @@ function collectSkillIdsForScope(
 
 /** tooltip 预览用：统计 scale source 在 scope 内的单位数（与运行时 countScaleSource 同口径）·
  *  tag → scope 内含 tag 的词条数；resource/rarity → scope 内匹配的技能数；
- *  empty → 与宿主 posRel 的空键位数（需宿主 key）；targetScore → 当前关目标分数档（全程可预览）。
- *  无法在当前上下文解析时返 null（neighbors/empty 缺宿主键位、self/hasted）→ 预览只显规则。*/
+ *  empty → 与宿主 posRel 的空键位数（需宿主 key）；targetScore → 当前关目标分数档（全程可预览）；
+ *  affixName → scope 内携带同 defId 词条的去重技能数（需 hostDefId）。
+ *  无法在当前上下文解析时返 null（neighbors/empty 缺宿主键位、self/hasted、affixName 缺 hostDefId）→ 预览只显规则。*/
 export function previewCountScaleSource(
   source: ScaleCountSource,
   scope: TargetSelector | undefined,
   hostSkillId?: string,
   hostKey?: string,
+  hostDefId?: string,
 ): number | null {
   if (source.by === 'empty') {
     if (hostKey === undefined) return null
@@ -114,6 +116,15 @@ export function previewCountScaleSource(
       if (def && tags.some(t => def.tags.includes(t))) n++
     }
     return n
+  }
+  if (source.by === 'affixName') {
+    if (hostDefId === undefined) return null   // 预览缺宿主 defId → 只显规则
+    const skills = new Set<string>()
+    for (const e of _equipped.values()) {
+      if (!skillIds.has(e.skillId)) continue
+      if (e.defId === hostDefId) skills.add(e.skillId)
+    }
+    return skills.size
   }
   // resource / rarity：数 scope 内匹配的技能
   let n = 0
@@ -405,6 +416,7 @@ export function hookOnSkillFire(
       currentWordLength: 0,    // skill fire context, no word context
       hostSkillLevel: gameState.affixSkills.get(entry.skillId)?.level ?? 1,
       selfSection: def.section,
+      selfDefId: def.id,
       getPlayerResource,
       resolveSelector: _selectorResolver,
       queryEquipped: buildQueryEquipped(entry),
@@ -456,6 +468,7 @@ export function hookOnSkillFire(
         currentWordLength: 0,
         hostSkillLevel: gameState.affixSkills.get(entry.skillId)?.level ?? 1,
       selfSection: def.section,
+      selfDefId: def.id,
         getPlayerResource,
         queryEquipped: buildQueryEquipped(entry),
       }
@@ -518,6 +531,7 @@ export function hookOnKey(
       currentWordLength: 0,
       hostSkillLevel: gameState.affixSkills.get(entry.skillId)?.level ?? 1,
       selfSection: def.section,
+      selfDefId: def.id,
       getPlayerResource,
       resolveSelector: _selectorResolver,
       queryEquipped: buildQueryEquipped(entry),
@@ -579,6 +593,7 @@ export function hookOnWordEnd(
       currentWordLength,
       hostSkillLevel: gameState.affixSkills.get(entry.skillId)?.level ?? 1,
       selfSection: def.section,
+      selfDefId: def.id,
       getPlayerResource,
       queryEquipped: buildQueryEquipped(entry),
       resolveSelector: _selectorResolver,
@@ -645,6 +660,7 @@ export function hookOnHasteGranted(
       currentWordLength: 0,
       hostSkillLevel: gameState.affixSkills.get(entry.skillId)?.level ?? 1,
       selfSection: def.section,
+      selfDefId: def.id,
       getPlayerResource,
       resolveSelector: _selectorResolver,
       queryEquipped: buildQueryEquipped(entry),
@@ -700,6 +716,7 @@ export function hookOnResourceConsumed(
       currentWordLength: 0,
       hostSkillLevel: gameState.affixSkills.get(entry.skillId)?.level ?? 1,
       selfSection: def.section,
+      selfDefId: def.id,
       getPlayerResource,
       resolveSelector: _selectorResolver,
       queryEquipped: buildQueryEquipped(entry),
@@ -758,6 +775,7 @@ export function hookOnBattleStart(
       currentWordLength: 0,
       hostSkillLevel: gameState.affixSkills.get(entry.skillId)?.level ?? 1,
       selfSection: def.section,
+      selfDefId: def.id,
       getPlayerResource,
       resolveSelector: _selectorResolver,
       queryEquipped: buildQueryEquipped(entry),
@@ -816,6 +834,7 @@ export function hookOnBattleEnd(
       currentWordLength: 0,
       hostSkillLevel: gameState.affixSkills.get(entry.skillId)?.level ?? 1,
       selfSection: def.section,
+      selfDefId: def.id,
       getPlayerResource,
       resolveSelector: _selectorResolver,
       queryEquipped: buildQueryEquipped(entry),

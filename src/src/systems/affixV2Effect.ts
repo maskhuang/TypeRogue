@@ -75,6 +75,8 @@ export interface ResolveContext {
   readonly hostSkillLevel: number
   /** 本 affix 自身 def 的 section（gain_skill filter.hasTagFromHost 用 · 缺省时 imitate 等动态 filter 退化）*/
   readonly selfSection?: import('../data/affixTags').SectionTag
+  /** 本 affix 自身 def id（scale source by:'affixName' 自指计数用 · 缺省 → 该计数返 0）*/
+  readonly selfDefId?: string
   /** 玩家资源池查询（resource_below/above 用）*/
   readonly getPlayerResource: (resource: string) => number
 
@@ -449,6 +451,7 @@ function applyScale(scale: ScaleByTag | undefined, ctx: ResolveContext): number 
  *   - rarity   → scope 内该稀有度的技能数（同上）
  *   - empty    → 与宿主键位成该 posRel 的空键位数（getKeysWithRelation − bindings · 不用 scope）
  *   - targetScore → 当前关目标分数档 round(targetScore / TARGET_BASE)（全局 · 不用 scope）
+ *   - affixName → scope 内携带「与宿主同 defId 词条」的去重技能数（含宿主自身 · 需 ctx.selfDefId）
  */
 function countScaleSource(source: ScaleCountSource, scope: TargetSelector | undefined, ctx: ResolveContext): number {
   switch (source.by) {
@@ -492,6 +495,15 @@ function countScaleSource(source: ScaleCountSource, scope: TargetSelector | unde
     case 'targetScore':
       // 当前关目标分数档 · 越深入 run 目标越高 → scale 越大 · 全局，与 scope 无关
       return Math.round(gameState.targetScore / BALANCE.TARGET_BASE)
+    case 'affixName': {
+      // scope 内携带「与宿主同 defId 词条」的去重技能数（宿主自身那个技能也计入）
+      if (!ctx.queryEquipped || !ctx.selfDefId) return 0
+      const skills = new Set<string>()
+      for (const e of ctx.queryEquipped(scope ?? { type: 'all_skills' })) {
+        if (e.defId === ctx.selfDefId) skills.add(e.skillId)
+      }
+      return skills.size
+    }
   }
 }
 

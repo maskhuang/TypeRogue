@@ -365,6 +365,53 @@ describe('ScaleByTag · targetScore（目标分数档 · 全局 · 不用 scope�
   })
 })
 
+describe('ScaleByTag · affixName（同名词条 · 自指计数去重技能）', () => {
+  // mock：matchSkills 个技能各携带 self_def，外加 decoy 个携带 other_def 的干扰技能
+  const mkViews = (matchSkills: number, decoy: number) => [
+    ...Array.from({ length: matchSkills }, (_, i) => ({
+      defId: 'self_def', skillId: `sk_${i}`, key: 'q', instanceId: `m_${i}`, tags: [],
+    })),
+    ...Array.from({ length: decoy }, (_, i) => ({
+      defId: 'other_def', skillId: `dk_${i}`, key: 'w', instanceId: `o_${i}`, tags: [],
+    })),
+  ]
+
+  it('count 曲线 · 只数携带同 defId 的技能（忽略干扰词条）', () => {
+    const ctxQ = { ...baseCtx, selfDefId: 'self_def', queryEquipped: () => mkViews(3, 2) }
+    const r = resolveEffect({
+      kind: 'gain_resource', resource: 'score', ratio: 0.1,
+      scale: { type: 'count', source: { by: 'affixName' }, factor: 0.5 },
+    }, ctxQ)
+    // n=3 → 0.1 × 11 × (1 + 3×0.5) = 2.75
+    expect(r.resourceProduced[0].amount).toBeCloseTo(2.75, 3)
+  })
+
+  it('同一技能上多份同名词条只计 1 次（去重技能）', () => {
+    const views = [
+      { defId: 'self_def', skillId: 'sk_a', key: 'q', instanceId: 'm0', tags: [] },
+      { defId: 'self_def', skillId: 'sk_a', key: 'w', instanceId: 'm1', tags: [] },
+      { defId: 'self_def', skillId: 'sk_b', key: 'e', instanceId: 'm2', tags: [] },
+    ]
+    const ctxQ = { ...baseCtx, selfDefId: 'self_def', queryEquipped: () => views }
+    const r = resolveEffect({
+      kind: 'gain_resource', resource: 'score', ratio: 1,
+      scale: { type: 'per_n', source: { by: 'affixName' }, perN: 1 },
+    }, ctxQ)
+    // 去重技能数=2 → floor(2/1)=2 → 11 × 2 = 22
+    expect(r.resourceProduced[0].amount).toBe(22)
+  })
+
+  it('缺 selfDefId → 计数 0（factor=1，原样产出）', () => {
+    const ctxQ = { ...baseCtx, queryEquipped: () => mkViews(5, 0) }
+    const r = resolveEffect({
+      kind: 'gain_resource', resource: 'score', ratio: 1,
+      scale: { type: 'count', source: { by: 'affixName' }, factor: 0.5 },
+    }, ctxQ)
+    // selfDefId 缺省 → n=0 → 11 × 1 = 11
+    expect(r.resourceProduced[0].amount).toBe(11)
+  })
+})
+
 describe('apply_aura · scale 缩放 modifier amount', () => {
   const mockViews = (count: number, tag: string) =>
     Array.from({ length: count }, (_, i) => ({

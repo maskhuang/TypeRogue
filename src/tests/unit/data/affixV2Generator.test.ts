@@ -71,7 +71,7 @@ describe('chant generator · scale roll', () => {
     expect(pctWithScaleCount).toBeGreaterThan(0)
   })
 
-  it('tag source 的 tag = recipe.section；source 含 tag/resource/rarity/empty/targetScore 变体', () => {
+  it('tag source 的 tag = recipe.section；source 含 tag/resource/rarity/empty/targetScore/affixName 变体', () => {
     setSeededMode(99)
     const bys = new Set<string>()
     for (let i = 0; i < 600; i++) {
@@ -84,7 +84,7 @@ describe('chant generator · scale roll', () => {
       if (scale.source.by === 'tag') expect(scale.source.tag).toBe(RECIPE_PILOERECTION.section)  // 'posture'
     }
     // 非门控的 source 变体都应被抽到（hasted 受需求门控，不在此断言）
-    for (const by of ['tag', 'resource', 'rarity', 'empty', 'targetScore']) expect(bys.has(by)).toBe(true)
+    for (const by of ['tag', 'resource', 'rarity', 'empty', 'targetScore', 'affixName']) expect(bys.has(by)).toBe(true)
   })
 
   it('tool 段 recipe 生成时 roll maxUses（[MIN, MAX] 闭区间整数）', () => {

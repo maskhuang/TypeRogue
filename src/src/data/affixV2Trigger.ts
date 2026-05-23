@@ -80,7 +80,7 @@ export type TriggerSpec = Phase1TriggerSpec | Phase2TriggerSpec
 //   curve（type）：count — 乘性连续 factor = 1 + n × factor（n=0 → ×1 全产出）
 //                  per_n — 步进整数 factor = floor(n / perN)（n<perN → 0，门控）
 //   source       ：数 scope 内的什么单位 —— 词条(tag) / 资源(resource) / 稀有度(rarity) /
-//                  空位(empty) / 极速(hasted) / 目标分数档(targetScore)
+//                  空位(empty) / 极速(hasted) / 目标分数档(targetScore) / 同名词条(affixName)
 // 都按"乘性 scale 因子"接入 add / multiply / gain_resource / apply_aura。
 // scope 决定计数范围（缺省 all_skills）；empty / hasted / targetScore 例外——不使用 scope（见各 source 注释）。
 
@@ -98,6 +98,9 @@ export type ScaleCountSource =
   | { readonly by: 'hasted' }
   /** 目标分数：当前关目标分数档 = round(targetScore / TARGET_BASE) · 越深入 run 目标越高 → 数越大 · 全局计数，不使用 scope */
   | { readonly by: 'targetScore' }
+  /** 同名词条：scope 内携带「与宿主同名词条」（同 defId）的去重技能数 · 自指，无参数（计数对象恒为挂载本 scale 的词条名）·
+   *  宿主自身那个技能也计入（≥1）· 宿主 defId 运行时取 ctx.selfDefId、tooltip 预览取 hostDefId · 协同放大「越多技能装了我，我越强」*/
+  | { readonly by: 'affixName' }
 
 export type ScaleByTag =
   | {

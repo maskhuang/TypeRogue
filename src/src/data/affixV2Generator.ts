@@ -114,16 +114,18 @@ const CHANT_TAG_PER_N_MIN = 2
 const CHANT_TAG_PER_N_MAX = 4
 const CHANT_TAG_COUNT_FACTOR = 0.1
 
-/** 抽 scale 计数来源（变体）· 词条 48% / 资源 16% / 稀有度 13% / 极速 8% / 目标分数 7% / 空位 8%。
- *  资源用宿主资源（"数同资源技能"，无则随机）；稀有度 0-3 随机；极速数全局动态；目标分数读当前关目标档；空位随机锁 posRel。
- *  by:'hasted' 受需求门控——被关掉则回退 targetScore/empty（非极速来源）。 */
+/** 抽 scale 计数来源（变体）· 词条 42% / 资源 16% / 稀有度 13% / 极速 8% / 目标分数 7% / 同名词条 7% / 空位 7%。
+ *  资源用宿主资源（"数同资源技能"，无则随机）；稀有度 0-3 随机；极速数全局动态；目标分数读当前关目标档；
+ *  同名词条数携带本词条名（同 defId）的去重技能（自指·宿主自身计入·孤本时计 1）；空位随机锁 posRel。
+ *  by:'hasted' 受需求门控——被关掉则回退 targetScore/affixName/empty（非极速来源）。 */
 function pickScaleSource(section: SectionTag, skillResource?: ResourceType, kind?: string): ScaleCountSource {
   const roll = random()
-  if (roll < 0.48) return { by: 'tag', tag: section }
-  if (roll < 0.64) return { by: 'resource', resource: skillResource ?? pickRandom(MATCHED_RESOURCE_POOL) }
-  if (roll < 0.77) return { by: 'rarity', rarity: Math.floor(random() * 4) }
-  if (roll < 0.85 && admitDemand(kind)) return { by: 'hasted' }
-  if (roll < 0.92) return { by: 'targetScore' }
+  if (roll < 0.42) return { by: 'tag', tag: section }
+  if (roll < 0.58) return { by: 'resource', resource: skillResource ?? pickRandom(MATCHED_RESOURCE_POOL) }
+  if (roll < 0.71) return { by: 'rarity', rarity: Math.floor(random() * 4) }
+  if (roll < 0.79 && admitDemand(kind)) return { by: 'hasted' }
+  if (roll < 0.86) return { by: 'targetScore' }
+  if (roll < 0.93) return { by: 'affixName' }
   return { by: 'empty', posRel: pickRandom(POSREL_VALUES) }
 }
 

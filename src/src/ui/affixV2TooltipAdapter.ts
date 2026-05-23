@@ -215,12 +215,12 @@ function formatCondition(cond: ConditionSpec): string {
 
 /** 当前场上（已装备）含某 tag 的词条数 + scale 因子 · 仅 all_skills scope 可在 tooltip 精确预览
  *  （所有生成的 scale 都是 all_skills · 见 affixV2Generator）；其他 scope 需宿主键位，返回 null 不预览。*/
-/** 宿主上下文（已绑定 skill 的 tooltip 才有）· neighbors scope 需要它来解析键位邻居 */
-type HostCtx = { skillId: string; key: string }
+/** 宿主上下文（已绑定 skill 的 tooltip 才有）· neighbors scope 需键位解析邻居；affixName scope 需 defId 自指计数 */
+type HostCtx = { skillId: string; key: string; defId?: string }
 
 function liveScale(scale: ScaleByTag, host?: HostCtx): { count: number; factor: number } | null {
   // 复用运行时同口径的 source/scope 解析（仅监听 scope 内的匹配单位）· 无法解析的上下文 → null 只显规则
-  const count = previewCountScaleSource(scale.source, scale.scope, host?.skillId, host?.key)
+  const count = previewCountScaleSource(scale.source, scale.scope, host?.skillId, host?.key, host?.defId)
   if (count === null) return null
   const factor = scale.type === 'count'
     ? 1 + count * scale.factor
@@ -253,6 +253,8 @@ function scaleSourceUnit(source: ScaleCountSource): string {
       return zh ? `极速技能` : `hasted skill`
     case 'targetScore':
       return zh ? `目标分数档` : `target-score tier`
+    case 'affixName':
+      return zh ? `携带本词条的技能` : `skill bearing this affix`
   }
 }
 
@@ -549,8 +551,8 @@ export function affixV2SkillToTooltipInfo(skill: {
     for (const entry of entries) {
       const def = getAffixV2Definition(entry.defId)
       if (!def) continue
-      // 已绑定 → 传宿主上下文（skillId + key），neighbors scope 可解析键位邻居
-      const info = affixV2DefinitionToTooltipInfo(def, skillResource, getEnchant(entry.instanceId), { skillId: entry.skillId, key: entry.key })
+      // 已绑定 → 传宿主上下文（skillId + key + defId），neighbors 解析键位邻居、affixName 自指计数
+      const info = affixV2DefinitionToTooltipInfo(def, skillResource, getEnchant(entry.instanceId), { skillId: entry.skillId, key: entry.key, defId: entry.defId })
       out.push(withUsesLeft(info, def, skill.v2Uses?.[entry.defId] ?? 0))
     }
     return out
