@@ -190,8 +190,9 @@ export interface EscalateRecipe {
   readonly T: number                   // 一关末 cumulativeFactorAdd ≈ T（产出 × (1+T)）
 }
 
-/** chant 系：apply_aura 持续 buff · trigger 固定 passive · scope + modifier 随机
- *  amount = T_modifier / scope_size（按 size 反比，total buff "强度预算"维持 T）
+/** chant 系：apply_aura 持续 buff · trigger 固定 passive · scope 随机 · modifier 由 recipe 固定
+ *  （每个 modifier 一条独立 recipe，便于独立命名 / 出率 / 调参）·
+ *  amount = T（rainbow / inherit_tags 无 amount 字段，T 被忽略）
  */
 export interface ChantRecipe {
   readonly kind: 'chant'
@@ -199,7 +200,10 @@ export interface ChantRecipe {
   readonly section: SectionTag
   readonly name_zh: string
   readonly name_en: string
-  readonly T_byModifier: Readonly<Record<AuraModifier['type'], number>>
+  /** 固定 modifier（base_add / factor_add 暂无消费端，不可选）*/
+  readonly modifier: 'crit_chance_add' | 'output_bonus_pct' | 'multi_fire_add' | 'rainbow' | 'inherit_tags'
+  /** 强度预算（crit_chance_add / output_bonus_pct / multi_fire_add 用；rainbow / inherit_tags 忽略）*/
+  readonly T: number
 }
 
 /** chain 系：fire_target broadcast · scope 排除 self · pick=random · trigger 排除 on_key */
@@ -556,12 +560,9 @@ export function rollAffixV2Spec(
       ? { kind: 'multiply', amount }
       : { kind: 'multiply', amount, selector: sel }
   } else if (recipe.kind === 'chant') {
-    // chant: trigger 固定 passive；scope 与 modifier 加权随机；amount 不按 size 缩放
+    // chant: trigger 固定 passive；scope 加权随机；modifier 由 recipe 固定（拆分后每条 recipe 一种）
     triggerSpec = { type: 'passive' }
-    // base_add / factor_add 暂无消费端，从随机池剔除（类型仍保留供 handwritten 使用）
-    const modifierType = pickRandom([
-      'crit_chance_add', 'output_bonus_pct', 'multi_fire_add', 'rainbow', 'inherit_tags',
-    ] as const)
+    const modifierType = recipe.modifier
     if (modifierType === 'inherit_tags') {
       // inherit_tags：selector = tag 来源 scope（语义反转，接收方恒为宿主自身）·
       // 无 amount / scale · 来源走专用池（排除 self/hasted no-op，含 workbench=IN-tray）
@@ -569,7 +570,7 @@ export function rollAffixV2Spec(
       effect = { kind: 'apply_aura', selector: sel, modifier: { type: 'inherit_tags' } }
     } else {
       const sel = pickGatedScope(FULL_SCOPE_POOL, recipe.kind)
-      const amount = recipe.T_byModifier[modifierType]
+      const amount = recipe.T
       let modifier: AuraModifier
       switch (modifierType) {
         case 'crit_chance_add':  modifier = { type: 'crit_chance_add', amount };        break
@@ -807,22 +808,62 @@ export const RECIPE_RUN: EscalateRecipe = {
   T: 0.5,
 }
 
+// chant 系（apply_aura）· 按 modifier 拆分为独立 recipe · 均 posture 段（命名方案A·行为↔机制贴合）
+// T 不按 size 缩放（scope 加权抽样已控制稀有度）。
+
+/** crit_chance_add · 毛竖 piloerection — 威吓展示 = 锋芒/致命边缘 */
 export const RECIPE_PILOERECTION: ChantRecipe = {
   kind: 'chant',
   id: 'piloerection',
   section: 'posture',
   name_zh: '毛竖',
   name_en: 'piloerection',
-  // T per modifier · 不按 size 缩放（scope 加权抽样已控制稀有度）
-  T_byModifier: {
-    crit_chance_add:   0.4,
-    output_bonus_pct:  0.5,
-    base_add:          0,    // 暂无消费端，从随机池剔除（占位仅满足 Record 完整性）
-    factor_add:        0,    // 暂无消费端，从随机池剔除（占位仅满足 Record 完整性）
-    multi_fire_add:    1,    // +1 释放（self → 2x；adjacent 4 邻 → 每邻位 +1 各自双发）
-    rainbow:           0,    // rainbow 无 amount，值仅占位
-    inherit_tags:      0,    // inherit_tags 无 amount（值仅占位）；可被随机池抽中，来源走 INHERIT_TAGS_SOURCE_POOL
-  },
+  modifier: 'crit_chance_add',
+  T: 0.4,
+}
+
+/** output_bonus_pct · 举臂 arm-raise — 召集号召 = 群体输出增益 */
+export const RECIPE_ARM_RAISE: ChantRecipe = {
+  kind: 'chant',
+  id: 'arm_raise',
+  section: 'posture',
+  name_zh: '举臂',
+  name_en: 'arm-raise',
+  modifier: 'output_bonus_pct',
+  T: 0.5,
+}
+
+/** multi_fire_add · 双足摇摆步 bipedal-swagger — 摇摆往复 = 重复/额外触发（+1 释放：self→2x）*/
+export const RECIPE_BIPEDAL_SWAGGER: ChantRecipe = {
+  kind: 'chant',
+  id: 'bipedal_swagger',
+  section: 'posture',
+  name_zh: '双足摇摆步',
+  name_en: 'bipedal-swagger',
+  modifier: 'multi_fire_add',
+  T: 1,
+}
+
+/** rainbow · 仰卧 supine — 完全暴露 = 放弃固定身份/输出随机化（无 amount，T 忽略）*/
+export const RECIPE_SUPINE: ChantRecipe = {
+  kind: 'chant',
+  id: 'supine',
+  section: 'posture',
+  name_zh: '仰卧',
+  name_en: 'supine',
+  modifier: 'rainbow',
+  T: 0,
+}
+
+/** inherit_tags · 蜷缩 huddle — 群体蜷挤并入 = tag 并集（无 amount，T 忽略；来源走 INHERIT_TAGS_SOURCE_POOL）*/
+export const RECIPE_HUDDLE: ChantRecipe = {
+  kind: 'chant',
+  id: 'huddle',
+  section: 'posture',
+  name_zh: '蜷缩',
+  name_en: 'huddle',
+  modifier: 'inherit_tags',
+  T: 0,
 }
 
 export const RECIPE_DRUMMING: ChainRecipe = {
@@ -923,6 +964,10 @@ export const ALL_RECIPES: readonly AffixV2Recipe[] = [
   RECIPE_CLIMB,
   RECIPE_RUN,
   RECIPE_PILOERECTION,
+  RECIPE_ARM_RAISE,
+  RECIPE_BIPEDAL_SWAGGER,
+  RECIPE_SUPINE,
+  RECIPE_HUDDLE,
   RECIPE_DRUMMING,
   RECIPE_DRINK,
   RECIPE_REGURGITATE,

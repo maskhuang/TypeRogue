@@ -3,7 +3,7 @@
 // ============================================
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
-import { generateAffixV2, pickRecipeForSkill, META_RECIPE_KINDS, ALL_RECIPES, RECIPE_PILOERECTION, RECIPE_GAZE_FOLLOW, RECIPE_IMITATE, RECIPE_REGURGITATE, RECIPE_FEED, RECIPE_NUT_CRACK } from '../../../src/data/affixV2Generator'
+import { generateAffixV2, pickRecipeForSkill, META_RECIPE_KINDS, ALL_RECIPES, RECIPE_PILOERECTION, RECIPE_ARM_RAISE, RECIPE_BIPEDAL_SWAGGER, RECIPE_SUPINE, RECIPE_HUDDLE, RECIPE_GAZE_FOLLOW, RECIPE_IMITATE, RECIPE_REGURGITATE, RECIPE_FEED, RECIPE_NUT_CRACK } from '../../../src/data/affixV2Generator'
 import { getAffixV2Definition, TOOL_AFFIX_USES_MIN, TOOL_AFFIX_USES_MAX } from '../../../src/data/affixV2'
 import { setSeededMode, setNormalMode } from '../../../src/core/seededRandom'
 
@@ -17,20 +17,20 @@ afterEach(() => {
 
 describe('chant generator · scale roll', () => {
   it('rainbow modifier 永远不挂 scale', () => {
-    // 多 seed 跑 100 次，统计 rainbow apply_aura 是否带 scale
+    // RECIPE_SUPINE 固定 rainbow modifier · 跑多次统计是否带 scale
     setNormalMode()
     setSeededMode(1)
     let rainbowCount = 0
     let rainbowWithScale = 0
     for (let i = 0; i < 200; i++) {
-      const id = generateAffixV2(RECIPE_PILOERECTION)
+      const id = generateAffixV2(RECIPE_SUPINE)
       const def = getAffixV2Definition(id)
       if (def?.effect.kind === 'apply_aura' && def.effect.modifier.type === 'rainbow') {
         rainbowCount++
         if ('scale' in def.effect && def.effect.scale) rainbowWithScale++
       }
     }
-    expect(rainbowCount).toBeGreaterThan(0)  // 200 trials 应能抽到 rainbow
+    expect(rainbowCount).toBe(200)  // SUPINE 恒 rainbow
     expect(rainbowWithScale).toBe(0)         // rainbow 不带 scale
   })
 
@@ -38,7 +38,7 @@ describe('chant generator · scale roll', () => {
     setSeededMode(7)
     let mfaWithScaleCount = 0
     for (let i = 0; i < 300; i++) {
-      const id = generateAffixV2(RECIPE_PILOERECTION)
+      const id = generateAffixV2(RECIPE_BIPEDAL_SWAGGER)   // 固定 multi_fire_add
       const def = getAffixV2Definition(id)
       if (def?.effect.kind !== 'apply_aura') continue
       if (def.effect.modifier.type !== 'multi_fire_add') continue
@@ -56,17 +56,20 @@ describe('chant generator · scale roll', () => {
   it('crit_chance_add / output_bonus_pct 的 scale 曲线是 count', () => {
     setSeededMode(13)
     let pctWithScaleCount = 0
+    // crit=PILOERECTION · output=ARM_RAISE（拆分后各自独立 recipe）
     for (let i = 0; i < 300; i++) {
-      const id = generateAffixV2(RECIPE_PILOERECTION)
-      const def = getAffixV2Definition(id)
-      if (def?.effect.kind !== 'apply_aura') continue
-      const modType = def.effect.modifier.type
-      if (modType !== 'crit_chance_add' && modType !== 'output_bonus_pct') continue
-      const scale = (def.effect as { scale?: { type: string; factor?: number } }).scale
-      if (!scale) continue
-      pctWithScaleCount++
-      expect(scale.type).toBe('count')
-      expect(scale.factor).toBe(0.1)
+      for (const recipe of [RECIPE_PILOERECTION, RECIPE_ARM_RAISE]) {
+        const id = generateAffixV2(recipe)
+        const def = getAffixV2Definition(id)
+        if (def?.effect.kind !== 'apply_aura') continue
+        const modType = def.effect.modifier.type
+        if (modType !== 'crit_chance_add' && modType !== 'output_bonus_pct') continue
+        const scale = (def.effect as { scale?: { type: string; factor?: number } }).scale
+        if (!scale) continue
+        pctWithScaleCount++
+        expect(scale.type).toBe('count')
+        expect(scale.factor).toBe(0.1)
+      }
     }
     expect(pctWithScaleCount).toBeGreaterThan(0)
   })
@@ -205,21 +208,21 @@ describe('chant generator · inherit_tags 随机可抽', () => {
     setSeededMode(7)
     let count = 0
     for (let i = 0; i < 600; i++) {
-      const def = getAffixV2Definition(generateAffixV2(RECIPE_PILOERECTION))
+      const def = getAffixV2Definition(generateAffixV2(RECIPE_HUDDLE))  // 固定 inherit_tags
       if (def?.effect.kind !== 'apply_aura') continue
       if (def.effect.modifier.type !== 'inherit_tags') continue
       count++
       expect('scale' in def.effect && def.effect.scale).toBeFalsy()  // 无 scale
       expect('amount' in def.effect.modifier).toBe(false)            // 无 amount 字段
     }
-    expect(count).toBeGreaterThan(0)
+    expect(count).toBe(600)  // HUDDLE 恒 inherit_tags
   })
 
   it('inherit_tags 来源 scope 不为 self / hasted；含 workbench 变体', () => {
     setSeededMode(99)
     const scopes = new Set<string>()
     for (let i = 0; i < 800; i++) {
-      const def = getAffixV2Definition(generateAffixV2(RECIPE_PILOERECTION))
+      const def = getAffixV2Definition(generateAffixV2(RECIPE_HUDDLE))  // 固定 inherit_tags
       if (def?.effect.kind !== 'apply_aura') continue
       if (def.effect.modifier.type !== 'inherit_tags') continue
       scopes.add(def.effect.selector.type)
