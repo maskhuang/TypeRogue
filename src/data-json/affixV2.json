@@ -78,7 +78,7 @@
     { "id": "coalition_attack", "name_zh": "联盟攻击", "name_en": "coalitionary attack", "section": "agonistic", "phase": "P2", "notes": "多键协同" },
     { "id": "redirected_aggr", "name_zh": "转向攻击", "name_en": "redirected aggression", "section": "agonistic", "phase": "P2", "notes": "重定向" },
 
-    { "id": "pant_hoot", "name_zh": "喘啸", "name_en": "pant-hoot", "section": "vocal", "phase": "P1", "notes": "多阶段广播" },
+    { "id": "pant_hoot", "name_zh": "喘啸", "name_en": "pant-hoot", "section": "vocal", "phase": "P1", "notes": "RECIPE_PANT_HOOT 实装（chain·fire_target broadcast）· 远距合唱叫声=触发其他技能 · 静态 JSON id 为命名占位" },
     { "id": "phase_buildup", "name_zh": "起句段", "name_en": "build-up phase", "section": "vocal", "phase": "P2", "notes": "boss-phase marker" },
     { "id": "phase_climax", "name_zh": "高潮段", "name_en": "climax phase", "section": "vocal", "phase": "P2", "notes": "boss-phase marker" },
     { "id": "phase_letdown", "name_zh": "收尾段", "name_en": "let-down phase", "section": "vocal", "phase": "P2", "notes": "boss-phase marker" },

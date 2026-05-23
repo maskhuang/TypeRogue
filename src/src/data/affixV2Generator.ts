@@ -866,12 +866,14 @@ export const RECIPE_HUDDLE: ChantRecipe = {
   T: 0,
 }
 
-export const RECIPE_DRUMMING: ChainRecipe = {
+/** chain 系（fire_target broadcast）· 喘啸 pant-hoot — 远距合唱式叫声引发其他个体加入，
+ *  对应"触发其他技能"。broadcast 的天然段是 vocal（archetype registry: broadcast→vocal/agonistic）*/
+export const RECIPE_PANT_HOOT: ChainRecipe = {
   kind: 'chain',
-  id: 'drumming',
-  section: 'agonistic',
-  name_zh: '击鼓',
-  name_en: 'drumming',
+  id: 'pant_hoot',
+  section: 'vocal',
+  name_zh: '喘啸',
+  name_en: 'pant-hoot',
 }
 
 export const RECIPE_DRINK: ConvertRecipe = {
@@ -968,7 +970,7 @@ export const ALL_RECIPES: readonly AffixV2Recipe[] = [
   RECIPE_BIPEDAL_SWAGGER,
   RECIPE_SUPINE,
   RECIPE_HUDDLE,
-  RECIPE_DRUMMING,
+  RECIPE_PANT_HOOT,
   RECIPE_DRINK,
   RECIPE_REGURGITATE,
   RECIPE_LEAP,
