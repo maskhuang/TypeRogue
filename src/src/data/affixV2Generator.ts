@@ -226,16 +226,21 @@ export interface ConvertRecipe {
   readonly T: number  // 一关末（player 持 1 Lv1 source 时）总产出 ≈ T × Lv1[target]
 }
 
-/** metabolize 系：convert_resource · 消耗 from 资源、产出 to 资源 · 二者均排除宿主原资源 ·
- *  与 convert(drink) 区别：drink 读宿主资源持有量产出（不扣除）；metabolize 真扣除非宿主资源 ·
- *  from/to 在生成时从 resourcePool − host 里抽（必互异、必非 host）*/
+/** metabolize 系：convert_resource · 消耗 from 资源、产出 to 资源 ·
+ *  与 convert(drink) 区别：drink 读宿主资源持有量产出（不扣除）；metabolize 真扣除 ·
+ *  sourceMode 决定 from 的来源：
+ *    'non_host'（反刍 regurgitate）：from/to 均排除宿主原资源，从 resourcePool − host 里抽（互异）—— 代谢外部资源
+ *    'host'（反吐再食 rr）：from 锁定宿主自身产出资源（病态自我消耗），to 为 resourcePool − from 里抽 */
 export interface MetabolizeRecipe {
   readonly kind: 'metabolize'
   readonly id: string
   readonly section: SectionTag
   readonly name_zh: string
   readonly name_en: string
-  readonly resourcePool: readonly ResourceType[]  // 可消耗/产出的「可存」资源池（不含 base/multiplier 等 per-word 暂存量）
+  readonly sourceMode: 'non_host' | 'host'
+  // 资源池：可含 base/multiplier —— convert_resource 的 resourceFloor 守护下限（multiplier 不跌破 baseMultiplier、
+  // base 词内累加 floor=0），故无需再排除。host 模式下仅约束 to。
+  readonly resourcePool: readonly ResourceType[]
   readonly T: number  // 一关产出预算（× Lv1[to] = 绝对值）· 消耗等量 Lv1-单位的 from
 }
 
@@ -593,12 +598,23 @@ export function rollAffixV2Spec(
     const target = candidates.length > 0 ? pickRandom(candidates) : source  // pool 单项 fallback
     effect = { kind: 'gain_proportional', source, target, ratio }
   } else if (recipe.kind === 'metabolize') {
-    // metabolize: 消耗 from、产出 to · 二者均排除宿主原资源（host）· from ≠ to
+    // metabolize: 消耗 from、产出 to · from ≠ to
     const ratio = scaleMagnitude(recipe.T, triggerEntry.freq)
     const host: ResourceType = skillResource ?? 'score'
-    const candidates = recipe.resourcePool.filter(r => r !== host)
-    const from = pickRandom(candidates)
-    const toCandidates = candidates.filter(r => r !== from)
+    let from: ResourceType
+    let toCandidates: readonly ResourceType[]
+    if (recipe.sourceMode === 'host') {
+      // 反吐再食 rr：from = 宿主自身产出资源（病态自我消耗）· to 为其余可存资源
+      // host 可能是 base/multiplier（不在 resourcePool）→ from 直接取 host，convert_resource
+      // 的 have<=0 守卫处理无可消耗情形（per-word 暂存量耗尽即空转）
+      from = host
+      toCandidates = recipe.resourcePool.filter(r => r !== from)
+    } else {
+      // 反刍 regurgitate：from/to 均排除宿主原资源（代谢外部资源）
+      const candidates = recipe.resourcePool.filter(r => r !== host)
+      from = pickRandom(candidates)
+      toCandidates = candidates.filter(r => r !== from)
+    }
     const to = toCandidates.length > 0 ? pickRandom(toCandidates) : from  // pool 退化兜底
     effect = { kind: 'convert_resource', from, to, ratio }
   } else if (recipe.kind === 'chain') {
@@ -892,9 +908,24 @@ export const RECIPE_REGURGITATE: MetabolizeRecipe = {
   section: 'maintenance',
   name_zh: '反刍',
   name_en: 'regurgitate',
-  // 可存资源池（不含 base/multiplier 等 per-word 暂存量）· from/to 在此池 − 宿主原资源里抽
-  resourcePool: ['score', 'gold', 'shield', 'time'],
+  sourceMode: 'non_host',   // 代谢外部资源：from/to 均排除宿主原资源
+  // from/to 在此池 − 宿主原资源里抽 · base/multiplier 受 resourceFloor 守护下限，可入池
+  resourcePool: ['score', 'gold', 'shield', 'time', 'base', 'multiplier'],
   T: 3,                     // 一关产出 ≈ 3 × Lv1[to]；消耗等量 Lv1-单位的 from
+}
+
+/** rr 反吐再食（abnormal）· 参考反刍但 from 锁定宿主自身产出资源（病态自我消耗闭环）·
+ *  to 为其余资源（resourcePool − from）· 宿主产 multiplier 时消耗受 baseMultiplier 下限守护、
+ *  产 base 时按词内累加量消耗（floor=0）—— 详 affixV2Effect.resourceFloor */
+export const RECIPE_RR: MetabolizeRecipe = {
+  kind: 'metabolize',
+  id: 'rr',
+  section: 'abnormal',
+  name_zh: '反吐再食',
+  name_en: 'regurgitation-reingestion',
+  sourceMode: 'host',
+  resourcePool: ['score', 'gold', 'shield', 'time', 'base', 'multiplier'],   // 仅约束 to（from = 宿主资源）
+  T: 3,                     // 同反刍：一关产出 ≈ 3 × Lv1[to]
 }
 
 export const RECIPE_LEAP: HasteRecipe = {
@@ -973,6 +1004,7 @@ export const ALL_RECIPES: readonly AffixV2Recipe[] = [
   RECIPE_PANT_HOOT,
   RECIPE_DRINK,
   RECIPE_REGURGITATE,
+  RECIPE_RR,
   RECIPE_LEAP,
   RECIPE_WADGE,
   RECIPE_NUT_CRACK,

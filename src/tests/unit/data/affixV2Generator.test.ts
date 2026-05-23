@@ -3,7 +3,7 @@
 // ============================================
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
-import { generateAffixV2, pickRecipeForSkill, META_RECIPE_KINDS, ALL_RECIPES, RECIPE_PILOERECTION, RECIPE_ARM_RAISE, RECIPE_BIPEDAL_SWAGGER, RECIPE_SUPINE, RECIPE_HUDDLE, RECIPE_GAZE_FOLLOW, RECIPE_IMITATE, RECIPE_REGURGITATE, RECIPE_FEED, RECIPE_NUT_CRACK } from '../../../src/data/affixV2Generator'
+import { generateAffixV2, pickRecipeForSkill, META_RECIPE_KINDS, ALL_RECIPES, RECIPE_PILOERECTION, RECIPE_ARM_RAISE, RECIPE_BIPEDAL_SWAGGER, RECIPE_SUPINE, RECIPE_HUDDLE, RECIPE_GAZE_FOLLOW, RECIPE_IMITATE, RECIPE_REGURGITATE, RECIPE_RR, RECIPE_FEED, RECIPE_NUT_CRACK } from '../../../src/data/affixV2Generator'
 import { getAffixV2Definition, TOOL_AFFIX_USES_MIN, TOOL_AFFIX_USES_MAX } from '../../../src/data/affixV2'
 import { setSeededMode, setNormalMode } from '../../../src/core/seededRandom'
 
@@ -257,6 +257,33 @@ describe('metabolize generator · 反刍/regurgitate', () => {
       if (def?.effect.kind !== 'convert_resource') continue
       expect(def.effect.from).not.toBe('gold')
       expect(def.effect.to).not.toBe('gold')
+    }
+  })
+
+  it('rr (sourceMode=host) · from 锁定宿主资源、to 为其余可存资源且互异', () => {
+    setSeededMode(303)
+    for (const host of ['score', 'gold', 'shield', 'time'] as const) {
+      for (let i = 0; i < 30; i++) {
+        const def = getAffixV2Definition(generateAffixV2(RECIPE_RR, host))
+        if (def?.effect.kind !== 'convert_resource') continue
+        expect(def.effect.from).toBe(host)               // from = 宿主自身产出资源
+        expect(def.effect.to).not.toBe(host)             // to ≠ from
+        expect(RECIPE_RR.resourcePool).toContain(def.effect.to)
+        expect(def.effect.ratio).toBeGreaterThan(0)
+      }
+    }
+  })
+
+  it('rr · 宿主产 base/multiplier 时 from 取该资源，to 为池内其余资源', () => {
+    setSeededMode(404)
+    for (const host of ['base', 'multiplier'] as const) {
+      for (let i = 0; i < 30; i++) {
+        const def = getAffixV2Definition(generateAffixV2(RECIPE_RR, host))
+        if (def?.effect.kind !== 'convert_resource') continue
+        expect(def.effect.from).toBe(host)               // from = 宿主自身产出资源（base/multiplier 现已入池）
+        expect(RECIPE_RR.resourcePool).toContain(def.effect.to)
+        expect(def.effect.from).not.toBe(def.effect.to)  // to = resourcePool − from
+      }
     }
   })
 

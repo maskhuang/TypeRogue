@@ -506,4 +506,27 @@ describe('resolveEffect · convert_resource（消耗型转化）', () => {
     expect(res.resourcesConsumed.length).toBe(0)
     expect(res.resourceProduced.length).toBe(0)
   })
+
+  describe('multiplier floor · 不可消耗到 baseMultiplier 以下', () => {
+    const origBaseMult = gameState.player?.baseMultiplier
+    afterEach(() => { if (gameState.player) gameState.player.baseMultiplier = origBaseMult })
+
+    it('仅消耗 baseMultiplier 以上的部分（floor 截断 consumed）', () => {
+      gameState.player.baseMultiplier = 1
+      // have=1.5 → consumable = 1.5 − 1 = 0.5；desired = ratio×Lv1[mult]=10×1=10 → consumed 截到 0.5
+      const ctx = { ...baseCtx, getPlayerResource: (r: string) => (r === 'multiplier' ? 1.5 : 0) }
+      const res = resolveEffect({ kind: 'convert_resource', from: 'multiplier', to: 'gold', ratio: 10 }, ctx)
+      expect(res.resourcesConsumed[0].resource).toBe('multiplier')
+      expect(res.resourcesConsumed[0].amount).toBeCloseTo(0.5, 5)  // 不是 desired(10)、不是 have(1.5)
+      expect(res.resourceProduced[0].amount).toBeCloseTo(10 * 3 * (0.5 / 10), 5)  // frac=consumed/desired
+    })
+
+    it('恰在 baseMultiplier 下限 → 不消耗不产出', () => {
+      gameState.player.baseMultiplier = 2
+      const ctx = { ...baseCtx, getPlayerResource: (r: string) => (r === 'multiplier' ? 2 : 0) }
+      const res = resolveEffect({ kind: 'convert_resource', from: 'multiplier', to: 'gold', ratio: 1 }, ctx)
+      expect(res.resourcesConsumed.length).toBe(0)
+      expect(res.resourceProduced.length).toBe(0)
+    })
+  })
 })

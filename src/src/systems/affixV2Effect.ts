@@ -183,6 +183,15 @@ function freshResult(): ResolveResult {
 // 主 entry · resolveEffect
 // ============================================
 
+/** 资源消耗下限（convert_resource）·
+ *  multiplier：不可消耗到 baseMultiplier 以下——可消耗的是 combo×comboBonus + skillMultBonus 部分
+ *    （断 combo 才回落到 baseMultiplier；扣减写 synergy.skillMultBonus，总 multiplier 同步降但守住下限）·
+ *  base / score / gold / shield / time：floor=0（consumed≤have 已天然保证非负，base 词内累加、词首归 0）*/
+function resourceFloor(resource: string): number {
+  if (resource === 'multiplier') return gameState.player?.baseMultiplier ?? 0
+  return 0
+}
+
 /**
  * 结算 effect spec。
  *
@@ -249,14 +258,16 @@ function resolveInto(spec: EffectSpec, ctx: ResolveContext, result: ResolveResul
     }
 
     case 'convert_resource': {
-      // 消耗 from（1:1 Lv1-单位）、产出 to · from/to 已在生成时排除宿主原资源
+      // 消耗 from（1:1 Lv1-单位）、产出 to
       const fromLv1 = ctx.resourceLv1Base(spec.from)
       const toLv1 = ctx.resourceLv1Base(spec.to)
       const desired = spec.ratio * fromLv1
       if (desired <= 0) return
       const have = ctx.getPlayerResource(spec.from)
-      if (have <= 0) return                       // 无可消耗 → 跳过（不消耗不产出）
-      const consumed = Math.min(desired, have)    // 持有不足时按比例缩减
+      // floor 保护：multiplier 不可消耗到 baseMultiplier 以下；其余 floor=0（详 resourceFloor）
+      const consumable = Math.max(0, have - resourceFloor(spec.from))
+      if (consumable <= 0) return                  // 低于下限 → 不消耗不产出
+      const consumed = Math.min(desired, consumable)  // 可消耗量不足时按比例缩减
       const frac = consumed / desired
       result.resourcesConsumed.push({ resource: spec.from, amount: consumed })
       result.resourceProduced.push({ resource: spec.to, amount: spec.ratio * toLv1 * frac })
