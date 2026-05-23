@@ -38,6 +38,7 @@ export const TRIGGER_FREQUENCY: Record<TriggerSpec['type'], TriggerFrequencyEntr
   every_n_keys:     { fires: 30,  note: '默认 n=10；实际计算用 keysPerBattle/n' },
   on_haste_granted: { fires: 20,  note: 'haste grant 频率经验值；依赖场上 grant_haste 源' },
   on_resource_consumed: { fires: 15, note: '资源消耗频率经验值；依赖场上 convert_resource 源' },
+  on_removed:       { fires: 1,   note: '死亡回响；每场被取代一次（依赖场上 consume_skill 源）→ magnitude 应高' },
   on_battle_start:  { fires: 1,   note: '每战仅一次（旧 innate V2 等价物）→ magnitude 应高' },
   on_battle_end:    { fires: 1,   note: '每战仅一次（关后结算 · gain_skill / 关后奖励主用）→ magnitude 应高' },
   on_window_mode:   { fires: 5,   note: 'Phase 2 · 罕见命中' },

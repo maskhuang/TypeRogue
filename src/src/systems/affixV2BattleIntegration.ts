@@ -28,12 +28,13 @@ import {
   hookOnBattleEnd,
   hookOnHasteGranted,
   hookOnResourceConsumed,
+  hookOnRemoved,
   listAllEquipped,
   setSelectorResolver,
   chargeToolAffixUses,
   type SourcedResult,
 } from './affixV2Equipped'
-import { listActiveAuras, peekInstanceState, getSkillCumBase, getSkillCumFactor, getFireTargetWaitMs, tryFireTargetQuota, consumeHasteOne, getHaste } from './affixV2State'
+import { listActiveAuras, peekInstanceState, getSkillCumBase, getSkillCumFactor, getFireTargetWaitMs, tryFireTargetQuota, consumeHasteOne, getHaste, markSkillConsumed, isSkillConsumed } from './affixV2State'
 import { BASE_VALUES, createSkillRuntimeState } from '../data/affixes'
 import { getAscendBaseScale } from '../data/affixTrigger'
 import { triggerSkill, recordSkillTrigger } from './skills'
@@ -189,6 +190,10 @@ export function processV2Results(results: readonly SourcedResult[], outputMult =
     for (const gr of sr.result.affixGrafts) {
       applyAffixGraft(gr.targetSkillId, gr.targetKey, gr.defId)
     }
+    // consume_skill（取代）: 本场移除目标 skill + 注入 ratio×基础产出 + 派发 on_removed 死亡回响
+    for (const rm of sr.result.skillsRemoved) {
+      applySkillConsume(rm.targetSkillId, rm.ratio, sr.sourceKey, sr.sourceSkillId, isCrit)
+    }
   }
   // tool/认知词条「用完消失」：本次结算中触发过的词条各计 1 次使用，用尽即从宿主移除
   if (results.length > 0) chargeToolAffixUses(results.map(r => r.sourceInstanceId))
@@ -209,6 +214,43 @@ function dispatchResourceConsumed(resource: string, amount: number): void {
     processV2Results(reactions)
   } finally {
     _inConsumeReaction = false
+  }
+}
+
+// on_removed 死亡回响 re-entrancy 防护（深度 1）：
+// 被移除 skill 的 on_removed 若自身又取代别的 skill，其取代结果照常注入产出/移除，
+// 但不再二次派发 on_removed —— 杜绝 consume→on_removed→consume→… 无限链（与 on_resource_consumed 同纪律）。
+let _inRemovalReaction = false
+
+/** 取代（consume_skill）：本场移除目标 skill（consumed 集）· 注入 ratio×被移除技能基础产出（其资源）·
+ *  派发 on_removed 死亡回响 · 目标已不存在 / 本场已被移除 → 跳过（防多个取代词条争抢同一目标）。 */
+function applySkillConsume(targetSkillId: string, ratio: number, sourceKey: string, sourceSkillId: string, isCrit: boolean): void {
+  const removed = state.affixSkills.get(targetSkillId)
+  if (!removed) return
+  if (isSkillConsumed(targetSkillId)) return
+  markSkillConsumed(targetSkillId)
+  // 产出 = ratio × 被移除技能主资源 Lv.N base（随其等级缩放）· 直接注入（不经 output bonus / crit 二次放大）
+  const base = defaultResourceLv1Base(removed.resource, removed.level ?? 1)
+  const payout = ratio * base
+  if (payout !== 0) {
+    applyResourceAmount(removed.resource, payout, sourceKey, sourceSkillId, isCrit)
+  }
+  if (typeof document !== 'undefined') {
+    showFeedback(`🩸 ${removed.name ?? targetSkillId}`, '#c0392b')
+  }
+  // 死亡回响：被移除 skill 上的 on_removed 词条派发一次
+  dispatchSkillRemoved(targetSkillId)
+}
+
+/** 派发 on_removed 死亡回响（深度 1 限流）· 被移除 skill 上的 on_removed 词条触发一次 */
+function dispatchSkillRemoved(skillId: string): void {
+  if (_inRemovalReaction) return
+  _inRemovalReaction = true
+  try {
+    const reactions = hookOnRemoved(skillId, defaultResourceLv1Base, defaultGetPlayerResource, Date.now())
+    processV2Results(reactions)
+  } finally {
+    _inRemovalReaction = false
   }
 }
 
@@ -350,7 +392,26 @@ function resolveSelectorToSkillIds(
       }
       break
     }
+
+    case 'same_word': {
+      // 同词内：宿主键位所在 word 的其他绑键技能（任一占用键字母出现在 word 中即在范围内）·
+      // 排除宿主自身；无 word 上下文（如 on_battle_start）→ 空集
+      const word = state.player.word?.toLowerCase() ?? ''
+      if (!word) break
+      const seen = new Set<string>()
+      for (const [key, sid] of state.player.bindings) {
+        if (sid === sourceSkillId || seen.has(sid)) continue
+        if (word.includes(key.toLowerCase())) {
+          seen.add(sid)
+          candidates.push(sid)
+        }
+      }
+      break
+    }
   }
+
+  // 本场已被移除(consumed)技能全 scope 排除（self 早返回不进此处，不受影响）
+  candidates = candidates.filter(c => !isSkillConsumed(c))
 
   // pick === 'random' 时返回随机 1 个；self 已提前 return，不会进这里
   const pick = (sel as { pick?: string }).pick
@@ -368,6 +429,8 @@ function selectorMatchesSkill(
   targetSkillId: string,
   targetKey: string,
 ): boolean {
+  // 本场已被移除(consumed)技能不接收任何 aura / 不作目标（self 除外，consumed self 不会再 fire 故无影响）
+  if (sel.type !== 'self' && isSkillConsumed(targetSkillId)) return false
   switch (sel.type) {
     case 'self':              return targetSkillId === sourceSkillId
     case 'neighbors':         return targetSkillId !== sourceSkillId && hasRelation(sourceKey, targetKey, sel.posRel)
@@ -380,6 +443,13 @@ function selectorMatchesSkill(
     case 'hasted':            return getHaste(targetSkillId) > 0
     case 'matched_rarity':    return state.affixSkills.get(targetSkillId)?.rarity === sel.rarity
     case 'workbench':         return state.player.inbox.includes(targetSkillId)
+    case 'same_word': {
+      if (targetSkillId === sourceSkillId) return false
+      const word = state.player.word?.toLowerCase() ?? ''
+      if (!word) return false
+      const keys = getSkillKeys(getBindingState(state), targetSkillId)
+      return keys.some(k => word.includes(k.toLowerCase()))
+    }
   }
 }
 

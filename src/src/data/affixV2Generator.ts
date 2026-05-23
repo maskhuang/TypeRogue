@@ -334,7 +334,20 @@ export interface CoprophagyRecipe {
   readonly fraction: number   // 回收比例（< 1 → 永远部分退款，不成无限循环）
 }
 
-export type AffixV2Recipe = DripRecipe | GrowthRecipe | EscalateRecipe | ChantRecipe | ChainRecipe | ConvertRecipe | MetabolizeRecipe | HasteRecipe | TeachRecipe | ImitateRecipe | SpearMakeRecipe | GazeFollowRecipe | CrackRecipe | CoprophagyRecipe
+/** devour 系：consume_skill 取代（agonistic 对抗）· trigger 随机抽（沿用 pickTrigger）·
+ *  selector 固定 same_word（同词内）· 生成时随机锁 1 个 filter 维度（resource/rarity/hasTag · 与 teach/imitate 同纪律）·
+ *  ratio 固定大额（不除 freq —— 同词内可吃技能数有限，总量天然封顶，类似 crack 的 per-use 模型）·
+ *  被取代技能本场移除（下场恢复），其 on_removed 词条触发死亡回响（build-around 协同）。*/
+export interface DevourRecipe {
+  readonly kind: 'devour'
+  readonly id: string
+  readonly section: SectionTag
+  readonly name_zh: string
+  readonly name_en: string
+  readonly ratio: number   // N · 产出 = N × 被移除技能基础产出（其主资源 Lv.N base）
+}
+
+export type AffixV2Recipe = DripRecipe | GrowthRecipe | EscalateRecipe | ChantRecipe | ChainRecipe | ConvertRecipe | MetabolizeRecipe | HasteRecipe | TeachRecipe | ImitateRecipe | SpearMakeRecipe | GazeFollowRecipe | CrackRecipe | CoprophagyRecipe | DevourRecipe
 
 // ============================================
 // Scope 池 · 加权抽样 · 范围越广越稀有
@@ -443,6 +456,15 @@ export function scaleMagnitude(T: number, freq: number): number {
 
 function pickRandom<T>(arr: readonly T[]): T {
   return arr[Math.floor(random() * arr.length)]
+}
+
+/** devour（取代）生成时随机锁 1 个 filter 维度（与 teach/imitate 单维度锁定同纪律）·
+ *  resource 40%（吃同词内某资源技能）/ rarity 30%（吃某稀有度档）/ hasTag 30%（吃某 section 技能）。 */
+function rollDevourFilter(): SkillFilter {
+  const roll = random()
+  if (roll < 0.4) return { resource: pickRandom(MATCHED_RESOURCE_POOL) }
+  if (roll < 0.7) return { rarity: Math.floor(random() * 4) }
+  return { hasTag: pickRandom(ALL_SECTION_TAGS) }
 }
 
 // ============================================
@@ -751,6 +773,16 @@ export function rollAffixV2Spec(
     // effect 固定 reclaim_consumed（按量回收被消耗资源的 fraction）· 无可消耗上下文则空转
     triggerSpec = { type: 'on_resource_consumed' }
     effect = { kind: 'reclaim_consumed', fraction: recipe.fraction }
+  } else if (recipe.kind === 'devour') {
+    // devour 取代（agonistic）：trigger 沿用 pickTrigger 随机抽（保持 triggerEntry.spec）·
+    // selector 固定 same_word（同词内 · 无 word 上下文则空集 no-op）·
+    // 生成时随机锁 1 个 filter 维度（resource 40% / rarity 30% / hasTag 30%）· ratio 不除 freq
+    effect = {
+      kind: 'consume_skill',
+      selector: { type: 'same_word' },
+      ratio: recipe.ratio,
+      filter: rollDevourFilter(),
+    }
   } else {
     throw new Error(`unsupported recipe kind: ${(recipe as { kind: string }).kind}`)
   }
@@ -957,6 +989,19 @@ export const RECIPE_COPROPHAGY: CoprophagyRecipe = {
   fraction: 0.3,            // 回收 30%（< 1 → 部分退款，不成无限循环）
 }
 
+/** 取代 supplant（agonistic 对抗 · §2.1.6 displacement/supplanting）·
+ *  移除同词内一个（满足随机 filter 的）技能，吸收其 N× 基础产出 · 本场移除（下场恢复）·
+ *  被取代技能的 on_removed 词条触发死亡回响 —— agonistic 段首个 live recipe（drumming/broadcast 已迁 vocal）。
+ *  build-around 协同：堆「便宜可弃 + on_removed 高回报」技能，supplant 作引擎吃它们换爆发 + 触发死亡回响。 */
+export const RECIPE_SUPPLANT: DevourRecipe = {
+  kind: 'devour',
+  id: 'supplant',
+  section: 'agonistic',
+  name_zh: '取代',
+  name_en: 'supplant',
+  ratio: 10,            // 产出 = 10 × 被移除技能基础产出（balance 旋钮 · 同词内可吃技能数封顶总量）
+}
+
 export const RECIPE_LEAP: HasteRecipe = {
   kind: 'haste',
   id: 'leap',
@@ -1035,6 +1080,7 @@ export const ALL_RECIPES: readonly AffixV2Recipe[] = [
   RECIPE_REGURGITATE,
   RECIPE_RR,
   RECIPE_COPROPHAGY,
+  RECIPE_SUPPLANT,
   RECIPE_LEAP,
   RECIPE_WADGE,
   RECIPE_NUT_CRACK,

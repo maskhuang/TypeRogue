@@ -102,6 +102,10 @@ export function evaluateTrigger(spec: TriggerSpec, ctx: TriggerContext): boolean
       if (ctx.consumedResource === undefined) return false
       return spec.resource === undefined || spec.resource === ctx.consumedResource
 
+    case 'on_removed':
+      // hook 层（hookOnRemoved）已保证只在被移除 skill 上迭代其 on_removed 词条；恒命中
+      return true
+
     // ── Phase 2（占位 · 未实装）──
     case 'on_window_mode':
     case 'on_sequence':

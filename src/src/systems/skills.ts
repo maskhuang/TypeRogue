@@ -5,6 +5,7 @@
 
 import { state, synergy } from '../core/state';
 import { onSkillFireV2 } from './affixV2BattleIntegration';
+import { isSkillConsumed } from './affixV2State';
 import { RESOURCE_COLORS } from '../core/constants';
 import type { ResourceType, PseudoInfiniteState } from '../core/types';
 import { t } from '../demo/demo-i18n';
@@ -255,6 +256,9 @@ export function triggerSkill(
   overrideAnchor?: { letterIndex?: number; fromElementId?: string },
   outputScale?: number,
 ): void {
+  // 取代（consume_skill）本场移除：被移除技能本场不再击发（无 affix / 无 base output）·
+  // 不影响打字推进（playerCorrect 负责 word.index），仅静默掉本技能产出
+  if (isSkillConsumed(skillId)) return;
   if (state.affixSkills.has(skillId)) {
     // 防御：运行时新增的技能（gain_skill 授予等）可能没有 runtimeState；
     // 缺失时旧管线会在 orchestrator 静默 continue，导致无词条技能（依赖旧管线产出基数）零产出/无反馈。

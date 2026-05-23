@@ -124,6 +124,7 @@ const RECIPE_COLORS: Record<string, string> = {
   piloerection: '#9b59b6',
   // agonistic · 红系
   drumming:     '#e74c3c',
+  supplant:     '#c0392b',  // 深红 · 取代/吞噬（本场移除 + 吸收产出）
   // tool/cognition · 棕金系（meta-progression 操纵家族 · 共 tool 段棕基底，各取一调以可辨识）
   teach:        '#d4a017',  // 暖金 · 教学/启蒙
   imitate:      '#b5651d',  // 铜/赤陶 · 镜像复制

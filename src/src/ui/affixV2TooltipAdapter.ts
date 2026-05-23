@@ -137,6 +137,8 @@ export function formatTriggerDescription(trigger: TriggerSpec): string {
       return trigger.resource
         ? (zh ? `${locResource(trigger.resource)}被消耗时` : `When ${locResource(trigger.resource)} is consumed`)
         : (zh ? '任一资源被消耗时' : 'When any resource is consumed')
+    case 'on_removed':
+      return zh ? '本技能被移除时' : 'When this skill is removed'
     case 'on_window_mode': return zh ? `节奏·${trigger.pattern}` : `Rhythm·${trigger.pattern}`
     case 'on_sequence':   return zh ? `序列·${trigger.pattern}` : `Sequence·${trigger.pattern}`
     case 'one_per_window': return zh ? `${trigger.n} 键内仅一次` : `Once per ${trigger.n} keys`
@@ -174,6 +176,9 @@ function formatSelector(sel: TargetSelector): string {
     case 'workbench':         return zh
       ? `IN-tray 未装配的技能${pickSuffix}`
       : `IN-tray (unequipped) skills${pickSuffix}`
+    case 'same_word':         return zh
+      ? `同词内的技能${pickSuffix}`
+      : `skills in the same word${pickSuffix}`
   }
 }
 
@@ -400,6 +405,15 @@ export function formatEffectDescription(effect: EffectSpec, skillResource?: stri
       return zh
         ? `复制 ${formatSelector(effect.from)} 的 1 个词条到本技能`
         : `graft 1 affix from ${formatSelector(effect.from)} to this skill`
+    case 'consume_skill': {
+      // 取代：移除 selector 内（满足 filter 的）1 个技能，获得 ratio× 其基础产出（本场移除，下场恢复）
+      const filterStr = effect.filter ? formatSkillFilter(effect.filter, defSection) : ''
+      const target = formatSelector(effect.selector)
+      const nx = `${Math.round(effect.ratio * 100) / 100}×`
+      return zh
+        ? `移除${target}中 1 个${filterStr}技能（本场），获得其 ${nx} 基础产出`
+        : `remove 1 ${filterStr} skill among ${target} (this fight), gain ${nx} its base output`
+    }
   }
 }
 

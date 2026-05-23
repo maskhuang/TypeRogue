@@ -315,6 +315,32 @@ export function grantHaste(skillId: string, amount: number, sourceInstanceId: st
 }
 
 // ============================================
+// 本场被移除技能 · consume_skill（取代）的「本场移除」集
+// ============================================
+// for-the-fight 移除：被取代的技能本场不再击发 / 不可被选中 / 不可再被取代，
+// battle reset（resetAllAffixV2State，在 battle start + end 都跑）时清空 → 下场恢复。
+// 不动 run 级 state（state.affixSkills / bindings 原样保留）。
+
+const _consumedSkills: Set<string> = new Set()
+
+export function markSkillConsumed(skillId: string): void {
+  _consumedSkills.add(skillId)
+}
+
+export function isSkillConsumed(skillId: string): boolean {
+  return _consumedSkills.has(skillId)
+}
+
+export function clearConsumedSkills(): void {
+  _consumedSkills.clear()
+}
+
+/** 测试 / 调试用 · 列出本场已被移除的 skillId */
+export function listConsumedSkills(): readonly string[] {
+  return Array.from(_consumedSkills)
+}
+
+// ============================================
 // 一键全 reset（battle end / cycle 切换）
 // ============================================
 
@@ -326,4 +352,5 @@ export function resetAllAffixV2State(): void {
   clearRateLimits()
   clearSkillAggregates()
   clearAllHaste()
+  clearConsumedSkills()
 }

@@ -739,6 +739,63 @@ export function hookOnResourceConsumed(
   return results
 }
 
+/**
+ * skill 被「本场移除」（consume_skill 取代）时调 · 死亡回响。
+ * 仅遍历被移除 skill 上的 V2 instance，命中 on_removed trigger 的 resolve。
+ * skillResource 用被移除 skill 自身资源（死亡回响 gain_resource 按其 Lv 缩放）。
+ * 与 on_resource_consumed 同纪律：无移除源（场上无 consume_skill）时永不触发（reactive build-around）。
+ */
+export function hookOnRemoved(
+  removedSkillId: string,
+  resourceLv1Base: (r: string, level?: number) => number,
+  getPlayerResource: (r: string) => number,
+  nowMs: number,
+): SourcedResult[] {
+  const results: SourcedResult[] = []
+  const ids = _bySkill.get(removedSkillId) ?? []
+  const skillResource = gameState.affixSkills.get(removedSkillId)?.resource ?? 'score'
+  const lvBase = lvNBaseFor(removedSkillId, resourceLv1Base)
+  for (const id of ids) {
+    const entry = _equipped.get(id)
+    if (!entry) continue
+    const def = getAffixV2Definition(entry.defId)
+    if (!def || def.trigger.type !== 'on_removed') continue
+
+    const triggerCtx: TriggerContext = { selfAffixId: entry.defId, selfKey: entry.key }
+    if (!evaluateTrigger(def.trigger, triggerCtx)) continue
+
+    const ctx: ResolveContext = {
+      instanceId: entry.instanceId,
+      skillId: entry.skillId,
+      key: entry.key,
+      skillResource,
+      skillResourceLv1Base: lvBase(skillResource),
+      resourceLv1Base: lvBase,
+      nowMs,
+      isCrit: false,
+      currentWordLength: 0,
+      hostSkillLevel: gameState.affixSkills.get(entry.skillId)?.level ?? 1,
+      selfSection: def.section,
+      selfDefId: def.id,
+      getPlayerResource,
+      resolveSelector: _selectorResolver,
+      queryEquipped: buildQueryEquipped(entry),
+    }
+    const result = resolveEffect(applyEnchantToEffect(def.effect, getEnchant(entry.instanceId)), ctx)
+    results.push({ sourceInstanceId: entry.instanceId, sourceSkillId: entry.skillId, sourceKey: entry.key, result })
+
+    _ghostLog.push({
+      timestamp: nowMs,
+      instanceId: entry.instanceId,
+      defId: entry.defId,
+      trigger: def.trigger.type,
+      result,
+    })
+    recordApprenticeTriggerHit(entry)
+  }
+  return results
+}
+
 // ============================================
 // Battle lifecycle hooks
 // ============================================

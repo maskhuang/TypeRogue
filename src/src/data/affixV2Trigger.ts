@@ -65,6 +65,10 @@ export type Phase1TriggerSpec =
    *  resource 缺省 = 任意资源被消耗即触发；指定时仅该资源被消耗才触发 ·
    *  无 convert_resource 源时永不触发（build-around · 与 on_haste_granted 同纪律）*/
   | { type: 'on_resource_consumed'; resource?: string }
+  /** 本技能「被移除」时触发（死亡回响 · 反应型）· 仅当宿主 skill 被 consume_skill（取代/吞噬类）
+   *  本场移除时派发；hook 层只迭代被移除 skill 上的 on_removed 词条。
+   *  无移除源（场上无 consume_skill）时永不触发（build-around · 与 on_resource_consumed 同纪律）*/
+  | { type: 'on_removed' }
 
 /** Phase 2 trigger 扩展（详 research §5.2） */
 export type Phase2TriggerSpec =
@@ -143,6 +147,13 @@ export type TargetSelector =
    * 这一既有 selector 无法单独圈出的集合。这些技能不参战，主用作 inherit_tags 的 tag 来源。
    */
   | { type: 'workbench'; pick?: 'all' | 'random' }
+  /**
+   * 同词内技能 · = 当前/刚输入单词里一起击发的技能（宿主键位所在 word 的其他绑键技能）。
+   * 运行时由集成层从 state.player.word 的字母 → state.player.bindings 推导（任一占用键的字母
+   * 出现在 word 中即在范围内）· 恒排除宿主自身 + 本场已被移除(consumed)的技能。
+   * 无 word 上下文（如 on_battle_start）→ 退化为空集。consume_skill（取代）签名 scope。
+   */
+  | { type: 'same_word'; pick?: 'all' | 'random' }
 
 // ===== AuraModifier (apply_aura 用) =====
 
@@ -389,6 +400,20 @@ export type EffectSpec =
    * 宿主词条数 +1（受 rarity 上限约束，已满则跳过）· run 内永久
    */
   | { kind: 'graft_affix'; from: TargetSelector }
+
+  /**
+   * 取代（agonistic 对抗 · 本场移除 + 吸收产出）· 移除 selector 范围内满足 filter 的 1 个技能，
+   * 获得 = ratio × 被移除技能基础产出（其主资源 Lv.N base）的一次性产出（同被移除技能的资源）。
+   *
+   * - selector：典型 same_word（同词内）· 范围已排除宿主自身 + 已被移除技能；
+   * - filter：可选 · 在 selector 候选上 AND 过滤（resource / rarity / hasTag 等 · 缺省 = 不过滤）·
+   *           recipe 生成时随机锁 1 个维度（与 teach/imitate 同纪律）；
+   * - 命中多个时随机取 1；命中 0 → no-op；
+   * - 移除是「本场」级（consumed 集 · battle reset 恢复），**不**改 run 级 state；
+   * - 被移除技能上的 on_removed 词条在移除时派发一次（死亡回响）。
+   * 产出由集成层按被移除技能的 resource × level 计算并注入（不经 output_bonus / crit 二次放大）。
+   */
+  | { kind: 'consume_skill'; selector: TargetSelector; ratio: number; filter?: SkillFilter }
 
 // ===== 默认值 =====
 

@@ -17,9 +17,11 @@ import type {
   StatusKeyword,
   ScaleByTag,
   ScaleCountSource,
+  SkillFilter,
 } from '../data/affixV2Trigger'
 import type { Tag } from '../data/affixTags'
 import type { AffixSkillInstance } from '../data/affixes'
+import { getAffixV2Definition } from '../data/affixV2'
 import { state as gameState } from '../core/state'
 import { BALANCE } from '../core/constants'
 import { getKeysWithRelation } from '../data/keyboardTopology'
@@ -147,6 +149,14 @@ export interface AffixGraft {
   readonly defId: string
 }
 
+export interface SkillRemoval {
+  readonly sourceInstanceId: string
+  /** 被移除（取代）的目标 skill */
+  readonly targetSkillId: string
+  /** 产出系数 · 集成层据此 + 被移除技能 resource×level 算一次性产出 */
+  readonly ratio: number
+}
+
 export interface ResolveResult {
   /** 一次性产出的资源列表（gain_resource）+ 关内成长后本次 fire 等效产出（add/multiply 复合）*/
   resourceProduced: ResourceProduction[]
@@ -165,6 +175,8 @@ export interface ResolveResult {
   skillUpgrades: SkillUpgrade[]
   /** 申请的词条嫁接（由 caller equip 到 host + 更新 v2Ids）*/
   affixGrafts: AffixGraft[]
+  /** 申请的「本场移除」技能（consume_skill）· 由 caller mark consumed + 注入产出 + 派发 on_removed */
+  skillsRemoved: SkillRemoval[]
   /** 因 rate limit 被丢弃的 fire_target 次数（telemetry 用）*/
   rateLimitedFireTargets: number
 }
@@ -179,6 +191,7 @@ function freshResult(): ResolveResult {
     skillsGranted: [],
     skillUpgrades: [],
     affixGrafts: [],
+    skillsRemoved: [],
     rateLimitedFireTargets: 0,
   }
 }
@@ -447,7 +460,77 @@ function resolveInto(spec: EffectSpec, ctx: ResolveContext, result: ResolveResul
       })
       return
     }
+
+    case 'consume_skill': {
+      // 取代：selector 展开 → 同词内候选（集成层 resolveSelector 已排除宿主自身 + 本场已 consumed）
+      const candidates = ctx.resolveSelector
+        ? ctx.resolveSelector(spec.selector, ctx.skillId, ctx.key)
+        : []
+      if (candidates.length === 0) return
+      // filter AND 过滤（活体 skill · resource/rarity/tag）；缺省 = 不过滤
+      const uniq = [...new Set(candidates)]
+      const matches = spec.filter
+        ? uniq.filter(id => matchLiveSkill(id, spec.filter!))
+        : uniq
+      if (matches.length === 0) return
+      // 命中多个随机取 1 · 实际移除 + 产出 + on_removed 派发由集成层执行
+      const targetSkillId = matches[Math.floor(random() * matches.length)]
+      result.skillsRemoved.push({
+        sourceInstanceId: ctx.instanceId,
+        targetSkillId,
+        ratio: spec.ratio,
+      })
+      return
+    }
   }
+}
+
+/**
+ * 活体 skill × SkillFilter AND 求值（consume_skill 用）·
+ * 维度：resource（any-of）/ excludeResource（none-of）/ rarity（精确或区间）/
+ *       hasTag · allTags · excludeTag（按该 skill v2Ids 各 def.section 组成的 own-tag 集匹配）。
+ * notOwned / classFilter / neighborPosRel / hasTagFromHost 在此场景无意义，忽略。
+ */
+function matchLiveSkill(skillId: string, filter: SkillFilter): boolean {
+  const sk = gameState.affixSkills.get(skillId)
+  if (!sk) return false
+
+  if (filter.resource !== undefined) {
+    const want = Array.isArray(filter.resource) ? filter.resource : [filter.resource]
+    if (!want.includes(sk.resource)) return false
+  }
+  if (filter.excludeResource !== undefined) {
+    const not = Array.isArray(filter.excludeResource) ? filter.excludeResource : [filter.excludeResource]
+    if (not.includes(sk.resource)) return false
+  }
+  if (filter.rarity !== undefined) {
+    const r = sk.rarity ?? 0
+    if (typeof filter.rarity === 'number') {
+      if (r !== filter.rarity) return false
+    } else {
+      if (filter.rarity.min !== undefined && r < filter.rarity.min) return false
+      if (filter.rarity.max !== undefined && r > filter.rarity.max) return false
+    }
+  }
+  if (filter.hasTag !== undefined || (filter.allTags && filter.allTags.length > 0) || filter.excludeTag !== undefined) {
+    const sections = new Set<string>()
+    for (const defId of sk.v2Ids ?? []) {
+      const def = getAffixV2Definition(defId)
+      if (def) sections.add(def.section)
+    }
+    if (filter.hasTag !== undefined) {
+      const wants = Array.isArray(filter.hasTag) ? filter.hasTag : [filter.hasTag]
+      if (!wants.some(t => sections.has(t))) return false
+    }
+    if (filter.allTags && filter.allTags.length > 0) {
+      if (!filter.allTags.every(t => sections.has(t))) return false
+    }
+    if (filter.excludeTag !== undefined) {
+      const nots = Array.isArray(filter.excludeTag) ? filter.excludeTag : [filter.excludeTag]
+      if (nots.some(t => sections.has(t))) return false
+    }
+  }
+  return true
 }
 
 // ============================================
