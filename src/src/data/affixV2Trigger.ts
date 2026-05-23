@@ -26,6 +26,8 @@ export interface FireFilter {
   readonly stack_state?: 'full' | 'partial'
   /** 来源 skill 稀有度（= V2 词条数量 0-3）· 精确匹配，复合范围交由 composite */
   readonly rarity?: number
+  /** 来源 skill 是否为当前焦点（MARK）· true = 仅焦点击发时命中（="使用MARK技能时"）*/
+  readonly marked?: boolean
 }
 
 // ===== WindowPattern (Phase 2 · on_window_mode) =====
@@ -56,6 +58,12 @@ export type Phase1TriggerSpec =
   | { type: 'every_n_keys'; n: number }
   /** scope 内某个 skill 获得极速时触发 · 默认 scope=self */
   | { type: 'on_haste_granted'; scope?: TargetSelector }
+  /** scope 内某个 skill 成为焦点（获得 MARK）时触发 · 默认 scope=self ·
+   *  reactive build-around：无 apply_mark 源时永不触发（与 on_haste_granted 同纪律）*/
+  | { type: 'on_mark_granted'; scope?: TargetSelector }
+  /** scope 内某个 skill 失去焦点（MARK 被改指/清除）时触发 · 默认 scope=self ·
+   *  单焦点 re-aim 时旧焦点必被剥夺 → 焦点交接 payoff · 关末 teardown 不触发（不发事件）*/
+  | { type: 'on_mark_lost'; scope?: TargetSelector }
   /** 每场战斗开始触发一次 · 旧 innate 的 V2 等价物 */
   | { type: 'on_battle_start' }
   /** 每场战斗结束触发一次 · result 决定哪类结局触发（缺省 'win'）·
@@ -139,6 +147,12 @@ export type TargetSelector =
   | { type: 'all_skills'; pick?: 'all' | 'random' }
   /** 当前处于极速状态（haste 层数 ≥ 1）的技能 · 运行时动态 */
   | { type: 'hasted'; pick?: 'all' | 'random' }
+  /**
+   * 当前焦点技能（MARK 单焦点寄存器 · 0/1 个）· 运行时动态。
+   * 解析为当前被标记的那个技能（无焦点 → 空集）· 与 hasted 同纪律（装备态/预览返空）。
+   * 作 effect scope = "作用于焦点"；与 Tier-2 射程内优先互补（详 affixV2State.setFocus）。
+   */
+  | { type: 'marked'; pick?: 'all' | 'random' }
   /** 指定稀有度（= V2 词条数量 0-3）的技能 · 精确匹配，复合范围交由 composite */
   | { type: 'matched_rarity'; rarity: number; pick?: 'all' | 'random' }
   /**
@@ -319,6 +333,9 @@ export type EffectSpec =
    * **不** 推进 word.index；每关重置。
    */
   | { kind: 'grant_haste'; selector: TargetSelector; amount: number }
+  /** MARK 给予：把 selector 解析出的候选随机取 1 个设为全局焦点（单焦点寄存器，new 顶 old）·
+   *  无数值 · 收益是被标记技能被其它取对象效果优先选中（Tier-2 射程内优先 + marked scope 显式触达）*/
+  | { kind: 'apply_mark'; selector: TargetSelector }
 
   /**
    * 多 effect 顺序执行（加算层 → 乘算层 → 一次性产出 的顺序结算）

@@ -25,6 +25,9 @@ export interface GameEvents {
   'haste:granted': { skillId: string; amount: number; sourceInstanceId: string }
   // V2 极速消耗事件（玩家按下绑定键消耗 1 层成功后发射）
   'haste:consumed': { skillId: string; sourceKey: string }
+  // V2 MARK 焦点事件（setFocus 单焦点寄存器改指/清除时发射；on_mark_granted / on_mark_lost 反应链用）
+  'mark:granted': { skillId: string; sourceInstanceId: string }
+  'mark:lost': { skillId: string; sourceInstanceId: string }
 
   // 效果队列事件
   'effect:queued': { effect: unknown; queueSize: number }

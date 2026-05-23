@@ -9,7 +9,7 @@
 
 import type { AffixV2Definition } from './affixV2'
 import { registerDynamicAffixV2, TOOL_AFFIX_USES_MIN, TOOL_AFFIX_USES_MAX } from './affixV2'
-import type { TriggerSpec, EffectSpec, FireFilter, AuraModifier, TargetSelector, ScaleByTag, ScaleCountSource, SkillFilter } from './affixV2Trigger'
+import type { TriggerSpec, EffectSpec, AuraModifier, TargetSelector, ScaleByTag, ScaleCountSource, SkillFilter } from './affixV2Trigger'
 import type { ResourceType } from '../core/types'
 import { random, runWithTempSeed } from '../core/seededRandom'
 import type { SectionTag } from './affixTags'
@@ -348,7 +348,18 @@ export interface DevourRecipe {
   readonly ratio: number   // N · 产出 = N × 被移除技能基础产出（其主资源 Lv.N base）
 }
 
-export type AffixV2Recipe = DripRecipe | GrowthRecipe | EscalateRecipe | ChantRecipe | ChainRecipe | ConvertRecipe | MetabolizeRecipe | HasteRecipe | TeachRecipe | ImitateRecipe | SpearMakeRecipe | GazeFollowRecipe | CrackRecipe | CoprophagyRecipe | DevourRecipe
+/** mark 系：apply_mark 给予焦点 · trigger 固定 on_self_fire（"使用本技能时"标记）· scope 随机抽 ·
+ *  0-1 单焦点状态（无叠层 / 无数值）· 收益是焦点技能被其它取对象效果优先选中
+ *  （Tier-2 射程内优先 + marked scope 显式触达）。本身近乎零独立产出，是纯汇聚导向器（build-around 引擎）。*/
+export interface MarkRecipe {
+  readonly kind: 'mark'
+  readonly id: string
+  readonly section: SectionTag
+  readonly name_zh: string
+  readonly name_en: string
+}
+
+export type AffixV2Recipe = DripRecipe | GrowthRecipe | EscalateRecipe | ChantRecipe | ChainRecipe | ConvertRecipe | MetabolizeRecipe | HasteRecipe | TeachRecipe | ImitateRecipe | SpearMakeRecipe | GazeFollowRecipe | CrackRecipe | CoprophagyRecipe | DevourRecipe | MarkRecipe
 
 // ============================================
 // Scope 池 · 加权抽样 · 范围越广越稀有
@@ -381,6 +392,8 @@ const FULL_SCOPE_POOL: readonly ScopeEntry[] = [
   { selector: { type: 'all_skills' },                                          weight: 2 },
   // hasted：场上当前处于极速态（haste 层数 ≥ 1）的技能 · 运行时动态范围 · 与 all_skills 同档稀有
   { selector: { type: 'hasted' },                                              weight: 2 },
+  // marked：当前焦点技能（MARK 单焦点）· 运行时动态 · 让其它效果显式"作用于焦点"（跨段汇聚）· 稀有
+  { selector: { type: 'marked' },                                              weight: 2 },
   // matched_tag：按 section tag 找场上所有挂该 tag 的 affix 所在 skill
   // 每 section 5 weight × 8 sections = 40 total（≈ 15% 命中 matched_tag 抽中）
   ...ALL_SECTION_TAGS.map(tag => ({
@@ -406,7 +419,8 @@ const FULL_SCOPE_POOL: readonly ScopeEntry[] = [
  *  额外纳入 workbench（IN-tray 是 inherit_tags 的签名来源）。其余沿用 FULL_SCOPE_POOL 权重。*/
 const INHERIT_TAGS_SOURCE_POOL: readonly ScopeEntry[] = [
   { selector: { type: 'workbench' }, weight: 25 },
-  ...FULL_SCOPE_POOL.filter(e => e.selector.type !== 'self' && e.selector.type !== 'hasted'),
+  // 排除 self/hasted（no-op）+ marked（继承运行时单焦点的 tag 语义糊且 resolveSourceScope 返空 → 死 roll）
+  ...FULL_SCOPE_POOL.filter(e => e.selector.type !== 'self' && e.selector.type !== 'hasted' && e.selector.type !== 'marked'),
 ]
 
 /** scale-by-tag 的 scope 池 · 决定 scale 计数的范围（"仅监听 scope 内的同 tag 词条数"）·
@@ -790,6 +804,22 @@ export function rollAffixV2Spec(
       ratio: recipe.ratio,
       filter: rollDevourFilter(),
     }
+  } else if (recipe.kind === 'mark') {
+    // mark 给予：trigger 随机抽（沿用 triggerEntry.spec）· 但排除高频 trigger（freq > 100 = 每键/每2键/每3键）——
+    // 单焦点 + apply_mark 每次 resolve 随机取 1 目标，高频会让焦点每键乱跳（无意义）且狂刷
+    // mark:granted/lost 反应链（与 chain 防派发洪水同纪律）。
+    // scope 靠抽（FULL_SCOPE_POOL，含 self）· 排除 marked 自身（标记当前焦点 = no-op/自指）·
+    // **不**注入 pick='random'：单焦点选择由 effect 层 apply_mark 自行随机取 1（绕过 Tier-2 焦点优先，否则焦点永不移动）。
+    let curFreq = triggerEntry.freq
+    let retries = 8
+    while (curFreq > 100 && retries-- > 0) {
+      const retry = pickTrigger(recipe.section, recipe.kind)
+      triggerSpec = retry.spec
+      curFreq = retry.freq
+    }
+    const markScopePool = FULL_SCOPE_POOL.filter(s => s.selector.type !== 'marked')
+    const sel = pickGatedScope(markScopePool, recipe.kind)
+    effect = { kind: 'apply_mark', selector: sel }
   } else {
     throw new Error(`unsupported recipe kind: ${(recipe as { kind: string }).kind}`)
   }
@@ -1081,6 +1111,18 @@ export const RECIPE_GAZE_FOLLOW: GazeFollowRecipe = {
   name_en: 'gaze-follow',
 }
 
+/** 指向性搔抓 directed-scratch（gesture · §2.1.8）· mark 给予 ·
+ *  行为学：在自己身上搔一处向理毛伙伴示意"理我这儿" = 指涉性手势的字面形态 →
+ *  机制为"把所指物设为全场焦点，其它取对象效果优先汇聚"。gesture 段首个 live recipe。
+ *  纯汇聚导向器：单独几乎零产出，价值全来自 build 里别的有向效果（chain/aura/haste/redirect）被它拢到一处。*/
+export const RECIPE_DIRECTED_SCRATCH: MarkRecipe = {
+  kind: 'mark',
+  id: 'directed_scratch',
+  section: 'gesture',
+  name_zh: '指向性搔抓',
+  name_en: 'directed scratch',
+}
+
 /** 暂时全部 recipe 列表（生成 shop 选项时遍历此）*/
 export const ALL_RECIPES: readonly AffixV2Recipe[] = [
   RECIPE_FEED,
@@ -1104,6 +1146,7 @@ export const ALL_RECIPES: readonly AffixV2Recipe[] = [
   RECIPE_IMITATE,
   RECIPE_SPEAR_MAKE,
   RECIPE_GAZE_FOLLOW,
+  RECIPE_DIRECTED_SCRATCH,
 ]
 
 /** drink(convert) 以这些资源为 source 时降权 · time/gold 转化收益偏强，降低出率 */

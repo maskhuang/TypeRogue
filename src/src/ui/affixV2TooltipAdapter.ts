@@ -170,6 +170,9 @@ function formatSelector(sel: TargetSelector): string {
     case 'hasted':            return zh
       ? `处于极速状态的技能${pickSuffix}`
       : `skills with haste${pickSuffix}`
+    case 'marked':            return zh
+      ? `当前焦点技能${pickSuffix}`
+      : `the focused skill${pickSuffix}`
     case 'matched_rarity':    return zh
       ? `${locRarity(sel.rarity)}技能${pickSuffix}`
       : `${locRarity(sel.rarity)} skills${pickSuffix}`
@@ -330,6 +333,11 @@ export function formatEffectDescription(effect: EffectSpec, skillResource?: stri
         ? `给 ${formatSelector(effect.selector)} +${n} 极速`
         : `grant ${formatSelector(effect.selector)} +${n} haste`
     }
+    case 'apply_mark':
+      // 标记：把 selector 选出的技能设为焦点 → 其它取对象效果优先汇聚（无数值）
+      return zh
+        ? `标记 ${formatSelector(effect.selector)} 为焦点（取对象效果优先指向它）`
+        : `mark ${formatSelector(effect.selector)} as focus (targeting effects prefer it)`
     case 'composite':
       return effect.effects.map(e => formatEffectDescription(e, skillResource, defSection, host)).join(zh ? '；' : '; ')
     case 'conditional': {

@@ -75,6 +75,9 @@ function resolveSourceScopeSkillIds(sel: TargetSelector, hostSkillId: string, ho
     case 'hasted':
       // 极速态 = 战斗运行时（_hasteBySkill），本模块刻意不依赖；继承语义也不挂靠极速 → 返空
       return []
+    case 'marked':
+      // 焦点 = 战斗运行时单焦点；继承语义不挂靠焦点（INHERIT_TAGS_SOURCE_POOL 已排除 marked）→ 返空
+      return []
   }
 }
 

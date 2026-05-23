@@ -27,6 +27,8 @@ import {
   hookOnBattleStart,
   hookOnBattleEnd,
   hookOnHasteGranted,
+  hookOnMarkGranted,
+  hookOnMarkLost,
   hookOnResourceConsumed,
   hookOnRemoved,
   listAllEquipped,
@@ -34,7 +36,7 @@ import {
   chargeToolAffixUses,
   type SourcedResult,
 } from './affixV2Equipped'
-import { listActiveAuras, peekInstanceState, getSkillCumBase, getSkillCumFactor, getFireTargetWaitMs, tryFireTargetQuota, consumeHasteOne, getHaste, markSkillConsumed, isSkillConsumed } from './affixV2State'
+import { listActiveAuras, peekInstanceState, getSkillCumBase, getSkillCumFactor, getFireTargetWaitMs, tryFireTargetQuota, consumeHasteOne, getHaste, markSkillConsumed, isSkillConsumed, getFocus, isFocused } from './affixV2State'
 import { BASE_VALUES, createSkillRuntimeState } from '../data/affixes'
 import { getAscendBaseScale } from '../data/affixTrigger'
 import { triggerSkill, recordSkillTrigger } from './skills'
@@ -242,6 +244,36 @@ function applySkillConsume(targetSkillId: string, ratio: number, sourceKey: stri
   dispatchSkillRemoved(targetSkillId)
 }
 
+// MARK 焦点反应链 re-entrancy 防护（深度 1）：
+// on_mark_granted / on_mark_lost 的 effect 若自身又 apply_mark 改指焦点，
+// 其引发的 mark:granted/lost 不再二次派发反应链 —— 杜绝 mark→react→mark→… 无限链
+// （与 on_resource_consumed / on_removed 同纪律）。焦点 lost+granted 成对发射时为顺序（非嵌套），各跑一次。
+let _inMarkReaction = false
+
+/** 派发 on_mark_granted（深度 1 限流）· 新焦点 skill 上/scope 内的 on_mark_granted 词条触发一次 */
+function dispatchMarkGranted(skillId: string): void {
+  if (_inMarkReaction) return
+  _inMarkReaction = true
+  try {
+    const results = hookOnMarkGranted(skillId, defaultResourceLv1Base, defaultGetPlayerResource, Date.now())
+    processV2Results(results)
+  } finally {
+    _inMarkReaction = false
+  }
+}
+
+/** 派发 on_mark_lost（深度 1 限流）· 旧焦点 skill 上/scope 内的 on_mark_lost 词条触发一次 */
+function dispatchMarkLost(skillId: string): void {
+  if (_inMarkReaction) return
+  _inMarkReaction = true
+  try {
+    const results = hookOnMarkLost(skillId, defaultResourceLv1Base, defaultGetPlayerResource, Date.now())
+    processV2Results(results)
+  } finally {
+    _inMarkReaction = false
+  }
+}
+
 /** 派发 on_removed 死亡回响（深度 1 限流）· 被移除 skill 上的 on_removed 词条触发一次 */
 function dispatchSkillRemoved(skillId: string): void {
   if (_inRemovalReaction) return
@@ -397,6 +429,13 @@ function resolveSelectorToSkillIds(
       break
     }
 
+    case 'marked': {
+      // 单焦点寄存器：当前焦点（0/1 个）· consumed 由下方统一过滤
+      const focus = getFocus()
+      if (focus !== null) candidates.push(focus)
+      break
+    }
+
     case 'matched_rarity': {
       for (const [sid, sk] of state.affixSkills) {
         if (sk.rarity === sel.rarity) candidates.push(sid)
@@ -427,6 +466,11 @@ function resolveSelectorToSkillIds(
   // pick === 'random' 时返回随机 1 个；self 已提前 return，不会进这里
   const pick = (sel as { pick?: string }).pick
   if (pick === 'random' && candidates.length > 0) {
+    // MARK Tier-2「射程内优先」：焦点落在本 selector 候选内时，随机 pick 锁定焦点（射程不变，
+    // 仅在够得着时把随机收敛到焦点）· 焦点不在候选内 → 照常随机。marked selector 自身仅 0/1 候选，
+    // 命中焦点即返回，无副作用。
+    const focus = getFocus()
+    if (focus !== null && candidates.includes(focus)) return [focus]
     return [candidates[Math.floor(Math.random() * candidates.length)]]
   }
   return candidates
@@ -454,6 +498,7 @@ function selectorMatchesSkill(
     }
     case 'all_skills':        return true
     case 'hasted':            return getHaste(targetSkillId) > 0
+    case 'marked':            return isFocused(targetSkillId)
     case 'matched_rarity':    return state.affixSkills.get(targetSkillId)?.rarity === sel.rarity
     case 'workbench':         return state.player.inbox.includes(targetSkillId)
     case 'same_word': {
@@ -532,6 +577,15 @@ export function wireV2BattleIntegration(): void {
   // grant_haste → on_haste_granted → grant_haste 自循环按 4/sec 节奏持续运行，链不中断
   eventBus.on('haste:granted', ({ skillId, sourceInstanceId }) => {
     scheduleHasteGrantedDispatch(sourceInstanceId, skillId)
+  })
+
+  // mark:granted / mark:lost → 触发 on_mark_granted / on_mark_lost 类 V2 affix（scope 内含变更 skillId）
+  // 深度 1 反应链限流（dispatchMark*），关末 reset 清焦点时不发事件故不触发 on_mark_lost
+  eventBus.on('mark:granted', ({ skillId }) => {
+    dispatchMarkGranted(skillId)
+  })
+  eventBus.on('mark:lost', ({ skillId }) => {
+    dispatchMarkLost(skillId)
   })
 
   // 注：on_key 与 on_skill_fire 不通过 eventBus，需 in-line 调用

@@ -32,6 +32,7 @@ import {
   addSkillCumBase,
   addSkillCumFactor,
   grantHaste,
+  setFocus,
 } from './affixV2State'
 import { random } from '../core/seededRandom'
 import { getCandidatePool, widenSkillFilter, spawnSkillFromSeed, filterByNeighborPosRel } from './affixV2SkillFilter'
@@ -306,6 +307,17 @@ function resolveInto(spec: EffectSpec, ctx: ResolveContext, result: ResolveResul
       for (const tid of targets) {
         grantHaste(tid, spec.amount, ctx.instanceId)
       }
+      return
+    }
+
+    case 'apply_mark': {
+      // 单焦点：selector 展开候选 → 随机取 1 个设为焦点（setFocus 内含 new-顶-old + mark 事件）·
+      // 注意：apply_mark 的 selector **不**注入 pick='random'（见 generator），故这里拿到全候选自行随机取，
+      // 避免 resolveSelectorToSkillIds 的 Tier-2「焦点优先」把选择反噬回当前焦点（导致焦点永不移动）。
+      const candidates = ctx.resolveSelector?.(spec.selector, ctx.skillId, ctx.key) ?? [ctx.skillId]
+      if (candidates.length === 0) return
+      const target = candidates[Math.floor(random() * candidates.length)]
+      setFocus(target, ctx.instanceId)
       return
     }
 

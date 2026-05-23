@@ -315,6 +315,41 @@ export function grantHaste(skillId: string, amount: number, sourceInstanceId: st
 }
 
 // ============================================
+// MARK 焦点 · 全局单焦点寄存器（0/1 个技能）
+// ============================================
+// 0-1 状态（非叠层）· new 顶 old · 同焦点重标 = no-op · 关末 reset 清空（不发事件）。
+// 收益：焦点技能被其它取对象效果优先选中（Tier-2 射程内优先 · resolveSelectorToSkillIds）
+//       + marked scope 显式触达。本寄存器不带任何数值放大（无 value 层）。
+
+let _focusSkillId: string | null = null
+
+/** 当前焦点技能 id（无焦点 → null）*/
+export function getFocus(): string | null {
+  return _focusSkillId
+}
+
+/** 该 skill 是否为当前焦点 */
+export function isFocused(skillId: string): boolean {
+  return _focusSkillId === skillId
+}
+
+/** 设焦点统一入口（apply_mark 结算调）· 单焦点：new 顶 old ·
+ *  同焦点重标 = no-op（不发事件，故 on_self_fire 反复标自身不会刷 lost/granted）·
+ *  改指/上位时发 mark:lost(旧焦点) + mark:granted(新焦点)，供反应链消费 */
+export function setFocus(skillId: string, sourceInstanceId: string): void {
+  if (_focusSkillId === skillId) return
+  const prev = _focusSkillId
+  _focusSkillId = skillId
+  if (prev) eventBus.emit('mark:lost', { skillId: prev, sourceInstanceId })
+  eventBus.emit('mark:granted', { skillId, sourceInstanceId })
+}
+
+/** 清空焦点（战斗 reset 用）· 不发事件——关末 teardown 不触发 on_mark_lost */
+export function clearFocus(): void {
+  _focusSkillId = null
+}
+
+// ============================================
 // 本场被移除技能 · consume_skill（取代）的「本场移除」集
 // ============================================
 // for-the-fight 移除：被取代的技能本场不再击发 / 不可被选中 / 不可再被取代，
@@ -353,4 +388,5 @@ export function resetAllAffixV2State(): void {
   clearSkillAggregates()
   clearAllHaste()
   clearConsumedSkills()
+  clearFocus()
 }

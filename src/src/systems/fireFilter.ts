@@ -15,6 +15,7 @@ import { hasRelation } from '../data/keyboardTopology'
 import { hasTag, type FireEvent } from './tagQuery'
 import { state } from '../core/state'
 import { skillHasEffectiveTag } from './affixV2InheritedTags'
+import { isFocused } from './affixV2State'
 
 // re-export 方便调用方一站式 import
 export type { FireFilter, FireEvent }
@@ -82,6 +83,11 @@ export function matchFireFilter(
   if (filter.rarity !== undefined) {
     const srcRarity = state.affixSkills.get(event.sourceSkillId)?.rarity
     if (srcRarity !== filter.rarity) return false
+  }
+
+  // ── marked 维度（来源 skill 是否为当前焦点）· "使用MARK技能时" = filter.marked===true ──
+  if (filter.marked !== undefined) {
+    if (isFocused(event.sourceSkillId) !== filter.marked) return false
   }
 
   return true

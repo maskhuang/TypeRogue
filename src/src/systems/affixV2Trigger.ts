@@ -41,6 +41,8 @@ export interface TriggerContext {
   readonly isWordEnd?: boolean
   /** 获得极速的目标 skillId（on_haste_granted 用 · scope 匹配在 hook 层做）*/
   readonly grantedSkillId?: string
+  /** 焦点变更涉及的 skillId（on_mark_granted=新焦点 / on_mark_lost=旧焦点 · scope 匹配在 hook 层做）*/
+  readonly markedSkillId?: string
   /** 本次被消耗的资源类型（on_resource_consumed 用）*/
   readonly consumedResource?: string
 }
@@ -88,6 +90,11 @@ export function evaluateTrigger(spec: TriggerSpec, ctx: TriggerContext): boolean
     case 'on_haste_granted':
       // hook 层已保证 scope 匹配；evaluator 只校验 context 完整
       return ctx.grantedSkillId !== undefined
+
+    case 'on_mark_granted':
+    case 'on_mark_lost':
+      // hook 层已保证 scope 匹配（含 granted/lost 区分）；evaluator 只校验 context 完整
+      return ctx.markedSkillId !== undefined
 
     case 'on_battle_start':
       // hook 层（hookOnBattleStart）已保证调用时机；恒命中
