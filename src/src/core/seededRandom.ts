@@ -77,6 +77,21 @@ export function setNormalMode(): void {
 }
 
 /**
+ * 用一个隔离的种子流临时替换全局 random() 跑一段逻辑，结束后**精确还原**之前的 _rng。
+ * 用于标定 / 离线采样：不消耗、不扰动 gameplay 的随机序列（无论当前处普通还是种子模式）。
+ */
+export function runWithTempSeed<T>(seed: number, fn: () => T): T {
+  const prev = _rng
+  const sr = new SeededRandom(seed)
+  _rng = () => sr.next()
+  try {
+    return fn()
+  } finally {
+    _rng = prev
+  }
+}
+
+/**
  * 种子化洗牌 — Fisher-Yates shuffle（不修改原数组）
  */
 export function seededShuffle<T>(arr: readonly T[], rng: SeededRandom): T[] {

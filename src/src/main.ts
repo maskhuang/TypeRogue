@@ -42,6 +42,7 @@ import { initFullTutorial } from './systems/tutorial/tutorialInit';
 import { A8_WORD_COMPRESS_RATIO } from './core/constants';
 import { initShopPreview } from './ui/shopPreview';
 import { wireV2BattleIntegration } from './systems/affixV2BattleIntegration';
+import { warmupHasteBudget } from './data/affixV2Generator';
 import { renderHandbook } from './ui/handbook/handbookOverlay';
 
 // 模块级引用，让 updateMenuInfo 能拿到 metaState
@@ -78,6 +79,9 @@ async function init(): Promise<void> {
 
   // V2 affix 战斗集成 · 订阅 battle:start / word:complete · 装配登记表为空时 no-op
   wireV2BattleIntegration();
+
+  // 加载期预热极速供需预算标定（确定性、幂等）· 避免首次生成词条时同步掉帧
+  warmupHasteBudget();
 
   if (IS_DEMO) {
     // === Demo 模式：精简初始化 ===

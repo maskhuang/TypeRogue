@@ -461,6 +461,13 @@ function countScaleSource(source: ScaleCountSource, scope: TargetSelector | unde
       }
       return n
     }
+    case 'hasted': {
+      // 场上当前极速技能数 · 复用战斗态 hasted selector 解析 · 全局计数，与 scope 无关
+      const ids = ctx.resolveSelector
+        ? ctx.resolveSelector({ type: 'hasted' }, ctx.skillId, ctx.key)
+        : []
+      return new Set(ids).size
+    }
   }
 }
 

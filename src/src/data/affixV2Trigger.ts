@@ -89,6 +89,8 @@ export type ScaleCountSource =
   | { readonly by: 'rarity'; readonly rarity: number }
   /** 空位：与宿主键位成该 posRel 关系的空键位（无技能绑定）数 · 不使用 scope */
   | { readonly by: 'empty'; readonly posRel: PositionRelation }
+  /** 极速：场上当前处于极速态（haste 层数 ≥ 1）的技能数 · 运行时动态 · 全局计数，不使用 scope */
+  | { readonly by: 'hasted' }
 
 export type ScaleByTag =
   | {

@@ -242,6 +242,8 @@ function scaleSourceUnit(source: ScaleCountSource): string {
       return zh ? `${locRarity(source.rarity)}技能` : `${locRarity(source.rarity)} skill`
     case 'empty':
       return zh ? `「${locRel(source.posRel)}」空位` : `${locRel(source.posRel)} empty slot`
+    case 'hasted':
+      return zh ? `极速技能` : `hasted skill`
   }
 }
 

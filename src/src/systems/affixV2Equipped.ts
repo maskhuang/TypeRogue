@@ -71,7 +71,8 @@ function collectSkillIdsForScope(
     case 'all_skills':
       return [...gameState.affixSkills.keys()]
     case 'hasted':
-      // 极速状态查询需 affixV2State.getHaste；保留 stub，hasted 不进 generator 池
+      // 装备态/预览无战斗态，无法判定极速 · effect 目标解析走 _selectorResolver（战斗态），不经此 stub；
+      // 此处仅 scale-tag 计数会调用，而 SCALE_SCOPE_POOL 不含 hasted → 返空安全
       return []
   }
 }
@@ -94,6 +95,7 @@ export function previewCountScaleSource(
     }
     return n
   }
+  if (source.by === 'hasted') return null   // 极速数运行时动态 · 预览无战斗态 → 只显规则不显数
   const sc: TargetSelector = scope ?? { type: 'all_skills' }
   if (sc.type === 'self' || sc.type === 'hasted') return null
   if (sc.type === 'neighbors' && (hostSkillId === undefined || hostKey === undefined)) return null

@@ -11,7 +11,7 @@ import type { AffixV2Definition } from './affixV2'
 import { registerDynamicAffixV2, TOOL_AFFIX_USES_MIN, TOOL_AFFIX_USES_MAX } from './affixV2'
 import type { TriggerSpec, EffectSpec, FireFilter, AuraModifier, TargetSelector, ScaleByTag, ScaleCountSource, SkillFilter } from './affixV2Trigger'
 import type { ResourceType } from '../core/types'
-import { random } from '../core/seededRandom'
+import { random, runWithTempSeed } from '../core/seededRandom'
 import type { SectionTag } from './affixTags'
 import { PositionRelation } from './keyboardTopology'
 
@@ -43,9 +43,9 @@ const POSREL_VALUES = [
 // 二级抽样 trigger · 先大类（on_fire vs non-on-fire 50/50）再细分
 // ============================================
 
-/** 顶层：50% on_fire 家族 / 50% 非 fire（on_word_end / on_key / every_n_keys）*/
-function pickTrigger(section: SectionTag): TriggerEntry {
-  return random() < 0.5 ? pickOnFireTrigger(section) : pickNonFireTrigger()
+/** 顶层：50% on_fire 家族 / 50% 非 fire（on_word_end / on_key / every_n_keys）· kind 用于 on_haste_granted 需求门控 */
+function pickTrigger(section: SectionTag, kind: string): TriggerEntry {
+  return random() < 0.5 ? pickOnFireTrigger(section) : pickNonFireTrigger(kind)
 }
 
 /** on_fire 家族（含 on_self_fire）· 6 子类等权 · 子类内随机参数 */
@@ -85,18 +85,18 @@ function pickOnFireTrigger(section: SectionTag): TriggerEntry {
   }
 }
 
-/** 非 fire · 3 子类等权 · every_n_keys 含 N=1 等同 on_key · on_haste_granted 含随机 scope */
-function pickNonFireTrigger(): TriggerEntry {
+/** 非 fire · on_word_end / every_n_keys / on_haste_granted · on_haste_granted 受需求门控（被关掉则回退 every_n_keys）*/
+function pickNonFireTrigger(kind: string): TriggerEntry {
   const r = random()
   if (r < 1 / 3) return { spec: { type: 'on_word_end' }, freq: 30 }
-  if (r < 2 / 3) {
-    // every_n_keys · N ∈ [1, 30] 随机；N=1 即每次击键
+  if (r < 2 / 3 || !admitDemand(kind)) {
+    // every_n_keys · N ∈ [1, 30] 随机；N=1 即每次击键（也承接 on_haste_granted 被门控掉的回退）
     const n = Math.floor(random() * (EVERY_N_MAX - EVERY_N_MIN + 1)) + EVERY_N_MIN
     return { spec: { type: 'every_n_keys', n }, freq: 300 / n }
   }
   // on_haste_granted · scope 加权随机（self 偏多，wide scope 稀有）·
   // freq 经验值 ~20（依赖场上是否有 grant_haste 源；非 fire 系列里频率粗估）
-  const scope = pickWeightedScope(FULL_SCOPE_POOL).selector
+  const scope = pickGatedScope(FULL_SCOPE_POOL, kind)
   return { spec: { type: 'on_haste_granted', scope }, freq: 20 }
 }
 
@@ -109,19 +109,21 @@ const CHANT_TAG_PER_N_MIN = 2
 const CHANT_TAG_PER_N_MAX = 4
 const CHANT_TAG_COUNT_FACTOR = 0.1
 
-/** 抽 scale 计数来源（变体）· 词条 50% / 资源 20% / 稀有度 15% / 空位 15%。
- *  资源用宿主资源（"数同资源技能"，无则随机）；稀有度 0-3 随机；空位随机锁 posRel。 */
-function pickScaleSource(section: SectionTag, skillResource?: ResourceType): ScaleCountSource {
+/** 抽 scale 计数来源（变体）· 词条 50% / 资源 18% / 稀有度 14% / 极速 8% / 空位 10%。
+ *  资源用宿主资源（"数同资源技能"，无则随机）；稀有度 0-3 随机；极速数全局动态；空位随机锁 posRel。
+ *  by:'hasted' 受需求门控——被关掉则回退 empty（非极速来源）。 */
+function pickScaleSource(section: SectionTag, skillResource?: ResourceType, kind?: string): ScaleCountSource {
   const roll = random()
   if (roll < 0.50) return { by: 'tag', tag: section }
-  if (roll < 0.70) return { by: 'resource', resource: skillResource ?? pickRandom(MATCHED_RESOURCE_POOL) }
-  if (roll < 0.85) return { by: 'rarity', rarity: Math.floor(random() * 4) }
+  if (roll < 0.68) return { by: 'resource', resource: skillResource ?? pickRandom(MATCHED_RESOURCE_POOL) }
+  if (roll < 0.82) return { by: 'rarity', rarity: Math.floor(random() * 4) }
+  if (roll < 0.90 && admitDemand(kind)) return { by: 'hasted' }
   return { by: 'empty', posRel: pickRandom(POSREL_VALUES) }
 }
 
-/** 给定 source 选 scope：empty 用自身 posRel（top-level scope 留空）；其余从 SCALE_SCOPE_POOL 抽。 */
+/** 给定 source 选 scope：empty 用自身 posRel、hasted 全局数极速技能（均 top-level scope 留空）；其余从 SCALE_SCOPE_POOL 抽。 */
 function pickScaleScope(source: ScaleCountSource): TargetSelector | undefined {
-  return source.by === 'empty' ? undefined : pickWeightedScope(SCALE_SCOPE_POOL).selector
+  return (source.by === 'empty' || source.by === 'hasted') ? undefined : pickWeightedScope(SCALE_SCOPE_POOL).selector
 }
 
 /**
@@ -132,10 +134,11 @@ function pickScaleScope(source: ScaleCountSource): TargetSelector | undefined {
 function pickChantScale(
   modifierType: AuraModifier['type'],
   section: SectionTag,
+  kind: string,
 ): ScaleByTag | undefined {
   if (modifierType === 'rainbow') return undefined
   if (random() >= CHANT_SCALE_PROBABILITY) return undefined
-  const source = pickScaleSource(section)
+  const source = pickScaleSource(section, undefined, kind)
   const scope = pickScaleScope(source)
   if (modifierType === 'multi_fire_add') {
     const perN = Math.floor(random() * (CHANT_TAG_PER_N_MAX - CHANT_TAG_PER_N_MIN + 1)) + CHANT_TAG_PER_N_MIN
@@ -303,7 +306,8 @@ const FULL_SCOPE_POOL: readonly ScopeEntry[] = [
   { selector: { type: 'neighbors', posRel: PositionRelation.SameRow },          weight: 5 },
   { selector: { type: 'neighbors', posRel: PositionRelation.SameHand },         weight: 3 },
   { selector: { type: 'all_skills' },                                          weight: 2 },
-  // 注：hasted scope 不进 generator 池（运行时动态范围，过于条件化，作者化使用）
+  // hasted：场上当前处于极速态（haste 层数 ≥ 1）的技能 · 运行时动态范围 · 与 all_skills 同档稀有
+  { selector: { type: 'hasted' },                                              weight: 2 },
   // matched_tag：按 section tag 找场上所有挂该 tag 的 affix 所在 skill
   // 每 section 5 weight × 8 sections = 40 total（≈ 15% 命中 matched_tag 抽中）
   ...ALL_SECTION_TAGS.map(tag => ({
@@ -374,15 +378,111 @@ function pickRandom<T>(arr: readonly T[]): T {
   return arr[Math.floor(random() * arr.length)]
 }
 
+// ============================================
+// 极速供需预算（方案 B2 · 启动标定 + 需求门控）
+// ============================================
+// 不变式：给予极速（供给 S，产 grant_haste）始终略高于涉及极速（需求 D，读取极速却不产出）。
+// 做法：首次生成时用一条隔离种子流离线 roll 海量 spec，实测当前生成器的 S 与原始需求率 D_raw，
+//       解出门控概率 _demandGate，使运行时需求 ≈ S × RATIO < S。
+// 因为 S/D_raw 是**实测**而非解析，加任何 recipe/trigger/scope 都被下次标定自动吸收 —— 无需维护修正常数。
+// 登记纪律：① classifyHaste 须能认出每个极速消费特征；② 产 grant_haste 的 recipe.kind 须进 HASTE_GRANT_KINDS。
+
+const HASTE_DEMAND_RATIO = 0.85          // 需求 = 供给 × 此值；S − D = S(1−RATIO) > 0，此即"略高"的旋钮
+const HASTE_CALIB_SAMPLES = 8000         // 标定采样数（一次性、确定性）
+const HASTE_CALIB_SEED = 0x48415354      // "HAST" · 固定种子 → 每会话标定结果一致
+/** 产出 grant_haste 的 recipe.kind · 这些 recipe 的需求特征不门控（保留极速自喂回路） */
+const HASTE_GRANT_KINDS: ReadonlySet<string> = new Set(['haste'])
+
+let _demandGate = 1        // 默认 1（不门控）· 标定后收紧
+let _calibrated = false
+let _calibrating = false   // 标定期间需求全放行，以测原始需求率
+
+/** 遍历 effect 树每个节点（含 composite/conditional/stack_release 子节点）*/
+function walkEffect(e: EffectSpec, visit: (n: EffectSpec) => void): void {
+  visit(e)
+  if (e.kind === 'composite') e.effects.forEach(c => walkEffect(c, visit))
+  else if (e.kind === 'conditional') { walkEffect(e.then, visit); if (e.else) walkEffect(e.else, visit) }
+  else if (e.kind === 'stack_release') walkEffect(e.release, visit)
+}
+function effectGrantsHaste(e: EffectSpec): boolean {
+  let hit = false
+  walkEffect(e, n => { if (n.kind === 'grant_haste') hit = true })
+  return hit
+}
+/** effect 是否读取极速状态：hasted selector（selector/target/from）或 by:'hasted' scale 来源 */
+function effectReferencesHaste(e: EffectSpec): boolean {
+  let hit = false
+  walkEffect(e, n => {
+    const anyN = n as Record<string, unknown>
+    for (const k of ['selector', 'target', 'from'] as const) {
+      const v = anyN[k] as TargetSelector | undefined
+      if (v && typeof v === 'object' && v.type === 'hasted') hit = true
+    }
+    const sc = (n as { scale?: ScaleByTag }).scale
+    if (sc && sc.source.by === 'hasted') hit = true
+  })
+  return hit
+}
+/** 分类一个 spec：grants=产极速（供给）；references=读取极速（on_haste_granted trigger / hasted scope / by:hasted scale）*/
+export function classifyHaste(trigger: TriggerSpec, effect: EffectSpec): { grants: boolean; references: boolean } {
+  return {
+    grants: effectGrantsHaste(effect),
+    references: trigger.type === 'on_haste_granted' || effectReferencesHaste(effect),
+  }
+}
+
+/** 是否放行一次需求特征的发射 · 标定期 / grant recipe 全放行，否则按 _demandGate 掷骰 */
+function admitDemand(kind?: string): boolean {
+  if (_calibrating) return true
+  if (kind !== undefined && HASTE_GRANT_KINDS.has(kind)) return true
+  return random() < _demandGate
+}
+
+/** 惰性标定：实测 S 与 D_raw，解出 _demandGate 使运行时需求 ≈ S × RATIO */
+function ensureHasteCalibrated(): void {
+  if (_calibrated) return
+  _calibrating = true
+  let grants = 0
+  let refsOnly = 0
+  runWithTempSeed(HASTE_CALIB_SEED, () => {
+    for (let i = 0; i < HASTE_CALIB_SAMPLES; i++) {
+      const { trigger, effect } = rollAffixV2Spec(pickRecipeForSkill())
+      if (effectGrantsHaste(effect)) grants++
+      else if (trigger.type === 'on_haste_granted' || effectReferencesHaste(effect)) refsOnly++
+    }
+  })
+  _calibrating = false
+  const S = grants / HASTE_CALIB_SAMPLES
+  const dRaw = refsOnly / HASTE_CALIB_SAMPLES
+  _demandGate = dRaw > 0 ? Math.min(1, Math.max(0, (S * HASTE_DEMAND_RATIO) / dRaw)) : 1
+  _calibrated = true
+}
+
+/** 加载期预热：提前跑极速预算标定，避免首次生成（如进商店）时同步掉帧。幂等。 */
+export function warmupHasteBudget(): void {
+  ensureHasteCalibrated()
+}
+
+/** 抽 effect/trigger 作用域 · 若抽中 hasted 但需求被门控掉，则从去 hasted 的池里重抽 */
+function pickGatedScope(pool: readonly ScopeEntry[], kind: string): TargetSelector {
+  const sel = pickWeightedScope(pool).selector
+  if (sel.type === 'hasted' && !admitDemand(kind)) {
+    return pickWeightedScope(pool.filter(e => e.selector.type !== 'hasted')).selector
+  }
+  return sel
+}
+
 /**
- * 从 recipe 生成一个动态 AffixV2Definition，并注册到运行时索引。
- * 返回 def.id（可塞进 skill.v2Ids）。
- *
+ * 纯 roll：从 recipe 抽出 trigger + effect spec，**不注册**到运行时索引。
+ * generateAffixV2 与极速预算标定共用此函数（标定走它避免污染 def 注册表）。
  * @param skillResource  词条所在技能的资源（convert recipe 用作 source 锚点；其他 recipe 不用）
  */
-export function generateAffixV2(recipe: AffixV2Recipe, skillResource?: ResourceType): string {
+export function rollAffixV2Spec(
+  recipe: AffixV2Recipe,
+  skillResource?: ResourceType,
+): { trigger: TriggerSpec; effect: EffectSpec } {
   // 二级抽样：先 50/50 on_fire vs non-on-fire，再分子类
-  const triggerEntry = pickTrigger(recipe.section)
+  const triggerEntry = pickTrigger(recipe.section, recipe.kind)
 
   let effect: EffectSpec
   let triggerSpec: TriggerSpec = triggerEntry.spec
@@ -393,7 +493,7 @@ export function generateAffixV2(recipe: AffixV2Recipe, skillResource?: ResourceT
     const resource = pickRandom(recipe.resourcePool)
     const withScale = random() < 0.5
     if (withScale) {
-      const source = pickScaleSource(recipe.section, resource)
+      const source = pickScaleSource(recipe.section, resource, recipe.kind)
       effect = { kind: 'gain_resource', resource, ratio, scale: { type: 'count', source, factor: 0.1, scope: pickScaleScope(source) } }
     } else {
       effect = { kind: 'gain_resource', resource, ratio }
@@ -405,15 +505,15 @@ export function generateAffixV2(recipe: AffixV2Recipe, skillResource?: ResourceT
     const ratio = scaleMagnitude(recipe.T, triggerEntry.freq)
     effect = { kind: 'add', ratio }
   } else if (recipe.kind === 'escalate') {
-    const scope = pickWeightedScope(FULL_SCOPE_POOL)
+    const sel = pickGatedScope(FULL_SCOPE_POOL, recipe.kind)
     const amount = scaleMagnitude(recipe.T, triggerEntry.freq)
-    effect = scope.selector.type === 'self'
+    effect = sel.type === 'self'
       ? { kind: 'multiply', amount }
-      : { kind: 'multiply', amount, selector: scope.selector }
+      : { kind: 'multiply', amount, selector: sel }
   } else if (recipe.kind === 'chant') {
     // chant: trigger 固定 passive；scope 与 modifier 加权随机；amount 不按 size 缩放
     triggerSpec = { type: 'passive' }
-    const scope = pickWeightedScope(FULL_SCOPE_POOL)
+    const sel = pickGatedScope(FULL_SCOPE_POOL, recipe.kind)
     // base_add / factor_add 暂无消费端，从随机池剔除（类型仍保留供 handwritten 使用）
     const modifierType = pickRandom([
       'crit_chance_add', 'output_bonus_pct', 'multi_fire_add', 'rainbow',
@@ -428,10 +528,10 @@ export function generateAffixV2(recipe: AffixV2Recipe, skillResource?: ResourceT
     }
     // 30% 概率挂 scale · rainbow 跳过（无 amount 字段，scale 无意义）
     // 曲线：multi_fire_add → per_n（整数步进）；% 类型 → count（连续）· 来源(词条/资源/稀有度/空位)随机
-    const scale = pickChantScale(modifierType, recipe.section)
+    const scale = pickChantScale(modifierType, recipe.section, recipe.kind)
     effect = scale
-      ? { kind: 'apply_aura', selector: scope.selector, modifier, scale }
-      : { kind: 'apply_aura', selector: scope.selector, modifier }
+      ? { kind: 'apply_aura', selector: sel, modifier, scale }
+      : { kind: 'apply_aura', selector: sel, modifier }
   } else if (recipe.kind === 'convert') {
     // convert: scope 固定 self · source 固定为词条所在 skill 资源 · target 随机（必不同）
     const ratio = scaleMagnitude(recipe.T, triggerEntry.freq)
@@ -445,33 +545,35 @@ export function generateAffixV2(recipe: AffixV2Recipe, skillResource?: ResourceT
     let curFreq = triggerEntry.freq
     let retries = 8
     while (curFreq > 100 && retries-- > 0) {
-      const retry = pickTrigger(recipe.section)
+      const retry = pickTrigger(recipe.section, recipe.kind)
       triggerSpec = retry.spec
       curFreq = retry.freq
     }
     const nonSelfScope = FULL_SCOPE_POOL.filter(s => s.selector.type !== 'self')
-    const scope = pickWeightedScope(nonSelfScope)
+    const sel = pickGatedScope(nonSelfScope, recipe.kind)
     // 给 selector 注入 pick='random'
     let selector: TargetSelector
-    switch (scope.selector.type) {
+    switch (sel.type) {
       case 'neighbors':
-        selector = { type: 'neighbors', posRel: scope.selector.posRel, pick: 'random' }
+        selector = { type: 'neighbors', posRel: sel.posRel, pick: 'random' }
         break
       case 'all_skills':
         selector = { type: 'all_skills', pick: 'random' }
         break
       case 'matched_tag':
-        selector = { type: 'matched_tag', tag: scope.selector.tag, pick: 'random' }
+        selector = { type: 'matched_tag', tag: sel.tag, pick: 'random' }
         break
       case 'matched_resource':
-        selector = { type: 'matched_resource', resource: scope.selector.resource, pick: 'random' }
+        selector = { type: 'matched_resource', resource: sel.resource, pick: 'random' }
         break
-      // 注：hasted 不进 generator 池（见 FULL_SCOPE_POOL），故 chain pick 注入无需处理
+      case 'hasted':
+        selector = { type: 'hasted', pick: 'random' }
+        break
       case 'matched_rarity':
-        selector = { type: 'matched_rarity', rarity: scope.selector.rarity, pick: 'random' }
+        selector = { type: 'matched_rarity', rarity: sel.rarity, pick: 'random' }
         break
       default:
-        selector = scope.selector
+        selector = sel
     }
     effect = { kind: 'fire_target', selector }
   } else if (recipe.kind === 'haste') {
@@ -480,12 +582,13 @@ export function generateAffixV2(recipe: AffixV2Recipe, skillResource?: ResourceT
     let curFreq = triggerEntry.freq
     let retries = 16
     while ((curFreq < fmin || curFreq > fmax) && retries-- > 0) {
-      const retry = pickTrigger(recipe.section)
+      const retry = pickTrigger(recipe.section, recipe.kind)
       triggerSpec = retry.spec
       curFreq = retry.freq
     }
-    const scope = pickWeightedScope(FULL_SCOPE_POOL)
-    effect = { kind: 'grant_haste', selector: scope.selector, amount: recipe.amount }
+    // haste 是 grant recipe → pickGatedScope 不门控 hasted（保留"给极速技能再加速"的自喂回路）
+    const sel = pickGatedScope(FULL_SCOPE_POOL, recipe.kind)
+    effect = { kind: 'grant_haste', selector: sel, amount: recipe.amount }
   } else if (recipe.kind === 'imitate') {
     // imitate: trigger 固定 on_battle_end(any) · 胜败都触发
     // filter 仅 neighborPosRel：从 6 种 PositionRelation 随机锁 1 个 · 跨战不变
@@ -550,6 +653,17 @@ export function generateAffixV2(recipe: AffixV2Recipe, skillResource?: ResourceT
   } else {
     throw new Error(`unsupported recipe kind: ${(recipe as { kind: string }).kind}`)
   }
+
+  return { trigger: triggerSpec, effect }
+}
+
+/**
+ * 从 recipe 生成一个动态 AffixV2Definition，并注册到运行时索引。返回 def.id（可塞进 skill.v2Ids）。
+ * 首次调用时惰性标定极速供需预算（见 ensureHasteCalibrated）。
+ */
+export function generateAffixV2(recipe: AffixV2Recipe, skillResource?: ResourceType): string {
+  ensureHasteCalibrated()
+  const { trigger: triggerSpec, effect } = rollAffixV2Spec(recipe, skillResource)
 
   const nonce = random().toString(36).slice(2, 8)
   const id = `gen_${recipe.id}_${nonce}`
