@@ -44,10 +44,16 @@ function resolveSourceScopeSkillIds(sel: TargetSelector, hostSkillId: string, ho
     case 'self':
       return [hostSkillId]
     case 'neighbors': {
+      // 多格宿主：并集所有占位键（与 resolveSelectorToSkillIds / 范围预览同口径）
+      const hostKeys: string[] = []
+      for (const [k, sid] of state.player.bindings) {
+        if (sid === hostSkillId) hostKeys.push(k)
+      }
+      if (hostKeys.length === 0) hostKeys.push(hostKey)
       const out: string[] = []
       for (const [k, sid] of state.player.bindings) {
         if (sid === hostSkillId) continue
-        if (hasRelation(hostKey, k, sel.posRel)) out.push(sid)
+        if (hostKeys.some(hk => hasRelation(hk, k, sel.posRel))) out.push(sid)
       }
       return out
     }

@@ -324,6 +324,13 @@ function fireOneTarget(targetSkillId: string, sourceKey: string): void {
 // Selector 解析（fire_target / aura 用）
 // ============================================
 
+/** 源技能的全部占位键（多格技能含所有格）· 邻位关系并集用 ·
+ *  未绑定时回退到传入的 sourceKey，保证单格 / 边缘情形不空。 */
+function sourceKeysOf(sourceSkillId: string, sourceKey: string): string[] {
+  const keys = getSkillKeys(getBindingState(state), sourceSkillId)
+  return keys.length > 0 ? keys : [sourceKey]
+}
+
 /** 把 TargetSelector 展开为目标 skillId 列表 */
 function resolveSelectorToSkillIds(
   sel: TargetSelector,
@@ -337,10 +344,14 @@ function resolveSelectorToSkillIds(
 
     case 'neighbors': {
       const bindings = state.player.bindings
+      // 多格技能：邻位关系并集所有占位键（与范围预览 / legacy getExtendedNeighbors 同口径）。
+      // 仅用锚点键会漏掉其他格带出的邻位 —— 如 E-R 跨 finger 2/3，从锚点 E 取同指漏掉 R 的同指 T。
+      const srcKeys = sourceKeysOf(sourceSkillId, sourceKey)
       const seen = new Set<string>()
       for (const [key, sid] of bindings) {
         if (sid === sourceSkillId) continue
-        if (hasRelation(sourceKey, key, sel.posRel) && !seen.has(sid)) {
+        if (seen.has(sid)) continue
+        if (srcKeys.some(sk => hasRelation(sk, key, sel.posRel))) {
           seen.add(sid)
           candidates.push(sid)
         }
@@ -433,7 +444,9 @@ function selectorMatchesSkill(
   if (sel.type !== 'self' && isSkillConsumed(targetSkillId)) return false
   switch (sel.type) {
     case 'self':              return targetSkillId === sourceSkillId
-    case 'neighbors':         return targetSkillId !== sourceSkillId && hasRelation(sourceKey, targetKey, sel.posRel)
+    case 'neighbors':
+      return targetSkillId !== sourceSkillId
+        && sourceKeysOf(sourceSkillId, sourceKey).some(sk => hasRelation(sk, targetKey, sel.posRel))
     case 'matched_tag':       return skillHasEffectiveTag(targetSkillId, sel.tag)
     case 'matched_resource': {
       const sk = state.affixSkills.get(targetSkillId)

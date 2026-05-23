@@ -142,13 +142,22 @@ export function filterByNeighborPosRel(
   posRel: PositionRelation,
 ): readonly SkillSeed[] {
   if (!hostKey) return []          // 无 host key 上下文 · 无法计算邻位 · 返空
+  // 多格宿主：并集所有占位键 — 候选任一格与宿主任一格成 posRel 即过
+  const hostSkillId = gameState.player.bindings.get(hostKey)
+  const hostKeys: string[] = []
+  if (hostSkillId) {
+    for (const [k, sid] of gameState.player.bindings) {
+      if (sid === hostSkillId) hostKeys.push(k)
+    }
+  }
+  if (hostKeys.length === 0) hostKeys.push(hostKey)
   return pool.filter(seed => {
     if (!seed.templateSkill) return false
     const targetId = seed.templateSkill.id
-    // 找该 skill 当前绑定到哪些键位 · 任一格与 hostKey 满足 posRel 即过
+    // 找该 skill 当前绑定到哪些键位 · 候选任一格与宿主任一格满足 posRel 即过
     for (const [k, sid] of gameState.player.bindings) {
       if (sid !== targetId) continue
-      if (hasRelation(hostKey, k, posRel)) return true
+      if (hostKeys.some(hk => hasRelation(hk, k, posRel))) return true
     }
     return false
   })

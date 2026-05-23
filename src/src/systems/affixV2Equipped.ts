@@ -45,10 +45,17 @@ function collectSkillIdsForScope(
     case 'self':
       return [sourceSkillId]
     case 'neighbors': {
+      // 多格技能：邻位关系并集所有占位键（与 resolveSelectorToSkillIds / 范围预览同口径）。
+      // 就地收集源技能占位键，避免 import bindingManager 形成循环依赖。
+      const srcKeys: string[] = []
+      for (const [k, sid] of gameState.player.bindings) {
+        if (sid === sourceSkillId) srcKeys.push(k)
+      }
+      if (srcKeys.length === 0) srcKeys.push(sourceKey)
       const out: string[] = []
       for (const [k, sid] of gameState.player.bindings) {
         if (sid === sourceSkillId) continue
-        if (hasRelation(sourceKey, k, scope.posRel)) out.push(sid)
+        if (srcKeys.some(sk => hasRelation(sk, k, scope.posRel))) out.push(sid)
       }
       return out
     }

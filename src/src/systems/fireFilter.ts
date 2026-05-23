@@ -48,8 +48,19 @@ export function matchFireFilter(
   }
 
   // ── posRel 维度（键盘拓扑邻接）──
+  // 多格监听者：并集所有占位键 — 任一格与来源成 posRel 即命中
+  // （与触发源预览 shopWorkbench.getTriggerSourceKeys 同口径，避免预览含 T 而实际不响应）
   if (filter.posRel !== undefined) {
-    if (!hasRelation(listenerKey, event.sourceKey, filter.posRel)) return false
+    const listenerSkillId = state.player.bindings.get(listenerKey)
+    let posHit = false
+    if (listenerSkillId) {
+      for (const [k, sid] of state.player.bindings) {
+        if (sid === listenerSkillId && hasRelation(k, event.sourceKey, filter.posRel)) { posHit = true; break }
+      }
+    } else {
+      posHit = hasRelation(listenerKey, event.sourceKey, filter.posRel)
+    }
+    if (!posHit) return false
   }
 
   // ── resource 维度（产出资源类型）──
