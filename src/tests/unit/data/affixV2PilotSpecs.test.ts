@@ -11,7 +11,7 @@ import { formatEffectDescription, formatAffixV2Description } from '../../../src/
 import { generateAffixV2, RECIPE_TEACH, RECIPE_IMITATE, RECIPE_SPEAR_MAKE, RECIPE_GAZE_FOLLOW } from '../../../src/data/affixV2Generator'
 import { PositionRelation, getKeysWithRelation } from '../../../src/data/keyboardTopology'
 import type { EffectSpec } from '../../../src/data/affixV2Trigger'
-import { getCandidatePool } from '../../../src/systems/affixV2SkillFilter'
+import { getCandidatePool, widenSkillFilter, type SkillSeed } from '../../../src/systems/affixV2SkillFilter'
 import { equipAffixV2, clearAllEquipped } from '../../../src/systems/affixV2Equipped'
 import {
   resetAllAffixV2State,
@@ -730,11 +730,10 @@ describe('Recipe · teach (recipe_pool · 生成时锁 hasTag)', () => {
     }
   })
 
-  it('每个生成实例 hasTag 锁定 1 段 · ALL_RECIPES 非 teach section 之一', () => {
-    const recipeSections = new Set(
-      ['maintenance', 'locomotion', 'posture', 'agonistic', 'tool'],   // ALL_RECIPES non-teach 段
-    )
-    for (let i = 0; i < 10; i++) {
+  it('每个生成实例 hasTag 锁定 1 段 · recipe_pool 全部段之一（含 meta 持有的 tool）', () => {
+    // recipe_pool 现含 meta → teach 可锁任意段（含 tool）· 锁 tool 时 spawn 出的 meta 词条 effect 被置 noop
+    const recipeSections = new Set(['maintenance', 'locomotion', 'posture', 'agonistic', 'tool'])
+    for (let i = 0; i < 30; i++) {
       const id = generateAffixV2(RECIPE_TEACH)
       const def = getAffixV2Definition(id)!
       if (def.effect.kind === 'gain_skill') {
@@ -765,11 +764,12 @@ describe('Recipe · teach (recipe_pool · 生成时锁 hasTag)', () => {
     expect(r.skillsGranted[0].skill.level).toBe(7)
   })
 
-  it('teach 自身从 recipe_pool 候选池排除 · gain_skill 不会直接选 teach seed 作 spawn 模板', () => {
-    // 走 candidate pool 查询而非 e2e · spawn 后 skill 可能因 sampleV2Ids 独立随机得 teach（这是另一回事）
+  it('teach/meta seed 已纳入 recipe_pool（tool 段可达）· 递归由 spawn 时置 noop 阻断', () => {
+    // 旧设计在池层排除 meta；现改为纳入（让 tool 段可被 teach 锁/生成），
+    // 防递归靠 spawnSkillFromSeed 的 inertMeta（meta effect 置 noop），见 affixV2SkillFilter.test.ts。
     const pool = getCandidatePool('recipe_pool')
-    const teachSeeds = pool.filter(s => s.recipe?.kind === 'teach')
-    expect(teachSeeds.length).toBe(0)
+    expect(pool.some(s => s.recipe?.kind === 'teach')).toBe(true)
+    expect(pool.some(s => s.section === 'tool')).toBe(true)
   })
 
   describe('复合 filter · hasTag + resource + rarity', () => {
@@ -798,7 +798,7 @@ describe('Recipe · teach (recipe_pool · 生成时锁 hasTag)', () => {
       expect(rarityCount).toBeLessThanOrEqual(45)
     })
 
-    it('当 filter.resource 命中 · 学徒 resource 限定到该值', () => {
+    it('当 filter.resource 命中 · 资源约束型学徒 resource 限定到该值', () => {
       // 强造 filter:{hasTag:'maintenance',resource:'score'} 验证 spawn 约束
       const def = getAffixV2Definition(generateAffixV2(RECIPE_TEACH))!
       if (def.effect.kind !== 'gain_skill') return
@@ -806,11 +806,16 @@ describe('Recipe · teach (recipe_pool · 生成时锁 hasTag)', () => {
         ...def.effect,
         filter: { hasTag: 'maintenance' as const, resource: 'score' as const, notOwned: false },
       }
-      // maintenance recipe 池含 feed/drink · 两者都允许 score
+      // maintenance recipe 池：feed/drink 带 resourcePool（受 resource 约束）· wadge 是 growth（资源无关，
+      // 缺 resourcePool → matchSkillFilter 视为通过、spawn 给默认资源）。仅对受约束的成员断言 score。
       for (let i = 0; i < 10; i++) {
         const r = resolveEffect(forcedEffect, { ...ctx, hostSkillLevel: 1 })
         expect(r.skillsGranted.length).toBe(1)
-        expect(r.skillsGranted[0].skill.resource).toBe('score')
+        const granted = r.skillsGranted[0].skill
+        const grantedDef = getAffixV2Definition(granted.v2Ids![0])!
+        if (grantedDef.name_en !== 'wadge') {
+          expect(granted.resource).toBe('score')
+        }
       }
     })
 
@@ -827,25 +832,24 @@ describe('Recipe · teach (recipe_pool · 生成时锁 hasTag)', () => {
       }
     })
 
-    it('widen 顺序：resource → rarity → allTags → hasTag · hasTag 最后丢', () => {
-      // 构造一个不可能直接命中的 filter（resource=mutagen recipe 池 0 个支持）
-      // 验证 widen 时 resource 先丢 · hasTag 保留
-      const def = getAffixV2Definition(generateAffixV2(RECIPE_TEACH))!
-      if (def.effect.kind !== 'gain_skill') return
-      const forcedEffect = {
-        ...def.effect,
-        filter: {
-          hasTag: 'maintenance' as const,
-          resource: 'mutagen' as const,   // recipe 池 0 个 maintenance 支持 mutagen
-          notOwned: false,
-        },
-      }
-      const r = resolveEffect(forcedEffect, { ...ctx, hostSkillLevel: 1 })
-      expect(r.skillsGranted.length).toBe(1)
-      expect(r.skillsGranted[0].widened).toBe(true)            // 走了 widen
-      // mutagen 不可达 · widen 丢 resource 后留 hasTag=maintenance → 应抽 feed/drink
-      const resource = r.skillsGranted[0].skill.resource
-      expect(['score', 'gold', 'shield', 'time', 'multiplier', 'base']).toContain(resource)
+    it('widen 顺序：resource → rarity → allTags → hasTag · resource 先丢、hasTag 保留', () => {
+      // 直接测 widenSkillFilter：用合成池隔离 WIDEN_ORDER 机制。
+      // 注：真 recipe_pool 的每个 section 现都含资源无关成员（如 maintenance 的 wadge / locomotion 的 climb），
+      // 任意 resource 都能直接命中、永不 widen，故无法再借真池构造"resource 不可达"。
+      // 合成池仅含 resourcePool 受限 seed → resource=mutagen 不可达 → 触发 widen。
+      const pool: SkillSeed[] = [
+        { source: 'recipe_pool', section: 'maintenance', resourcePool: ['score', 'gold'] },
+        { source: 'recipe_pool', section: 'locomotion', resourcePool: ['shield'] },
+      ]
+      const r = widenSkillFilter(
+        { hasTag: 'maintenance', resource: 'mutagen', notOwned: false },
+        pool,
+      )
+      expect(r.droppedFields).toContain('resource')   // resource 先被丢
+      expect(r.droppedFields).not.toContain('hasTag')  // hasTag 保留（未丢）
+      expect(r.filter.hasTag).toBe('maintenance')
+      expect(r.matches.length).toBe(1)                 // 丢 resource 后命中 maintenance seed
+      expect(r.matches[0].section).toBe('maintenance')
     })
   })
 })

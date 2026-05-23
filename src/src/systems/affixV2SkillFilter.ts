@@ -8,7 +8,7 @@
 // notOwned / classFilter 是运行时维度（依赖 player state），不在 seed 层裁，
 // 由 handler 在 spawn 后过滤 / 由 GenerateSkillOptions 透传。
 
-import { ALL_RECIPES, META_RECIPE_KINDS, type AffixV2Recipe } from '../data/affixV2Generator'
+import { ALL_RECIPES, type AffixV2Recipe } from '../data/affixV2Generator'
 import type { SkillFilter } from '../data/affixV2Trigger'
 import type { SectionTag } from '../data/affixTags'
 import type { ResourceType } from '../core/types'
@@ -48,10 +48,10 @@ export function getCandidatePool(
   excludeSkillId?: string,
 ): readonly SkillSeed[] {
   if (source === 'recipe_pool') {
-    // 排除 meta-progression recipe（teach / imitate / spear_make / gaze_follow）·
-    // 防 gain_skill 直接拿 meta 词条作 spawn 模板（spawn 出来的技能也排除 meta，见 generateSkill excludeMeta）。
-    // 注：shop / 普通 generateSkill 不受此限——meta 词条照常在商店刷新出现。
-    return ALL_RECIPES.filter(r => !META_RECIPE_KINDS.has(r.kind)).map(r => ({
+    // 全 recipe（含 meta 操纵家族 teach/imitate/spear_make/gaze_follow）· tool 段由 meta 持有，
+    // 纳入后 teach 等才能锁/生成 tool 段技能。meta 词条被 spawn 出来时其 on_battle_end effect
+    // 在生成处被置 noop（generateSkill inertMeta）→ 不会递归 spawn / 滚雪球，故无需在池层排除。
+    return ALL_RECIPES.map(r => ({
       source: 'recipe_pool' as const,
       recipe: r,
       section: r.section,
@@ -263,12 +263,14 @@ export function spawnSkillFromSeed(
 
   // seed.recipe 绑定到生成的 skill：保证至少 1 个 affix 来自被 filter 选中的 recipe
   // （= 满足 gain_skill 的 hasTag 过滤 · "教 X 必出 X"）· 修正此前 sampleV2Ids 纯随机忽略 filter 的问题
-  // excludeMeta：spawn 出来的技能不带 meta 操纵家族（防递归 spawn）· shop/普通生成不受此限
+  // excludeMeta：随机槽位不滚 meta · inertMeta：forcedRecipe 若为 meta（如 tool 段的 imitate/teach）
+  // 则其 effect 置 noop —— meta 词条可被 spawn（tool 段可达）但 on_battle_end 不触发 → 不递归 spawn / 滚雪球
   return generateSkill({
     resource,
     rarity,
     level: targetLv,
     forcedRecipe: seed.recipe,
     excludeMeta: true,
+    inertMeta: true,
   })
 }

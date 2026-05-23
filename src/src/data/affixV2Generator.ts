@@ -624,14 +624,13 @@ export function rollAffixV2Spec(
   } else if (recipe.kind === 'teach') {
     // teach: trigger 固定 on_battle_end(any) · 胜败都触发
     // filter 三维度复合 · 生成时独立 roll · 每个实例锁死：
-    //   - hasTag (100%)：从 ALL_RECIPES non-teach sections 随机 1 段（教学的"对象段"）
+    //   - hasTag (100%)：从 recipe_pool 全部段随机 1 段（教学的"对象段"，含 meta 独占的 tool 段）·
+    //     meta 词条可被锁/spawn 出来，但其 on_battle_end effect 在 spawn 时被置 noop（见 generateAffixV2 inertMeta）→ 不递归
     //   - resource (40%)：从 6 通用资源随机 1 个（教学的"主产出"）
     //   - rarity (20%)：0-3 等权随机（教学的"水平"）
     // 复合后 widen fallback 顺序 (resource → rarity → allTags → hasTag) 优先保留 section
     triggerSpec = { type: 'on_battle_end', result: 'any' }
-    const recipeSections = [...new Set(
-      ALL_RECIPES.filter(r => r.kind !== 'teach').map(r => r.section),
-    )]
+    const recipeSections = [...new Set(ALL_RECIPES.map(r => r.section))]
     const rolledSection: SectionTag = pickRandom(recipeSections)
 
     let teachFilter: SkillFilter = { hasTag: rolledSection, notOwned: false }
@@ -661,9 +660,21 @@ export function rollAffixV2Spec(
  * 从 recipe 生成一个动态 AffixV2Definition，并注册到运行时索引。返回 def.id（可塞进 skill.v2Ids）。
  * 首次调用时惰性标定极速供需预算（见 ensureHasteCalibrated）。
  */
-export function generateAffixV2(recipe: AffixV2Recipe, skillResource?: ResourceType): string {
+export function generateAffixV2(
+  recipe: AffixV2Recipe,
+  skillResource?: ResourceType,
+  opts?: { inertMeta?: boolean },
+): string {
   ensureHasteCalibrated()
-  const { trigger: triggerSpec, effect } = rollAffixV2Spec(recipe, skillResource)
+  const { trigger: triggerSpec, effect: rolledEffect } = rollAffixV2Spec(recipe, skillResource)
+
+  // inertMeta：被 gain_skill spawn 出来的 meta 词条（teach/imitate/spear_make/gaze_follow）
+  // 保留段/名/触发器（身份在、tool 段可达），但 effect 置 noop —— on_battle_end 不再
+  // 生成/升级/嫁接技能，切断"被生成的技能再去生成技能"的递归 / 滚雪球。
+  const effect: EffectSpec =
+    opts?.inertMeta && META_RECIPE_KINDS.has(recipe.kind)
+      ? { kind: 'noop' }
+      : rolledEffect
 
   const nonce = random().toString(36).slice(2, 8)
   const id = `gen_${recipe.id}_${nonce}`
@@ -763,13 +774,13 @@ export const RECIPE_LEAP: HasteRecipe = {
   freqRange: [20, 30],      // trigger 限 freq=[20,30]，一关约 20-30 极速
 }
 
-export const RECIPE_NUT_CRACK: GrowthRecipe = {
+export const RECIPE_WADGE: GrowthRecipe = {
   kind: 'growth',
-  id: 'nut_crack',
-  section: 'tool',
-  name_zh: '砸坚果',
-  name_en: 'nut-crack',
-  T: 2.8,                   // tool 段 throughput 锚（SECTION_THROUGHPUT_TARGET.tool=3.0 略下）
+  id: 'wadge',
+  section: 'maintenance',
+  name_zh: '残渣团',
+  name_en: 'wadge',
+  T: 2.8,                   // 关末累计底分 ≈ 2.8 × 宿主资源 Lv1 base（颊囊食团：关内累积、战后清空）
 }
 
 export const RECIPE_TEACH: TeachRecipe = {
@@ -813,7 +824,7 @@ export const ALL_RECIPES: readonly AffixV2Recipe[] = [
   RECIPE_DRUMMING,
   RECIPE_DRINK,
   RECIPE_LEAP,
-  RECIPE_NUT_CRACK,
+  RECIPE_WADGE,
   RECIPE_TEACH,
   RECIPE_IMITATE,
   RECIPE_SPEAR_MAKE,
@@ -829,7 +840,7 @@ const DRINK_LOW_WEIGHT = 0.25
  *  这些词条会"创建/改造其他技能"。从 **gain_skill spawn** 中排除（候选池 + spawn 出来技能的随机槽位）：
  *  防递归 spawn / 失控滚雪球——被生成的技能不该自己再带 meta。
  *  但 shop / 普通 generateSkill **不排除**，meta 词条照常刷新出现（玩家主动获取）。
- *  注：排除按 kind（meta 操纵家族），tool/cog 段本身不排除——nut_crack 等普通 tool 词条不受影响。 */
+ *  注：排除按 kind（meta 操纵家族），tool/cog 段本身不排除——普通 tool 词条不受影响。 */
 export const META_RECIPE_KINDS: ReadonlySet<string> = new Set(['teach', 'imitate', 'spear_make', 'gaze_follow'])
 
 /** 为指定 skill 资源加权抽一个 recipe ·

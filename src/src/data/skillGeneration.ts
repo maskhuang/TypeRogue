@@ -410,6 +410,9 @@ export interface GenerateSkillOptions {
   /** 随机槽位排除 meta 操纵家族（teach/imitate/spear_make/gaze_follow）·
    *  gain_skill spawn 传 true 防递归；shop/普通生成缺省 false（meta 正常刷新出现） */
   excludeMeta?: boolean
+  /** forcedRecipe 若为 meta 家族，则其 effect 置 noop（保留身份/段，不触发 on_battle_end 效果）·
+   *  gain_skill spawn 传 true：让 meta 词条可被 spawn（tool 段可达）又不递归 spawn / 滚雪球 */
+  inertMeta?: boolean
 }
 
 /** 生成一个随机词条制技能实例 */
@@ -443,7 +446,7 @@ export function generateSkill(options?: GenerateSkillOptions): AffixSkillInstanc
 
   // ── V2 接管：rarity = V2 affix 数量（rarity 0 → 0 个，3 → 3 个）──
   // 旧 AffixInstance 通道已禁用（orchestrator 入口短路）；保留 affixes=[] 供 UI 兼容
-  const v2Ids = sampleV2Ids(rarity, resource, options?.forcedRecipe, options?.excludeMeta)
+  const v2Ids = sampleV2Ids(rarity, resource, options?.forcedRecipe, options?.excludeMeta, options?.inertMeta)
   const affixes: AffixInstance[] = []
 
   // 自动命名：skill.name 只存资源 base，V2 词条名由 display 层（itemDescriptors / shopTerminal）
@@ -493,10 +496,11 @@ export function generateSkill(options?: GenerateSkillOptions): AffixSkillInstanc
  *  @param forcedRecipe   非空时第 1 个词条强制用此 recipe（gain_skill 按 tag 生成 ·
  *                        保证技能至少有一个该 section 的 affix）
  *  @param excludeMeta    随机槽位是否排除 meta 操纵家族（teach/imitate/spear_make/gaze_follow）·
- *                        gain_skill spawn 传 true（防生成的技能再带 meta → 递归 spawn）；
- *                        shop/普通生成不传（meta 词条正常刷新出现）
+ *                        gain_skill spawn 传 true（随机槽位不滚 meta）；shop/普通生成不传
+ *  @param inertMeta      forcedRecipe 若为 meta 家族 → 其 effect 置 noop（身份/段保留，不触发 on_battle_end）·
+ *                        gain_skill spawn 传 true：meta 可被生成（tool 段可达）但不递归 spawn
  */
-function sampleV2Ids(count: number, skillResource: ResourceType, forcedRecipe?: AffixV2Recipe, excludeMeta = false): string[] {
+function sampleV2Ids(count: number, skillResource: ResourceType, forcedRecipe?: AffixV2Recipe, excludeMeta = false, inertMeta = false): string[] {
   if (count <= 0) return []
   if (ALL_RECIPES.length === 0) return []
   const out: string[] = []
@@ -505,7 +509,8 @@ function sampleV2Ids(count: number, skillResource: ResourceType, forcedRecipe?: 
     const recipe = (i === 0 && forcedRecipe)
       ? forcedRecipe
       : pickRecipeForSkill(skillResource, { excludeMeta })
-    out.push(generateAffixV2(recipe, skillResource))
+    // inertMeta 仅对 meta recipe 生效（generateAffixV2 内部判定）· 随机槽位已 excludeMeta 故无 meta，透传无副作用
+    out.push(generateAffixV2(recipe, skillResource, { inertMeta }))
   }
   return out
 }

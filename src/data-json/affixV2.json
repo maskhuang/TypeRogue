@@ -15,7 +15,7 @@
     { "id": "swallow", "name_zh": "吞咽", "name_en": "swallow", "section": "maintenance", "phase": "P2", "notes": "单次完成" },
     { "id": "regurgitate", "name_zh": "反刍", "name_en": "regurgitate", "section": "maintenance", "phase": "P2", "notes": "缓存重触发" },
     { "id": "nest_build", "name_zh": "筑巢", "name_en": "nest-build", "section": "maintenance", "phase": "P2", "notes": "防御/aura" },
-    { "id": "wadge", "name_zh": "残渣团", "name_en": "wadge", "section": "maintenance", "phase": "P2", "notes": "累积型" },
+    { "id": "wadge", "name_zh": "残渣团", "name_en": "wadge", "section": "maintenance", "phase": "P1", "notes": "累积型 · RECIPE_WADGE 实装（growth · 关内底分累加，每战重置；原 nut-crack 迁入）" },
 
     { "id": "brachiate", "name_zh": "臂荡", "name_en": "brachiate", "section": "locomotion", "phase": "P1", "notes": "邻位跨越" },
     { "id": "semi_brachiate", "name_zh": "半臂荡", "name_en": "semi-brachiate", "section": "locomotion", "phase": "P2", "notes": "短跨变体" },
@@ -119,7 +119,7 @@
 
     { "id": "termite_fish", "name_zh": "钓白蚁", "name_en": "termite-fish", "section": "tool", "phase": "P1", "notes": "Goodall 经典" },
     { "id": "ant_dip", "name_zh": "蘸蚁", "name_en": "ant-dip", "section": "tool", "phase": "P1", "notes": "蓄势-爆发" },
-    { "id": "nut_crack", "name_zh": "砸坚果", "name_en": "nut-crack", "section": "tool", "phase": "P1", "notes": "大单次产出" },
+    { "id": "nut_crack", "name_zh": "砸坚果", "name_en": "nut-crack", "section": "tool", "phase": "P2", "notes": "占位 · 原 growth 实装已迁至 wadge（maintenance）" },
     { "id": "hammer_anvil", "name_zh": "锤砧", "name_en": "hammer & anvil", "section": "tool", "phase": "P1", "notes": "双件套联动" },
     { "id": "leaf_sponge", "name_zh": "叶海绵", "name_en": "leaf-sponge", "section": "tool", "phase": "P1", "notes": "吸收/储存" },
     { "id": "stone_throw", "name_zh": "投石", "name_en": "stone-throw", "section": "tool", "phase": "P2", "notes": "远程攻击" },

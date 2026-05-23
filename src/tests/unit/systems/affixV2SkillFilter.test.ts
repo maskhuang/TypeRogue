@@ -13,7 +13,7 @@ import {
 import type { SkillFilter } from '../../../src/src/data/affixV2Trigger'
 import { state as gameState } from '../../../src/core/state'
 import type { ShopItem, AffixSkillInstance } from '../../../src/core/types'
-import { RECIPE_FEED } from '../../../src/data/affixV2Generator'
+import { RECIPE_FEED, RECIPE_IMITATE } from '../../../src/data/affixV2Generator'
 import { getAffixV2Definition } from '../../../src/data/affixV2'
 
 // 构造测试用 seed
@@ -145,13 +145,15 @@ describe('getCandidatePool · recipe_pool 来源', () => {
     expect(getCandidatePool('altar_pool').length).toBe(0)
   })
 
-  it('recipe_pool 含 tool 段（nut_crack）· 全段至少 5 种 section 覆盖', () => {
-    // 当前 ALL_RECIPES: feed/climb/run/piloerection/drumming/drink/leap/nut_crack
-    // 包含 maintenance / locomotion / posture / agonistic / tool 5 段
+  it('recipe_pool 含全部段（含 meta 持有的 tool 段）· 至少 5 种 section 覆盖', () => {
+    // recipe_pool = 全 ALL_RECIPES（含 meta 操纵家族）· tool 段由 teach/imitate/spear_make/gaze_follow 持有
+    // → maintenance / locomotion / posture / agonistic / tool 5 段
+    // meta 被 spawn 出来时 effect 置 noop（spawnSkillFromSeed inertMeta）→ 不递归，故池层不排除
     const pool = getCandidatePool('recipe_pool')
     const sections = new Set(pool.map(s => s.section))
     expect(sections.has('tool')).toBe(true)
     expect(sections.size).toBeGreaterThanOrEqual(5)
+    expect(pool.some(s => s.recipe?.kind === 'teach')).toBe(true)   // meta 已纳入池
   })
 })
 
@@ -284,6 +286,22 @@ describe('shop_pool · state.shop.items 接入', () => {
       for (const defId of spawned.v2Ids ?? []) {
         expect(isMeta(defId)).toBe(false)
       }
+    }
+  })
+
+  it('forcedRecipe 为 meta（tool 段）→ 首词条段保留但 effect 置 noop（inertMeta 防递归）', () => {
+    // teach 锁 tool 段后会 spawn 出 meta 词条（如 imitate）· 段/名保留让 tool 可达，
+    // 但 effect 被置 noop · on_battle_end 不再生成技能 → 切断递归 spawn / 滚雪球
+    const seed: SkillSeed = {
+      source: 'recipe_pool',
+      recipe: RECIPE_IMITATE,   // meta · tool 段
+      section: 'tool',
+    }
+    for (let i = 0; i < 20; i++) {
+      const spawned = spawnSkillFromSeed(seed, 1, { rarity: 3 })
+      const firstDef = getAffixV2Definition(spawned.v2Ids![0])!
+      expect(firstDef.section).toBe('tool')        // 身份/段保留 · tool 可达
+      expect(firstDef.effect.kind).toBe('noop')    // meta effect 置空 → 不递归
     }
   })
 })
