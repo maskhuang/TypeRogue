@@ -125,3 +125,21 @@ describe('evaluateTrigger · Phase 2 占位', () => {
     expect(evaluateTrigger(spec, {})).toBe(false)
   })
 })
+
+describe('evaluateTrigger · on_resource_consumed', () => {
+  it('无被消耗资源 → false', () => {
+    expect(evaluateTrigger({ type: 'on_resource_consumed' }, {})).toBe(false)
+  })
+
+  it('任意资源被消耗（无 filter）→ true', () => {
+    expect(evaluateTrigger({ type: 'on_resource_consumed' }, { consumedResource: 'gold' })).toBe(true)
+    expect(evaluateTrigger({ type: 'on_resource_consumed' }, { consumedResource: 'shield' })).toBe(true)
+  })
+
+  it('resource filter 命中才触发', () => {
+    const spec: TriggerSpec = { type: 'on_resource_consumed', resource: 'shield' }
+    expect(evaluateTrigger(spec, { consumedResource: 'shield' })).toBe(true)
+    expect(evaluateTrigger(spec, { consumedResource: 'gold' })).toBe(false)
+    expect(evaluateTrigger(spec, {})).toBe(false)
+  })
+})

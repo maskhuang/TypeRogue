@@ -15,6 +15,7 @@ import {
   hookOnWordEnd,
   hookOnBattleStart,
   hookOnBattleEnd,
+  hookOnResourceConsumed,
   getGhostLog,
   clearGhostLog,
 } from '../../../src/systems/affixV2Equipped'
@@ -487,6 +488,62 @@ describe('unequipAllOnSkill — 一并清学徒进度', () => {
       // 这里不显式测 unequipAllOnSkill，因为它内部就是 for (id) unequipAffixV2(id)
     } finally {
       unregisterDynamicAffixV2('test_appr2')
+    }
+  })
+})
+
+describe('hookOnResourceConsumed · on_resource_consumed reactor', () => {
+  it('任意资源被消耗 → 无 filter 的反应词条触发', () => {
+    registerDynamicAffixV2({
+      id: 'test_react_any',
+      name_zh: '反应', name_en: 'React',
+      section: 'maintenance', tags: ['maintenance'], phase: 'P1',
+      trigger: { type: 'on_resource_consumed' },
+      effect: { kind: 'gain_resource', resource: 'score', ratio: 1 },
+    })
+    try {
+      equipAffixV2('skill_1', 'K', 'test_react_any')
+      const results = hookOnResourceConsumed('shield', baseResourceLv1, fullResource, NOW)
+      expect(results.length).toBe(1)
+      expect(results[0].result.resourceProduced[0]).toEqual({ resource: 'score', amount: 11 })
+      expect(getGhostLog()[0].trigger).toBe('on_resource_consumed')
+    } finally {
+      unregisterDynamicAffixV2('test_react_any')
+    }
+  })
+
+  it('resource filter 不匹配 → 不触发', () => {
+    registerDynamicAffixV2({
+      id: 'test_react_shield',
+      name_zh: '反应盾', name_en: 'React Shield',
+      section: 'maintenance', tags: ['maintenance'], phase: 'P1',
+      trigger: { type: 'on_resource_consumed', resource: 'shield' },
+      effect: { kind: 'gain_resource', resource: 'score', ratio: 1 },
+    })
+    try {
+      equipAffixV2('skill_1', 'K', 'test_react_shield')
+      expect(hookOnResourceConsumed('gold', baseResourceLv1, fullResource, NOW).length).toBe(0)
+      expect(hookOnResourceConsumed('shield', baseResourceLv1, fullResource, NOW).length).toBe(1)
+    } finally {
+      unregisterDynamicAffixV2('test_react_shield')
+    }
+  })
+
+  it('on_resource_consumed 不被 hookOnKey / hookOnWordEnd 误触发', () => {
+    registerDynamicAffixV2({
+      id: 'test_react_2',
+      name_zh: '反应2', name_en: 'React 2',
+      section: 'maintenance', tags: ['maintenance'], phase: 'P1',
+      trigger: { type: 'on_resource_consumed' },
+      effect: { kind: 'gain_resource', resource: 'score', ratio: 1 },
+    })
+    try {
+      equipAffixV2('skill_1', 'K', 'test_react_2')
+      hookOnKey(NOW, baseResourceLv1, fullResource)
+      hookOnWordEnd(NOW, 5, baseResourceLv1, fullResource)
+      expect(getGhostLog().length).toBe(0)
+    } finally {
+      unregisterDynamicAffixV2('test_react_2')
     }
   })
 })

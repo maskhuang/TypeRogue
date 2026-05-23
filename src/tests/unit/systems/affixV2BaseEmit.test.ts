@@ -9,6 +9,7 @@ import { state } from '../../../src/core/state'
 import { equipAffixV2, clearAllEquipped } from '../../../src/systems/affixV2Equipped'
 import { resetAllAffixV2State } from '../../../src/systems/affixV2State'
 import { onSkillFireV2 } from '../../../src/systems/affixV2BattleIntegration'
+import { registerDynamicAffixV2, unregisterDynamicAffixV2 } from '../../../src/data/affixV2'
 
 const SKILL_ID = 'skill_test'
 const KEY = 'k'
@@ -149,5 +150,55 @@ describe('V2 skill 基础产出 emit', () => {
     // shield Lv1 base = 0.2（BASE_VALUES 精确表）, charge ratio = 0.083 → cumBase = 0.0166, output = 0.2166
     expect(state.shield).toBeCloseTo(0.2166, 3)
     expect(state.resources.shield).toBeCloseTo(state.shield, 4)
+  })
+})
+
+describe('convert_resource 端到端 · 消耗扣资源 + 派发 on_resource_consumed 反应链', () => {
+  it('反刍消耗 shield、产出 gold；on_resource_consumed 反应词条随之产出 time', () => {
+    // 宿主资源 = score（故 convert 排除 score；消耗 shield、产出 gold）
+    state.affixSkills.get(SKILL_ID)!.resource = 'score'
+    state.affixSkills.get(SKILL_ID)!.v2Ids = ['test_regurg']
+
+    registerDynamicAffixV2({
+      id: 'test_regurg',
+      name_zh: '反刍', name_en: 'regurgitate',
+      section: 'maintenance', tags: ['maintenance'], phase: 'P1',
+      trigger: { type: 'on_self_fire' },
+      effect: { kind: 'convert_resource', from: 'shield', to: 'gold', ratio: 1 },
+    })
+    registerDynamicAffixV2({
+      id: 'test_consumed_reactor',
+      name_zh: '反应', name_en: 'reactor',
+      section: 'maintenance', tags: ['maintenance'], phase: 'P1',
+      trigger: { type: 'on_resource_consumed' },
+      effect: { kind: 'gain_resource', resource: 'time', ratio: 1 },
+    })
+    try {
+      equipAffixV2(SKILL_ID, KEY, 'test_regurg')
+      // 反应词条挂在另一技能上（也进 _equipped → 会被 hookOnResourceConsumed 找到）
+      equipAffixV2('skill_react', 'j', 'test_consumed_reactor')
+
+      const r = state.resources as unknown as Record<string, number>
+      state.shield = 10        // 可消耗资源（proxy → resources.shield）
+      state.time = 10          // 反应产出落点
+      state.timeMax = 30
+      state.gold = 0; state.player.gold = 0; r.gold = 0
+      state.score = 0; r.score = 0
+
+      onSkillFireV2(SKILL_ID, SKILL_ID, KEY, 'score', false, 0)
+
+      // 消耗：shield -= 1 × Lv1[shield]=0.2（BASE_VALUES 精确表）→ 10 - 0.2 = 9.8
+      expect(state.shield).toBeCloseTo(9.8, 3)
+      // 产出：gold += 1 × Lv1[gold]=3 → 3（1 Lv1-单位 shield 换 1 Lv1-单位 gold，系统口径下等值）
+      expect(r.gold).toBeCloseTo(3, 3)
+      // 反应链：消耗 shield → on_resource_consumed 反应词条产出 time += 1 × Lv1[time]=0.2 → 10.2
+      expect(state.time).toBeCloseTo(10.2, 3)
+      // 宿主自身基础产出（score）不受影响：11 × 1 = 11
+      expect(r.score).toBeCloseTo(11, 2)
+    } finally {
+      unregisterDynamicAffixV2('test_regurg')
+      unregisterDynamicAffixV2('test_consumed_reactor')
+      clearAllEquipped()
+    }
   })
 })

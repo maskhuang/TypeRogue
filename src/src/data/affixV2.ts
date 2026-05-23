@@ -114,7 +114,8 @@ export function getAffixV2Definition(id: string): AffixV2Definition | undefined 
 const RECIPE_COLORS: Record<string, string> = {
   // maintenance · 绿系
   feed:         '#27ae60',  // 标准绿
-  drink:        '#16a085',  // 深绿 · 转化
+  drink:        '#16a085',  // 深绿 · 转化（持有产出）
+  regurgitate:  '#1e8c6f',  // 墨绿 · 转化（消耗产出）
   // locomotion · 蓝系
   climb:        '#2980b9',  // 深蓝 · 稳重累加
   run:          '#00cec9',  // 青蓝 · 倍率加速

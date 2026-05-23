@@ -435,3 +435,28 @@ describe('apply_aura · scale 缩放 modifier amount', () => {
     expect(auras[0].modifier.type).toBe('rainbow')
   })
 })
+
+describe('resolveEffect · convert_resource（消耗型转化）', () => {
+  it('持有充足 → 消耗 from、产出 to（各按自身 Lv1）', () => {
+    // shield Lv1=5, gold Lv1=3; ratio=1 → 消耗 5 shield → 产出 3 gold
+    const ctx = { ...baseCtx, getPlayerResource: (r: string) => (r === 'shield' ? 10 : 0) }
+    const res = resolveEffect({ kind: 'convert_resource', from: 'shield', to: 'gold', ratio: 1 }, ctx)
+    expect(res.resourcesConsumed).toEqual([{ resource: 'shield', amount: 5 }])
+    expect(res.resourceProduced).toEqual([{ resource: 'gold', amount: 3 }])
+  })
+
+  it('持有不足 → 按比例缩减消耗与产出', () => {
+    // desired=5 shield，仅持有 2 → consumed=2，frac=0.4 → produce=3×0.4=1.2
+    const ctx = { ...baseCtx, getPlayerResource: (r: string) => (r === 'shield' ? 2 : 0) }
+    const res = resolveEffect({ kind: 'convert_resource', from: 'shield', to: 'gold', ratio: 1 }, ctx)
+    expect(res.resourcesConsumed[0].amount).toBeCloseTo(2, 5)
+    expect(res.resourceProduced[0].amount).toBeCloseTo(1.2, 5)
+  })
+
+  it('持有为 0 → 不消耗不产出', () => {
+    const ctx = { ...baseCtx, getPlayerResource: () => 0 }
+    const res = resolveEffect({ kind: 'convert_resource', from: 'shield', to: 'gold', ratio: 1 }, ctx)
+    expect(res.resourcesConsumed.length).toBe(0)
+    expect(res.resourceProduced.length).toBe(0)
+  })
+})

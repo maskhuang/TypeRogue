@@ -13,7 +13,7 @@
     { "id": "chew", "name_zh": "咀嚼", "name_en": "chew", "section": "maintenance", "phase": "P1", "notes": "持续小额" },
     { "id": "masticate", "name_zh": "细嚼", "name_en": "masticate", "section": "maintenance", "phase": "P2", "notes": "慢速大额" },
     { "id": "swallow", "name_zh": "吞咽", "name_en": "swallow", "section": "maintenance", "phase": "P2", "notes": "单次完成" },
-    { "id": "regurgitate", "name_zh": "反刍", "name_en": "regurgitate", "section": "maintenance", "phase": "P2", "notes": "缓存重触发" },
+    { "id": "regurgitate", "name_zh": "反刍", "name_en": "regurgitate", "section": "maintenance", "phase": "P1", "notes": "资源转化(消耗)·消耗某资源产出另一种(均排除原资源)" },
     { "id": "nest_build", "name_zh": "筑巢", "name_en": "nest-build", "section": "maintenance", "phase": "P2", "notes": "防御/aura" },
     { "id": "wadge", "name_zh": "残渣团", "name_en": "wadge", "section": "maintenance", "phase": "P1", "notes": "累积型 · RECIPE_WADGE 实装（growth · 关内底分累加，每战重置；原 nut-crack 迁入）" },
 

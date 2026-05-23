@@ -85,11 +85,16 @@ function pickOnFireTrigger(section: SectionTag): TriggerEntry {
   }
 }
 
-/** 非 fire · on_word_end / every_n_keys / on_haste_granted · on_haste_granted 受需求门控（被关掉则回退 every_n_keys）*/
+/** 非 fire · on_word_end / on_resource_consumed / every_n_keys / on_haste_granted · 末两者受需求门控（被关掉则回退 every_n_keys）*/
 function pickNonFireTrigger(kind: string): TriggerEntry {
   const r = random()
-  if (r < 1 / 3) return { spec: { type: 'on_word_end' }, freq: 30 }
-  if (r < 2 / 3 || !admitDemand(kind)) {
+  if (r < 0.30) return { spec: { type: 'on_word_end' }, freq: 30 }
+  if (r < 0.42) {
+    // on_resource_consumed · 反应型（监听 convert_resource 消耗事件 · 任意资源）·
+    // freq 经验值 ~15（依赖场上是否有 convert_resource 源；无源时永不触发 = build-around）
+    return { spec: { type: 'on_resource_consumed' }, freq: 15 }
+  }
+  if (r < 0.72 || !admitDemand(kind)) {
     // every_n_keys · N ∈ [1, 30] 随机；N=1 即每次击键（也承接 on_haste_granted 被门控掉的回退）
     const n = Math.floor(random() * (EVERY_N_MAX - EVERY_N_MIN + 1)) + EVERY_N_MIN
     return { spec: { type: 'every_n_keys', n }, freq: 300 / n }
@@ -215,6 +220,19 @@ export interface ConvertRecipe {
   readonly T: number  // 一关末（player 持 1 Lv1 source 时）总产出 ≈ T × Lv1[target]
 }
 
+/** metabolize 系：convert_resource · 消耗 from 资源、产出 to 资源 · 二者均排除宿主原资源 ·
+ *  与 convert(drink) 区别：drink 读宿主资源持有量产出（不扣除）；metabolize 真扣除非宿主资源 ·
+ *  from/to 在生成时从 resourcePool − host 里抽（必互异、必非 host）*/
+export interface MetabolizeRecipe {
+  readonly kind: 'metabolize'
+  readonly id: string
+  readonly section: SectionTag
+  readonly name_zh: string
+  readonly name_en: string
+  readonly resourcePool: readonly ResourceType[]  // 可消耗/产出的「可存」资源池（不含 base/multiplier 等 per-word 暂存量）
+  readonly T: number  // 一关产出预算（× Lv1[to] = 绝对值）· 消耗等量 Lv1-单位的 from
+}
+
 /** haste 系：grant_haste · 按下绑定键时消耗 1 层 → 额外触发
  *  amount = 每 trigger 固定整数 stack；freqRange 决定 trigger pool 过滤 → 自然守恒总量
  *  典型：amount=1 配 freqRange=[20,30] 一关 ~20-30 极速；
@@ -276,7 +294,7 @@ export interface GazeFollowRecipe {
   readonly name_en: string
 }
 
-export type AffixV2Recipe = DripRecipe | GrowthRecipe | EscalateRecipe | ChantRecipe | ChainRecipe | ConvertRecipe | HasteRecipe | TeachRecipe | ImitateRecipe | SpearMakeRecipe | GazeFollowRecipe
+export type AffixV2Recipe = DripRecipe | GrowthRecipe | EscalateRecipe | ChantRecipe | ChainRecipe | ConvertRecipe | MetabolizeRecipe | HasteRecipe | TeachRecipe | ImitateRecipe | SpearMakeRecipe | GazeFollowRecipe
 
 // ============================================
 // Scope 池 · 加权抽样 · 范围越广越稀有
@@ -555,6 +573,15 @@ export function rollAffixV2Spec(
     const candidates = recipe.resourcePool.filter(r => r !== source)
     const target = candidates.length > 0 ? pickRandom(candidates) : source  // pool 单项 fallback
     effect = { kind: 'gain_proportional', source, target, ratio }
+  } else if (recipe.kind === 'metabolize') {
+    // metabolize: 消耗 from、产出 to · 二者均排除宿主原资源（host）· from ≠ to
+    const ratio = scaleMagnitude(recipe.T, triggerEntry.freq)
+    const host: ResourceType = skillResource ?? 'score'
+    const candidates = recipe.resourcePool.filter(r => r !== host)
+    const from = pickRandom(candidates)
+    const toCandidates = candidates.filter(r => r !== from)
+    const to = toCandidates.length > 0 ? pickRandom(toCandidates) : from  // pool 退化兜底
+    effect = { kind: 'convert_resource', from, to, ratio }
   } else if (recipe.kind === 'chain') {
     // chain: fire_target broadcast · scope 排除 self · pick=random
     // 排除高频 trigger（freq > 100 = 每键 / 每 2 键 / 每 3 键）防 chain 派发洪水
@@ -781,6 +808,17 @@ export const RECIPE_DRINK: ConvertRecipe = {
   T: 3,
 }
 
+export const RECIPE_REGURGITATE: MetabolizeRecipe = {
+  kind: 'metabolize',
+  id: 'regurgitate',
+  section: 'maintenance',
+  name_zh: '反刍',
+  name_en: 'regurgitate',
+  // 可存资源池（不含 base/multiplier 等 per-word 暂存量）· from/to 在此池 − 宿主原资源里抽
+  resourcePool: ['score', 'gold', 'shield', 'time'],
+  T: 3,                     // 一关产出 ≈ 3 × Lv1[to]；消耗等量 Lv1-单位的 from
+}
+
 export const RECIPE_LEAP: HasteRecipe = {
   kind: 'haste',
   id: 'leap',
@@ -840,6 +878,7 @@ export const ALL_RECIPES: readonly AffixV2Recipe[] = [
   RECIPE_PILOERECTION,
   RECIPE_DRUMMING,
   RECIPE_DRINK,
+  RECIPE_REGURGITATE,
   RECIPE_LEAP,
   RECIPE_WADGE,
   RECIPE_TEACH,

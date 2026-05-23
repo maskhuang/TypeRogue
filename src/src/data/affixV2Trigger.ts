@@ -61,6 +61,10 @@ export type Phase1TriggerSpec =
   /** 每场战斗结束触发一次 · result 决定哪类结局触发（缺省 'win'）·
    *  典型用法：on_battle_end + gain_skill effect 做关后奖励 */
   | { type: 'on_battle_end'; result?: 'win' | 'lose' | 'any' }
+  /** 某资源被消耗时触发（反应型）· 监听 convert_resource 产生的消耗事件 ·
+   *  resource 缺省 = 任意资源被消耗即触发；指定时仅该资源被消耗才触发 ·
+   *  无 convert_resource 源时永不触发（build-around · 与 on_haste_granted 同纪律）*/
+  | { type: 'on_resource_consumed'; resource?: string }
 
 /** Phase 2 trigger 扩展（详 research §5.2） */
 export type Phase2TriggerSpec =
@@ -271,6 +275,19 @@ export type EffectSpec =
    *           持 10 Lv1 单位 source 时，等效 10× drip 一次产出。雪球性。
    */
   | { kind: 'gain_proportional'; source: string; target: string; ratio: number }
+
+  /**
+   * 资源转化（消耗型）· 消耗 from 资源，产出 to 资源 —— 二者均排除宿主原资源（生成时按 host 排除）。
+   * 与 gain_proportional（drink/饮水）区别：
+   *   - gain_proportional：source = 宿主自身资源，只「读取持有量」缩放产出，**不扣除**；
+   *   - convert_resource：from/to 都**不是**宿主产出资源，且真正**扣除** from（负向注入资源池）。
+   * 数值（1:1 Lv1-单位代谢，from/to 各按自身 Lv1 base 折算）：
+   *   desired = ratio × Lv1[from]；have = player[from]
+   *   持有为 0 → 跳过（不消耗不产出）；have < desired → 按 have/desired 比例缩减消耗与产出
+   *   消耗 = min(desired, have)；产出 = ratio × Lv1[to] × (消耗 / desired)
+   * 消耗量进 ResolveResult.resourcesConsumed，供集成层扣除 + 派发 on_resource_consumed。
+   */
+  | { kind: 'convert_resource'; from: string; to: string; ratio: number }
 
   /**
    * 极速 grant · 给 selector 内 skill +amount 极速层（per-skill 累加，floor 后消耗）

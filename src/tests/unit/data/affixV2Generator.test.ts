@@ -3,7 +3,7 @@
 // ============================================
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
-import { generateAffixV2, pickRecipeForSkill, META_RECIPE_KINDS, RECIPE_PILOERECTION, RECIPE_GAZE_FOLLOW, RECIPE_IMITATE } from '../../../src/data/affixV2Generator'
+import { generateAffixV2, pickRecipeForSkill, META_RECIPE_KINDS, RECIPE_PILOERECTION, RECIPE_GAZE_FOLLOW, RECIPE_IMITATE, RECIPE_REGURGITATE, RECIPE_FEED } from '../../../src/data/affixV2Generator'
 import { getAffixV2Definition, TOOL_AFFIX_USES_MIN, TOOL_AFFIX_USES_MAX } from '../../../src/data/affixV2'
 import { setSeededMode, setNormalMode } from '../../../src/core/seededRandom'
 
@@ -190,5 +190,43 @@ describe('chant generator · inherit_tags 随机可抽', () => {
     expect(scopes.has('self')).toBe(false)     // 继承自身 = no-op，已排除
     expect(scopes.has('hasted')).toBe(false)   // 继承不挂靠战斗极速态，已排除
     expect(scopes.has('workbench')).toBe(true) // IN-tray 签名来源在池内
+  })
+})
+
+describe('metabolize generator · 反刍/regurgitate', () => {
+  it('生成 convert_resource · from/to 均排除宿主资源且互异', () => {
+    setSeededMode(101)
+    for (let i = 0; i < 50; i++) {
+      const id = generateAffixV2(RECIPE_REGURGITATE, 'score')
+      const def = getAffixV2Definition(id)
+      expect(def?.effect.kind).toBe('convert_resource')
+      if (def?.effect.kind !== 'convert_resource') continue
+      expect(def.effect.from).not.toBe('score')        // 排除宿主原资源
+      expect(def.effect.to).not.toBe('score')
+      expect(def.effect.from).not.toBe(def.effect.to)   // from ≠ to
+      expect(def.effect.ratio).toBeGreaterThan(0)
+    }
+  })
+
+  it('不同宿主资源 → 该资源被排除出 from/to', () => {
+    setSeededMode(202)
+    for (let i = 0; i < 50; i++) {
+      const id = generateAffixV2(RECIPE_REGURGITATE, 'gold')
+      const def = getAffixV2Definition(id)
+      if (def?.effect.kind !== 'convert_resource') continue
+      expect(def.effect.from).not.toBe('gold')
+      expect(def.effect.to).not.toBe('gold')
+    }
+  })
+
+  it('on_resource_consumed 会被分配给生成词条（reactive trigger 进池）', () => {
+    setSeededMode(7)
+    let seen = false
+    for (let i = 0; i < 600; i++) {
+      const id = generateAffixV2(RECIPE_FEED)
+      const def = getAffixV2Definition(id)
+      if (def?.trigger.type === 'on_resource_consumed') { seen = true; break }
+    }
+    expect(seen).toBe(true)
   })
 })

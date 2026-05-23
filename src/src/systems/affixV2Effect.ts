@@ -144,6 +144,9 @@ export interface AffixGraft {
 export interface ResolveResult {
   /** 一次性产出的资源列表（gain_resource）+ 关内成长后本次 fire 等效产出（add/multiply 复合）*/
   resourceProduced: ResourceProduction[]
+  /** 本次结算消耗的资源列表（convert_resource）· 集成层按此扣除资源池 + 派发 on_resource_consumed ·
+   *  独立于 resourceProduced：消耗**不**经 output_bonus_pct aura 放大（避免「输出加成」反向放大消耗）*/
+  resourcesConsumed: ResourceProduction[]
   /** 申请的 fire_target 触发（实际触发由 caller 调用 skill dispatch）*/
   fireTargetsTriggered: FireTargetTriggered[]
   /** 应用的 aura（已写入 state 注册表）*/
@@ -163,6 +166,7 @@ export interface ResolveResult {
 function freshResult(): ResolveResult {
   return {
     resourceProduced: [],
+    resourcesConsumed: [],
     fireTargetsTriggered: [],
     aurasApplied: [],
     statusesApplied: [],
@@ -239,6 +243,21 @@ function resolveInto(spec: EffectSpec, ctx: ResolveContext, result: ResolveResul
       const scaleFactor = playerSource / sourceLv1
       const amount = spec.ratio * targetLv1 * scaleFactor
       result.resourceProduced.push({ resource: spec.target, amount })
+      return
+    }
+
+    case 'convert_resource': {
+      // 消耗 from（1:1 Lv1-单位）、产出 to · from/to 已在生成时排除宿主原资源
+      const fromLv1 = ctx.resourceLv1Base(spec.from)
+      const toLv1 = ctx.resourceLv1Base(spec.to)
+      const desired = spec.ratio * fromLv1
+      if (desired <= 0) return
+      const have = ctx.getPlayerResource(spec.from)
+      if (have <= 0) return                       // 无可消耗 → 跳过（不消耗不产出）
+      const consumed = Math.min(desired, have)    // 持有不足时按比例缩减
+      const frac = consumed / desired
+      result.resourcesConsumed.push({ resource: spec.from, amount: consumed })
+      result.resourceProduced.push({ resource: spec.to, amount: spec.ratio * toLv1 * frac })
       return
     }
 

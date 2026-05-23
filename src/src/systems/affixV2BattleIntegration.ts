@@ -27,6 +27,7 @@ import {
   hookOnBattleStart,
   hookOnBattleEnd,
   hookOnHasteGranted,
+  hookOnResourceConsumed,
   listAllEquipped,
   setSelectorResolver,
   chargeToolAffixUses,
@@ -157,6 +158,11 @@ export function processV2Results(results: readonly SourcedResult[], outputMult =
     for (const prod of modified) {
       applyResourceAmount(prod.resource, prod.amount * outputMult, sr.sourceKey, sr.sourceSkillId, isCrit)
     }
+    // convert_resource 消耗：直接扣除资源池（不经 output bonus / outputMult），再派发 on_resource_consumed 反应链
+    for (const cons of sr.result.resourcesConsumed) {
+      applyResourceAmount(cons.resource, -cons.amount, sr.sourceKey, sr.sourceSkillId, isCrit)
+      dispatchResourceConsumed(cons.resource)
+    }
     for (const ft of sr.result.fireTargetsTriggered) {
       const targetIds = resolveSelectorToSkillIds(ft.selector, sr.sourceSkillId, sr.sourceKey)
         .filter(tid => tid !== sr.sourceSkillId)
@@ -186,6 +192,23 @@ export function processV2Results(results: readonly SourcedResult[], outputMult =
   }
   // tool/认知词条「用完消失」：本次结算中触发过的词条各计 1 次使用，用尽即从宿主移除
   if (results.length > 0) chargeToolAffixUses(results.map(r => r.sourceInstanceId))
+}
+
+// on_resource_consumed 反应链 re-entrancy 防护：
+// convert_resource 消耗 → 反应词条触发；反应词条若自身也消耗，其消耗只扣资源池不再二次派发
+// （反应深度恒为 1，杜绝 convert→react→convert 无限链；无需 haste 那套供需标定机制）
+let _inConsumeReaction = false
+
+/** 资源被消耗时派发 on_resource_consumed 反应链（深度 1 限流）*/
+function dispatchResourceConsumed(resource: string): void {
+  if (_inConsumeReaction) return
+  _inConsumeReaction = true
+  try {
+    const reactions = hookOnResourceConsumed(resource, defaultResourceLv1Base, defaultGetPlayerResource, Date.now())
+    processV2Results(reactions)
+  } finally {
+    _inConsumeReaction = false
+  }
 }
 
 /** 升级 skill 等级 · capped 至 baseValues 长度 · 同步 affixSkills + player.skills */

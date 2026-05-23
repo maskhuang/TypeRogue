@@ -664,6 +664,61 @@ export function hookOnHasteGranted(
   return results
 }
 
+/**
+ * resource:consumed 全局 hook · 任一资源被消耗（convert_resource）时调
+ * 遍历 on_resource_consumed trigger 的 V2 instance，resource filter 匹配才命中。
+ * 与 on_haste_granted 同纪律：无消耗源时永不触发（reactive build-around）。
+ */
+export function hookOnResourceConsumed(
+  consumedResource: string,
+  resourceLv1Base: (r: string, level?: number) => number,
+  getPlayerResource: (r: string) => number,
+  nowMs: number,
+): SourcedResult[] {
+  const results: SourcedResult[] = []
+  for (const entry of _equipped.values()) {
+    const def = getAffixV2Definition(entry.defId)
+    if (!def || def.trigger.type !== 'on_resource_consumed') continue
+
+    const triggerCtx: TriggerContext = {
+      selfAffixId: entry.defId,
+      selfKey: entry.key,
+      consumedResource,
+    }
+    if (!evaluateTrigger(def.trigger, triggerCtx)) continue
+
+    const lvBase = lvNBaseFor(entry.skillId, resourceLv1Base)
+    const ctx: ResolveContext = {
+      instanceId: entry.instanceId,
+      skillId: entry.skillId,
+      key: entry.key,
+      skillResource: 'score',
+      skillResourceLv1Base: lvBase('score'),
+      resourceLv1Base: lvBase,
+      nowMs,
+      isCrit: false,
+      currentWordLength: 0,
+      hostSkillLevel: gameState.affixSkills.get(entry.skillId)?.level ?? 1,
+      selfSection: def.section,
+      getPlayerResource,
+      resolveSelector: _selectorResolver,
+      queryEquipped: buildQueryEquipped(entry),
+    }
+    const result = resolveEffect(applyEnchantToEffect(def.effect, getEnchant(entry.instanceId)), ctx)
+    results.push({ sourceInstanceId: entry.instanceId, sourceSkillId: entry.skillId, sourceKey: entry.key, result })
+
+    _ghostLog.push({
+      timestamp: nowMs,
+      instanceId: entry.instanceId,
+      defId: entry.defId,
+      trigger: def.trigger.type,
+      result,
+    })
+    recordApprenticeTriggerHit(entry)
+  }
+  return results
+}
+
 // ============================================
 // Battle lifecycle hooks
 // ============================================

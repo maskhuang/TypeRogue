@@ -133,6 +133,10 @@ export function formatTriggerDescription(trigger: TriggerSpec): string {
       if (result === 'lose') return zh ? '战斗失败后' : 'On battle lost'
       return zh ? '战斗结束后' : 'On battle end'
     }
+    case 'on_resource_consumed':
+      return trigger.resource
+        ? (zh ? `${locResource(trigger.resource)}被消耗时` : `When ${locResource(trigger.resource)} is consumed`)
+        : (zh ? '任一资源被消耗时' : 'When any resource is consumed')
     case 'on_window_mode': return zh ? `节奏·${trigger.pattern}` : `Rhythm·${trigger.pattern}`
     case 'on_sequence':   return zh ? `序列·${trigger.pattern}` : `Sequence·${trigger.pattern}`
     case 'one_per_window': return zh ? `${trigger.n} 键内仅一次` : `Once per ${trigger.n} keys`
@@ -295,6 +299,14 @@ export function formatEffectDescription(effect: EffectSpec, skillResource?: stri
       return zh
         ? `每持有 ${sourceUnit} ${locResource(effect.source)} → +${perUnit} ${locResource(effect.target)}`
         : `per ${sourceUnit} ${locResource(effect.source)} → +${perUnit} ${locResource(effect.target)}`
+    }
+    case 'convert_resource': {
+      // 消耗 from（按自身 Lv1）→ 产出 to（按自身 Lv1）· 1:1 Lv1-单位代谢
+      const fromAmt = lv1Amount(effect.from, effect.ratio)
+      const toAmt = lv1Amount(effect.to, effect.ratio)
+      return zh
+        ? `消耗 ${fromAmt} ${locResource(effect.from)} → +${toAmt} ${locResource(effect.to)}`
+        : `consume ${fromAmt} ${locResource(effect.from)} → +${toAmt} ${locResource(effect.to)}`
     }
     case 'grant_haste': {
       // 每 trigger 固定整数 amount stack（amount 来自 recipe.amount，不再除 freq）

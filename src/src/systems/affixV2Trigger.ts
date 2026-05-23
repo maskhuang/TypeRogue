@@ -41,6 +41,8 @@ export interface TriggerContext {
   readonly isWordEnd?: boolean
   /** 获得极速的目标 skillId（on_haste_granted 用 · scope 匹配在 hook 层做）*/
   readonly grantedSkillId?: string
+  /** 本次被消耗的资源类型（on_resource_consumed 用）*/
+  readonly consumedResource?: string
 }
 
 // ============================================
@@ -94,6 +96,11 @@ export function evaluateTrigger(spec: TriggerSpec, ctx: TriggerContext): boolean
     case 'on_battle_end':
       // hook 层（hookOnBattleEnd）已按 result 过滤；evaluator 恒命中
       return true
+
+    case 'on_resource_consumed':
+      // 需有被消耗资源；spec.resource 缺省 = 任意资源，否则精确匹配
+      if (ctx.consumedResource === undefined) return false
+      return spec.resource === undefined || spec.resource === ctx.consumedResource
 
     // ── Phase 2（占位 · 未实装）──
     case 'on_window_mode':
