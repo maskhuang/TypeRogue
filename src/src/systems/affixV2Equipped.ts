@@ -459,6 +459,15 @@ export function hookOnSkillFire(
       const def = getAffixV2Definition(entry.defId)
       if (!def || def.trigger.type !== 'on_fire') continue
 
+      // chain（fire_target）的 on_fire(marked)：仅监听「其他」焦点技能 fire —— 跳过本技能自身 fire。
+      // 否则本技能身为焦点时 fire 自身 → 自身 marked 监听命中 → fire_target 重触发 → 无限自激
+      // （marked 是运行时动态焦点，无法在生成期按值去自身化，故在此按效果类型排除）。
+      if (
+        def.trigger.filter?.marked !== undefined &&
+        def.effect.kind === 'fire_target' &&
+        entry.skillId === broadcastEvent.sourceSkillId
+      ) continue
+
       const triggerCtx: TriggerContext = {
         selfAffixId: entry.defId,
         selfKey: entry.key,

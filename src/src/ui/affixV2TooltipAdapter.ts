@@ -113,6 +113,9 @@ export function formatTriggerDescription(trigger: TriggerSpec, host?: HostCtx): 
       if (trigger.filter.rarity !== undefined) {
         parts.push(zh ? `${locRarity(trigger.filter.rarity)}技能` : `${locRarity(trigger.filter.rarity)} skill`)
       }
+      if (trigger.filter.marked !== undefined) {
+        parts.push(trigger.filter.marked ? (zh ? '焦点' : 'focus') : (zh ? '非焦点' : 'non-focus'))
+      }
       return zh
         ? `任一技能触发时（${parts.join('、')}）`
         : `When any skill fires (${parts.join(', ')})`

@@ -168,8 +168,12 @@ export function processV2Results(results: readonly SourcedResult[], outputMult =
       dispatchResourceConsumed(cons.resource, cons.amount)
     }
     for (const ft of sr.result.fireTargetsTriggered) {
-      const targetIds = resolveSelectorToSkillIds(ft.selector, sr.sourceSkillId, sr.sourceKey)
-        .filter(tid => tid !== sr.sourceSkillId)
+      // 显式 self selector：保留自激（重触发本技能·生成器保证此时 trigger 为非 fire 家族 → 不会无限自激）
+      // 其余 broadcast selector：剔除源防直接回弹 A → B → A
+      const resolved = resolveSelectorToSkillIds(ft.selector, sr.sourceSkillId, sr.sourceKey)
+      const targetIds = ft.selector.type === 'self'
+        ? resolved
+        : resolved.filter(tid => tid !== sr.sourceSkillId)
       for (const tid of targetIds) {
         scheduleFireTargetDispatch(ft.sourceInstanceId, tid, sr.sourceKey)
       }

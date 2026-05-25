@@ -54,6 +54,11 @@ export function matchFireFilter(
   if (filter.posRel !== undefined) {
     const listenerSkillId = state.player.bindings.get(listenerKey)
     let posHit = false
+    // 技能不是自己的位置邻位：同一技能 fire 自身时 posRel 永不命中
+    // （否则多格技能两占位键可互成关系 → 误判自身 fire；亦杜绝 self-scope chain on_fire(posRel) 无限自激）
+    if (listenerSkillId && event.sourceSkillId === listenerSkillId) {
+      return false
+    }
     if (listenerSkillId) {
       // trigger 锚：listener 技能所有 on_fire{posRel} 统一用其 trigger 锚（忽略 per-affix rolled posRel）
       const rel = triggerPosAnchor(listenerSkillId)

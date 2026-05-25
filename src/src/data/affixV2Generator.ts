@@ -48,23 +48,23 @@ function pickTrigger(section: SectionTag, kind: string): TriggerEntry {
   return random() < 0.5 ? pickOnFireTrigger(section) : pickNonFireTrigger(kind)
 }
 
-/** on_fire 家族（含 on_self_fire）· 6 子类等权 · 子类内随机参数 */
+/** on_fire 家族（含 on_self_fire）· 7 子类等权 · 子类内随机参数 */
 function pickOnFireTrigger(section: SectionTag): TriggerEntry {
   const r = random()
-  if (r < 1 / 6) {
+  if (r < 1 / 7) {
     // on_self_fire · 自身 fire
     return { spec: { type: 'on_self_fire' }, freq: 30 }
   }
-  if (r < 2 / 6) {
+  if (r < 2 / 7) {
     // on_fire(tag=本 section)
     return { spec: { type: 'on_fire', filter: { tag: section } }, freq: 45 }
   }
-  if (r < 3 / 6) {
+  if (r < 3 / 7) {
     // on_fire(resource) · 6 资源等权
     const resource = pickRandom(MATCHED_RESOURCE_POOL)
     return { spec: { type: 'on_fire', filter: { resource } }, freq: 45 }
   }
-  if (r < 4 / 6) {
+  if (r < 4 / 7) {
     // on_fire(posRel) · 6 关系等权
     const posRel = pickRandom(POSREL_VALUES)
     return {
@@ -72,10 +72,15 @@ function pickOnFireTrigger(section: SectionTag): TriggerEntry {
       freq: ONFIRE_POSREL_FREQ[String(posRel)] ?? 60,
     }
   }
-  if (r < 5 / 6) {
+  if (r < 5 / 7) {
     // on_fire(rarity) · 稀有度 0-3 等权 · freq 粗估（依赖场上稀有度分布）
     const rarity = Math.floor(random() * 4)
     return { spec: { type: 'on_fire', filter: { rarity } }, freq: 30 }
+  }
+  if (r < 6 / 7) {
+    // on_fire(marked=true) · 焦点技能 fire 时 · freq 粗估（依赖场上是否有焦点 · 单焦点）
+    // chain 里语义为"其他焦点技能 fire"（运行时 hookOnSkillFire 对 fire_target 排除自身）
+    return { spec: { type: 'on_fire', filter: { marked: true } }, freq: 20 }
   }
   // on_fire(is_crit) · true/false 等权
   const isCrit = random() < 0.5
@@ -105,6 +110,48 @@ function pickNonFireTrigger(kind: string): TriggerEntry {
   return random() < 0.5
     ? { spec: { type: 'on_haste_granted', scope }, freq: 20 }
     : { spec: { type: 'on_haste_emitted', scope }, freq: 20 }
+}
+
+/** self-scope chain：把 on_fire 的过滤维度取值改成「host 自身必不满足」的值，使 fire_target 重触发本技能时
+ *  该 fire 不再满足 trigger（杜绝无限自激）。返回去自身化后的 trigger；无法去自身化则返回 null（调用方重抽）。
+ *  - 非 fire 家族：本就不因自身 fire 重触发 → 原样安全。
+ *  - on_self_fire / 裸 on_fire：自身 fire 必中、无维度可调 → null。
+ *  - tag：取 ≠ host section（host 必带本词条 section）。
+ *  - resource：取 ≠ host 产出资源。
+ *  - posRel：原样（fireFilter 已修「技能不是自己的位置邻位」→ 自身 fire 不命中）。
+ *  - rarity：取 ≠ host 稀有度（= 词条数；hostRarity 未知则无法排除 → null）。
+ *  - is_crit：强制 true —— 每次自激都需暴击，满爆才能维持循环（阵容成型 payoff，限流 4/sec 兜底不卡死）；
+ *           is_crit=false（无暴击即循环、零投入退化）一并翻成 true。
+ *  - marked：原样保留 —— 运行时 hookOnSkillFire 对 fire_target+marked 排除自身，故仅监听"其他"焦点技能 fire（不自激）。
+ *  - stack_state：pickOnFireTrigger 不生成；保守 null。 */
+function selfSafeFireTrigger(
+  spec: TriggerSpec,
+  hostSection: SectionTag,
+  hostResource: ResourceType | undefined,
+  hostRarity: number | undefined,
+): TriggerSpec | null {
+  if (spec.type === 'on_self_fire') return null
+  if (spec.type !== 'on_fire') return spec
+  const f = spec.filter
+  if (!f) return null
+  if (f.tag !== undefined) {
+    const pool = ALL_SECTION_TAGS.filter(t => t !== hostSection)
+    return pool.length > 0 ? { type: 'on_fire', filter: { tag: pickRandom(pool) } } : null
+  }
+  if (f.resource !== undefined) {
+    if (hostResource === undefined) return null
+    const pool = MATCHED_RESOURCE_POOL.filter(r => r !== hostResource)
+    return pool.length > 0 ? { type: 'on_fire', filter: { resource: pickRandom(pool) } } : null
+  }
+  if (f.posRel !== undefined) return spec
+  if (f.rarity !== undefined) {
+    if (hostRarity === undefined) return null
+    const pool = [0, 1, 2, 3].filter(n => n !== hostRarity)
+    return pool.length > 0 ? { type: 'on_fire', filter: { rarity: pickRandom(pool) } } : null
+  }
+  if (f.is_crit !== undefined) return { type: 'on_fire', filter: { is_crit: true } }
+  if (f.marked !== undefined) return { type: 'on_fire', filter: { marked: true } }
+  return null
 }
 
 // ============================================
@@ -591,6 +638,7 @@ function pickGatedScope(pool: readonly ScopeEntry[], kind: string): TargetSelect
 export function rollAffixV2Spec(
   recipe: AffixV2Recipe,
   skillResource?: ResourceType,
+  hostRarity?: number,
 ): { trigger: TriggerSpec; effect: EffectSpec } {
   // 二级抽样：先 50/50 on_fire vs non-on-fire，再分子类
   const triggerEntry = pickTrigger(recipe.section, recipe.kind)
@@ -675,17 +723,26 @@ export function rollAffixV2Spec(
     const to = toCandidates.length > 0 ? pickRandom(toCandidates) : from  // pool 退化兜底
     effect = { kind: 'convert_resource', from, to, ratio }
   } else if (recipe.kind === 'chain') {
-    // chain: fire_target broadcast · scope 排除 self · pick=random
-    // 排除高频 trigger（freq > 100 = 每键 / 每 2 键 / 每 3 键）防 chain 派发洪水
+    // chain: fire_target broadcast · scope 全池（含 self·自激重触发本技能）· pick=random
+    const sel = pickGatedScope(FULL_SCOPE_POOL, recipe.kind)
+    const isSelf = sel.type === 'self'
+    // trigger 重抽：通用排除高频 trigger（freq > 100 = 每键/每2键/每3键）防 chain 派发洪水；
+    // self 额外要求 trigger 可「去自身化」——selfSafeFireTrigger 把 on_fire 的过滤维度取值改成 host 必不满足
+    // 的值（tag≠section / resource≠host产出 / rarity≠host稀有度 / posRel 已由 fireFilter 修 / is_crit→true），
+    // 否则 fire_target 重触发本技能会再次满足 trigger → 无限自激。on_self_fire / 裸 on_fire 不可去自身化 → 重抽。
     let curFreq = triggerEntry.freq
+    let safe: TriggerSpec | null = isSelf
+      ? selfSafeFireTrigger(triggerSpec, recipe.section, skillResource, hostRarity)
+      : triggerSpec
     let retries = 8
-    while (curFreq > 100 && retries-- > 0) {
+    while (retries-- > 0 && (curFreq > 100 || safe === null)) {
       const retry = pickTrigger(recipe.section, recipe.kind)
       triggerSpec = retry.spec
       curFreq = retry.freq
+      safe = isSelf ? selfSafeFireTrigger(triggerSpec, recipe.section, skillResource, hostRarity) : triggerSpec
     }
-    const nonSelfScope = FULL_SCOPE_POOL.filter(s => s.selector.type !== 'self')
-    const sel = pickGatedScope(nonSelfScope, recipe.kind)
+    // self 兜底：retries 用尽仍不可去自身化 → on_word_end（非 fire · 必安全）
+    triggerSpec = safe ?? { type: 'on_word_end' }
     // 给 selector 注入 pick='random'
     let selector: TargetSelector
     switch (sel.type) {
@@ -847,10 +904,10 @@ function toolUsesRange(recipe: AffixV2Recipe): readonly [number, number] {
 export function generateAffixV2(
   recipe: AffixV2Recipe,
   skillResource?: ResourceType,
-  opts?: { inertMeta?: boolean },
+  opts?: { inertMeta?: boolean; hostRarity?: number },
 ): string {
   ensureHasteCalibrated()
-  const { trigger: triggerSpec, effect: rolledEffect } = rollAffixV2Spec(recipe, skillResource)
+  const { trigger: triggerSpec, effect: rolledEffect } = rollAffixV2Spec(recipe, skillResource, opts?.hostRarity)
 
   // inertMeta：被 gain_skill spawn 出来的 meta 词条（teach/imitate/spear_make/gaze_follow）
   // 保留段/名/触发器（身份在、tool 段可达），但 effect 置 noop —— on_battle_end 不再

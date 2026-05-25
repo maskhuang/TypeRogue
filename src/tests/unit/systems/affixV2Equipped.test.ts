@@ -19,7 +19,7 @@ import {
   getGhostLog,
   clearGhostLog,
 } from '../../../src/systems/affixV2Equipped'
-import { resetAllAffixV2State, getInstanceState, peekInstanceState, peekApprenticeProgress } from '../../../src/systems/affixV2State'
+import { resetAllAffixV2State, getInstanceState, peekInstanceState, peekApprenticeProgress, setFocus } from '../../../src/systems/affixV2State'
 import type { FireEvent } from '../../../src/systems/fireFilter'
 import { registerDynamicAffixV2, unregisterDynamicAffixV2 } from '../../../src/data/affixV2'
 import { setEnchant } from '../../../src/systems/affixV2Equipped'
@@ -544,6 +544,42 @@ describe('hookOnResourceConsumed · on_resource_consumed reactor', () => {
       expect(getGhostLog().length).toBe(0)
     } finally {
       unregisterDynamicAffixV2('test_react_2')
+    }
+  })
+})
+
+describe('on_fire(marked) chain · 仅监听「其他」焦点技能', () => {
+  const mc = (id: string) => ({
+    id, name_zh: 'x', name_en: 'x', section: 'vocal' as const, tags: ['vocal' as const], phase: 'P1' as const,
+    trigger: { type: 'on_fire' as const, filter: { marked: true } },
+    effect: { kind: 'fire_target' as const, selector: { type: 'self' as const } },
+  })
+
+  it('焦点技能 fire 自身 → 不触发自身 marked chain（防自激）', () => {
+    registerDynamicAffixV2(mc('test_mark_chain'))
+    try {
+      gameState.affixSkills.set('host', { id: 'host', name: 'host', resource: 'score', level: 1, rarity: 1, v2Ids: ['test_mark_chain'] } as unknown as AffixSkillInstance)
+      equipAffixV2('host', 'K', 'test_mark_chain')
+      setFocus('host', 'inst')   // host 自己是焦点
+      const r = hookOnSkillFire('host', { sourceAffixId: 'x', sourceSkillId: 'host', sourceKey: 'K', sourceResource: 'score', isCrit: false, stackState: 'none', amount: 1, timestamp: 0 }, baseResourceLv1, fullResource, NOW)
+      expect(r.flatMap(s => s.result.fireTargetsTriggered).length).toBe(0)
+    } finally {
+      unregisterDynamicAffixV2('test_mark_chain')
+      gameState.affixSkills.delete('host')
+    }
+  })
+
+  it('别的焦点技能 fire → 触发 host 的 marked chain', () => {
+    registerDynamicAffixV2(mc('test_mark_chain2'))
+    try {
+      gameState.affixSkills.set('host', { id: 'host', name: 'host', resource: 'score', level: 1, rarity: 1, v2Ids: ['test_mark_chain2'] } as unknown as AffixSkillInstance)
+      equipAffixV2('host', 'K', 'test_mark_chain2')
+      setFocus('other', 'inst')  // 另一个技能是焦点
+      const r = hookOnSkillFire('other', { sourceAffixId: 'x', sourceSkillId: 'other', sourceKey: 'L', sourceResource: 'score', isCrit: false, stackState: 'none', amount: 1, timestamp: 0 }, baseResourceLv1, fullResource, NOW)
+      expect(r.flatMap(s => s.result.fireTargetsTriggered).length).toBe(1)
+    } finally {
+      unregisterDynamicAffixV2('test_mark_chain2')
+      gameState.affixSkills.delete('host')
     }
   })
 })

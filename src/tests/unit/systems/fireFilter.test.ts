@@ -5,6 +5,7 @@
 import { describe, it, expect } from 'vitest'
 import { matchFireFilter, type FireEvent } from '../../../src/systems/fireFilter'
 import { PositionRelation } from '../../../src/data/keyboardTopology'
+import { state } from '../../../src/core/state'
 
 const baseEvent: FireEvent = {
   sourceAffixId: 'pant_hoot',      // section=vocal
@@ -45,6 +46,19 @@ describe('matchFireFilter · 单维度匹配', () => {
   it('posRel SameRow 不命中（不同行）', () => {
     // baseEvent.sourceKey='K'（home row）；listener='Q'（top row）
     expect(matchFireFilter(baseEvent, { posRel: PositionRelation.SameRow }, 'Q')).toBe(false)
+  })
+
+  it('posRel · 技能不是自己的位置邻位（多格技能 fire 自身不命中自身 on_fire(posRel)）', () => {
+    // skill_X 占两格 A、S（同行/相邻/同手皆成立）· fire 自身时任何 posRel 都不应命中
+    state.player.bindings.set('A', 'skill_X')
+    state.player.bindings.set('S', 'skill_X')
+    const selfFire: FireEvent = { ...baseEvent, sourceSkillId: 'skill_X', sourceKey: 'A' }
+    for (const rel of [PositionRelation.SameRow, PositionRelation.Adjacent, PositionRelation.SameHand,
+      PositionRelation.SameColumn, PositionRelation.SameFinger, PositionRelation.Symmetric]) {
+      expect(matchFireFilter(selfFire, { posRel: rel }, 'S')).toBe(false)
+    }
+    state.player.bindings.delete('A')
+    state.player.bindings.delete('S')
   })
 
   it('resource 维度匹配', () => {

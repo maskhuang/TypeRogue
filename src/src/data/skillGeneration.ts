@@ -510,7 +510,7 @@ function sampleV2Ids(count: number, skillResource: ResourceType, forcedRecipe?: 
       ? forcedRecipe
       : pickRecipeForSkill(skillResource, { excludeMeta })
     // inertMeta 仅对 meta recipe 生效（generateAffixV2 内部判定）· 随机槽位已 excludeMeta 故无 meta，透传无副作用
-    out.push(generateAffixV2(recipe, skillResource, { inertMeta }))
+    out.push(generateAffixV2(recipe, skillResource, { inertMeta, hostRarity: count }))
   }
   return out
 }
