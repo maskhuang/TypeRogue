@@ -27,6 +27,7 @@ import {
   hookOnBattleStart,
   hookOnBattleEnd,
   hookOnHasteGranted,
+  hookOnHasteEmitted,
   hookOnMarkGranted,
   hookOnMarkLost,
   hookOnResourceConsumed,
@@ -342,6 +343,24 @@ function scheduleHasteGrantedDispatch(sourceInstId: string, grantedSkillId: stri
   }, wait + 5)  // 5ms jitter
 }
 
+/** 调度一次 on_haste_emitted 派发（源侧）：满配额立即跑 hook，否则 setTimeout 推迟。
+ *  独立配额桶（sourceInstId+'#emit'），不与 granted-side 派发互相饿死；同样 4/sec 限流防自循环爆栈。 */
+function scheduleHasteEmittedDispatch(sourceInstId: string, emitterSkillId: string): void {
+  const bucket = `${sourceInstId}#emit`
+  const now = Date.now()
+  const wait = getFireTargetWaitMs(bucket, now)
+  if (wait === 0) {
+    tryFireTargetQuota(bucket, now)  // 记账（独立于 granted/fire_target 桶）
+    const results = hookOnHasteEmitted(emitterSkillId, defaultResourceLv1Base, defaultGetPlayerResource, now)
+    processV2Results(results)
+    return
+  }
+  setTimeout(() => {
+    if (state.phase !== 'battle') return  // 出战斗丢弃残留
+    scheduleHasteEmittedDispatch(sourceInstId, emitterSkillId)
+  }, wait + 5)  // 5ms jitter
+}
+
 function fireOneTarget(targetSkillId: string, sourceKey: string): void {
   const keys = getSkillKeys(getBindingState(state), targetSkillId)
   const triggerKey = keys[0] ?? sourceKey
@@ -574,11 +593,17 @@ export function wireV2BattleIntegration(): void {
     processV2Results(results)
   })
 
-  // haste:granted → 触发 on_haste_granted 类 V2 affix（scope 内含 grantedSkillId）
+  // haste:granted → 触发 on_haste_granted 类 V2 affix（scope 内含 grantedSkillId，接收方侧）
   // 同来源限流：复用 fire_target rate limit（4/sec/source），超配额 setTimeout 推迟到下窗口，
   // grant_haste → on_haste_granted → grant_haste 自循环按 4/sec 节奏持续运行，链不中断
+  //
+  // 同一事件还派发 on_haste_emitted（源/施加方侧）：把 sourceInstanceId 解析回源 skill，
+  // scope 内含该源 skill 才命中（典型 scope=neighbors{posRel} = "posRel 里的技能给予极速时"）。
+  // relic 源（sourceInstanceId='relic:*'）无对应 equipped 词条 → 解析为空 → 跳过（relic 不是"技能"）。
   eventBus.on('haste:granted', ({ skillId, sourceInstanceId }) => {
     scheduleHasteGrantedDispatch(sourceInstanceId, skillId)
+    const emitterSkillId = listAllEquipped().find(e => e.instanceId === sourceInstanceId)?.skillId
+    if (emitterSkillId) scheduleHasteEmittedDispatch(sourceInstanceId, emitterSkillId)
   })
 
   // mark:granted / mark:lost → 触发 on_mark_granted / on_mark_lost 类 V2 affix（scope 内含变更 skillId）

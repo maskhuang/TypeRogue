@@ -129,6 +129,14 @@ export function formatTriggerDescription(trigger: TriggerSpec, host?: HostCtx): 
           ? `${formatSelector(scope, host)}获得极速时`
           : `When ${formatSelector(scope, host)} gains haste`)
     }
+    case 'on_haste_emitted': {
+      const scope = trigger.scope ?? { type: 'self' as const }
+      return scope.type === 'self'
+        ? (zh ? '本技能给予极速时' : 'When this skill grants haste')
+        : (zh
+          ? `${formatSelector(scope, host)}给予极速时`
+          : `When ${formatSelector(scope, host)} grants haste`)
+    }
     case 'on_battle_start': return zh ? '战斗开始时' : 'On battle start'
     case 'on_battle_end': {
       const result = trigger.result ?? 'win'

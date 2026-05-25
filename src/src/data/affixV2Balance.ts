@@ -37,6 +37,7 @@ export const TRIGGER_FREQUENCY: Record<TriggerSpec['type'], TriggerFrequencyEntr
   on_fire:          { fires: 30,  note: 'filter 应用后实际频率会降；默认无 filter 估值' },
   every_n_keys:     { fires: 30,  note: '默认 n=10；实际计算用 keysPerBattle/n' },
   on_haste_granted: { fires: 20,  note: 'haste grant 频率经验值；依赖场上 grant_haste 源' },
+  on_haste_emitted: { fires: 20,  note: 'haste 施加（源侧）频率经验值；依赖场上 grant_haste 源（reactive build-around）' },
   on_mark_granted:  { fires: 10,  note: '焦点上位频率经验值；依赖场上 apply_mark 源（reactive build-around）' },
   on_mark_lost:     { fires: 10,  note: '焦点交接频率经验值；单焦点 re-aim 时旧焦点剥夺（依赖 apply_mark 源）' },
   on_resource_consumed: { fires: 15, note: '资源消耗频率经验值；依赖场上 convert_resource 源' },

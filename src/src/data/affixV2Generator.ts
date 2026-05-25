@@ -99,10 +99,12 @@ function pickNonFireTrigger(kind: string): TriggerEntry {
     const n = Math.floor(random() * (EVERY_N_MAX - EVERY_N_MIN + 1)) + EVERY_N_MIN
     return { spec: { type: 'every_n_keys', n }, freq: 300 / n }
   }
-  // on_haste_granted · scope 加权随机（self 偏多，wide scope 稀有）·
+  // on_haste_granted（接收方）/ on_haste_emitted（源·施加方）· 各 50% · scope 加权随机（self 偏多，wide scope 稀有）·
   // freq 经验值 ~20（依赖场上是否有 grant_haste 源；非 fire 系列里频率粗估）
   const scope = pickGatedScope(FULL_SCOPE_POOL, kind)
-  return { spec: { type: 'on_haste_granted', scope }, freq: 20 }
+  return random() < 0.5
+    ? { spec: { type: 'on_haste_granted', scope }, freq: 20 }
+    : { spec: { type: 'on_haste_emitted', scope }, freq: 20 }
 }
 
 // ============================================
@@ -531,8 +533,13 @@ function effectReferencesHaste(e: EffectSpec): boolean {
 export function classifyHaste(trigger: TriggerSpec, effect: EffectSpec): { grants: boolean; references: boolean } {
   return {
     grants: effectGrantsHaste(effect),
-    references: trigger.type === 'on_haste_granted' || effectReferencesHaste(effect),
+    references: triggerReferencesHaste(trigger) || effectReferencesHaste(effect),
   }
+}
+
+/** trigger 是否「读取/依赖」极速供给（haste 需求侧）· on_haste_granted（接收方）+ on_haste_emitted（源/施加方）*/
+function triggerReferencesHaste(trigger: TriggerSpec): boolean {
+  return trigger.type === 'on_haste_granted' || trigger.type === 'on_haste_emitted'
 }
 
 /** 是否放行一次需求特征的发射 · 标定期 / grant recipe 全放行，否则按 _demandGate 掷骰 */
@@ -552,7 +559,7 @@ function ensureHasteCalibrated(): void {
     for (let i = 0; i < HASTE_CALIB_SAMPLES; i++) {
       const { trigger, effect } = rollAffixV2Spec(pickRecipeForSkill())
       if (effectGrantsHaste(effect)) grants++
-      else if (trigger.type === 'on_haste_granted' || effectReferencesHaste(effect)) refsOnly++
+      else if (triggerReferencesHaste(trigger) || effectReferencesHaste(effect)) refsOnly++
     }
   })
   _calibrating = false

@@ -58,6 +58,10 @@ export type Phase1TriggerSpec =
   | { type: 'every_n_keys'; n: number }
   /** scope 内某个 skill 获得极速时触发 · 默认 scope=self */
   | { type: 'on_haste_granted'; scope?: TargetSelector }
+  /** scope 内某个 skill 「给予/发出」极速时触发（源/施加方侧 · on_haste_granted 的镜像）· 默认 scope=self ·
+   *  匹配 grant_haste 的「源 skill」是否在 scope 内（典型 scope=neighbors{posRel} = "posRel 里的技能给予极速时"）·
+   *  relic 等无源 skill 的极速施加不触发 · 无 grant_haste 源时永不触发（reactive build-around · 与 on_haste_granted 同纪律）*/
+  | { type: 'on_haste_emitted'; scope?: TargetSelector }
   /** scope 内某个 skill 成为焦点（获得 MARK）时触发 · 默认 scope=self ·
    *  reactive build-around：无 apply_mark 源时永不触发（与 on_haste_granted 同纪律）*/
   | { type: 'on_mark_granted'; scope?: TargetSelector }

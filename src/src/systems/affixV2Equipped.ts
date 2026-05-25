@@ -692,6 +692,75 @@ export function hookOnHasteGranted(
 }
 
 /**
+ * haste:emitted 全局 hook · 任一 skill「发出/给予」极速时调（grant_haste 的源侧 · on_haste_granted 的镜像）。
+ * 遍历 on_haste_emitted trigger 的 V2 instance，scope 内含 emitterSkillId（源/施加方 skill）才命中。
+ * scope 缺省 = self（仅当本 affix 所在 skill 自己发出极速时触发）。
+ * relic 等无源 skill 的极速施加由调用方传 emitterSkillId=空 → 不进本 hook。
+ * 与 on_haste_granted 同纪律：无 grant_haste 源时永不触发（reactive build-around）。
+ */
+export function hookOnHasteEmitted(
+  emitterSkillId: string,
+  resourceLv1Base: (r: string, level?: number) => number,
+  getPlayerResource: (r: string) => number,
+  nowMs: number,
+): SourcedResult[] {
+  const results: SourcedResult[] = []
+  for (const entry of _equipped.values()) {
+    const def = getAffixV2Definition(entry.defId)
+    if (!def || def.trigger.type !== 'on_haste_emitted') continue
+
+    // scope 匹配：缺省 self（与 on_haste_granted 同口径，但匹配的是「源 skill」）
+    const scope: TargetSelector = def.trigger.scope ?? { type: 'self' }
+    let inScope = false
+    if (scope.type === 'self') {
+      inScope = entry.skillId === emitterSkillId
+    } else if (_selectorResolver) {
+      const targets = _selectorResolver(scope, entry.skillId, entry.key)
+      inScope = targets.includes(emitterSkillId)
+    }
+    if (!inScope) continue
+
+    const triggerCtx: TriggerContext = {
+      selfAffixId: entry.defId,
+      selfKey: entry.key,
+      emitterSkillId,
+    }
+    if (!evaluateTrigger(def.trigger, triggerCtx)) continue
+
+    const lvBase = lvNBaseFor(entry.skillId, resourceLv1Base)
+    const ctx: ResolveContext = {
+      instanceId: entry.instanceId,
+      skillId: entry.skillId,
+      key: entry.key,
+      skillResource: 'score',
+      skillResourceLv1Base: lvBase('score'),
+      resourceLv1Base: lvBase,
+      nowMs,
+      isCrit: false,
+      currentWordLength: 0,
+      hostSkillLevel: gameState.affixSkills.get(entry.skillId)?.level ?? 1,
+      selfSection: def.section,
+      selfDefId: def.id,
+      getPlayerResource,
+      resolveSelector: _selectorResolver,
+      queryEquipped: buildQueryEquipped(entry),
+    }
+    const result = resolveEffect(applyEnchantToEffect(def.effect, getEnchant(entry.instanceId)), ctx)
+    results.push({ sourceInstanceId: entry.instanceId, sourceSkillId: entry.skillId, sourceKey: entry.key, result })
+
+    _ghostLog.push({
+      timestamp: nowMs,
+      instanceId: entry.instanceId,
+      defId: entry.defId,
+      trigger: def.trigger.type,
+      result,
+    })
+    recordApprenticeTriggerHit(entry)
+  }
+  return results
+}
+
+/**
  * mark 焦点变更全局 hook · 焦点 granted/lost 时调（mark:granted / mark:lost 事件驱动）。
  * 遍历对应 on_mark_granted / on_mark_lost trigger 的 V2 instance，scope 内含 markedSkillId 才命中。
  * scope 缺省 = self（仅监听本 affix 所在 skill）· 与 on_haste_granted 同结构。
