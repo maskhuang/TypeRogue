@@ -4,7 +4,7 @@
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import { resolveEffect, evaluateCondition, type ResolveContext } from '../../../src/systems/affixV2Effect'
-import { resetAllAffixV2State, peekInstanceState, listActiveAuras, listStatuses, getInstanceState } from '../../../src/systems/affixV2State'
+import { resetAllAffixV2State, peekInstanceState, listActiveAuras, listStatuses, getInstanceState, addAlly } from '../../../src/systems/affixV2State'
 import { state as gameState } from '../../../src/core/state'
 import { BALANCE } from '../../../src/core/constants'
 
@@ -361,6 +361,36 @@ describe('ScaleByTag · targetScore（目标分数档 · 全局 · 不用 scope�
       scale: { type: 'per_n', source: { by: 'targetScore' }, perN: 3 },
     }, baseCtx)
     // floor(7/3) = 2 → 11 × 2 = 22
+    expect(r.resourceProduced[0].amount).toBe(22)
+  })
+})
+
+describe('ScaleByTag · allied（结盟数 n · 全局 · 不用 scope）', () => {
+  it('n=0（无结盟）→ count 因子 1', () => {
+    const r = resolveEffect({
+      kind: 'gain_resource', resource: 'score', ratio: 1,
+      scale: { type: 'count', source: { by: 'allied' }, factor: 0.1 },
+    }, baseCtx)
+    expect(r.resourceProduced[0].amount).toBeCloseTo(11, 5)   // 11 × (1 + 0×0.1)
+  })
+
+  it('count 曲线 · n = 结盟规模（getAllianceSize）', () => {
+    addAlly('sk_a', 'x'); addAlly('sk_b', 'x'); addAlly('sk_c', 'x')   // n=3
+    const r = resolveEffect({
+      kind: 'gain_resource', resource: 'score', ratio: 1,
+      scale: { type: 'count', source: { by: 'allied' }, factor: 0.1 },
+    }, baseCtx)
+    // 1 × 11 × (1 + 3×0.1) = 14.3
+    expect(r.resourceProduced[0].amount).toBeCloseTo(14.3, 5)
+  })
+
+  it('per_n 曲线 · floor(n / perN)', () => {
+    for (const id of ['a','b','c','d','e']) addAlly('sk_'+id, 'x')   // n=5
+    const r = resolveEffect({
+      kind: 'gain_resource', resource: 'score', ratio: 1,
+      scale: { type: 'per_n', source: { by: 'allied' }, perN: 2 },
+    }, baseCtx)
+    // floor(5/2) = 2 → 11 × 2 = 22
     expect(r.resourceProduced[0].amount).toBe(22)
   })
 })

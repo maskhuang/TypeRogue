@@ -34,6 +34,7 @@ import {
   grantHaste,
   setFocus,
   addAlly,
+  getAllianceSize,
 } from './affixV2State'
 import { random } from '../core/seededRandom'
 import { getCandidatePool, widenSkillFilter, spawnSkillFromSeed, filterByNeighborPosRel } from './affixV2SkillFilter'
@@ -625,6 +626,9 @@ function countScaleSource(source: ScaleCountSource, scope: TargetSelector | unde
         : []
       return new Set(ids).size
     }
+    case 'allied':
+      // 当前结盟集规模 n · 全局计数，与 scope 无关 · 与盟员产出加成 / 字母徽章同口径（含被取代但仍在盟的边角）
+      return getAllianceSize()
     case 'targetScore':
       // 当前关目标分数档 · 越深入 run 目标越高 → scale 越大 · 全局，与 scope 无关
       return Math.round(gameState.targetScore / BALANCE.TARGET_BASE)

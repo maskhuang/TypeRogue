@@ -100,9 +100,9 @@ export type TriggerSpec = Phase1TriggerSpec | Phase2TriggerSpec
 //   curve（type）：count — 乘性连续 factor = 1 + n × factor（n=0 → ×1 全产出）
 //                  per_n — 步进整数 factor = floor(n / perN)（n<perN → 0，门控）
 //   source       ：数 scope 内的什么单位 —— 词条(tag) / 资源(resource) / 稀有度(rarity) /
-//                  空位(empty) / 极速(hasted) / 目标分数档(targetScore) / 同名词条(affixName)
+//                  空位(empty) / 极速(hasted) / 结盟数(allied) / 目标分数档(targetScore) / 同名词条(affixName)
 // 都按"乘性 scale 因子"接入 add / multiply / gain_resource / apply_aura。
-// scope 决定计数范围（缺省 all_skills）；empty / hasted / targetScore 例外——不使用 scope（见各 source 注释）。
+// scope 决定计数范围（缺省 all_skills）；empty / hasted / allied / targetScore 例外——不使用 scope（见各 source 注释）。
 
 /** scale 计数来源 · 决定"数 scope 内的什么" */
 export type ScaleCountSource =
@@ -116,6 +116,9 @@ export type ScaleCountSource =
   | { readonly by: 'empty'; readonly posRel: PositionRelation }
   /** 极速：场上当前处于极速态（haste 层数 ≥ 1）的技能数 · 运行时动态 · 全局计数，不使用 scope */
   | { readonly by: 'hasted' }
+  /** 结盟数：当前结盟集规模 n（已入盟技能数）· 运行时动态 · 全局计数，不使用 scope ·
+   *  与盟员产出加成同口径（= 字母徽章显示的 n）· reactive build-around：无 apply_ally 源时为 0 */
+  | { readonly by: 'allied' }
   /** 目标分数：当前关目标分数档 = round(targetScore / TARGET_BASE) · 越深入 run 目标越高 → 数越大 · 全局计数，不使用 scope */
   | { readonly by: 'targetScore' }
   /** 同名词条：scope 内携带「与宿主同名词条」（同 defId）的去重技能数 · 自指，无参数（计数对象恒为挂载本 scale 的词条名）·

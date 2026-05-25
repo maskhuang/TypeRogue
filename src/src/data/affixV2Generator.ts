@@ -163,24 +163,25 @@ const CHANT_TAG_PER_N_MIN = 2
 const CHANT_TAG_PER_N_MAX = 4
 const CHANT_TAG_COUNT_FACTOR = 0.1
 
-/** 抽 scale 计数来源（变体）· 词条 42% / 资源 16% / 稀有度 13% / 极速 8% / 目标分数 7% / 同名词条 7% / 空位 7%。
- *  资源用宿主资源（"数同资源技能"，无则随机）；稀有度 0-3 随机；极速数全局动态；目标分数读当前关目标档；
+/** 抽 scale 计数来源（变体）· 词条 40% / 资源 15% / 稀有度 12% / 极速 7% / 结盟数 7% / 目标分数 6% / 同名词条 6% / 空位 7%。
+ *  资源用宿主资源（"数同资源技能"，无则随机）；稀有度 0-3 随机；极速数/结盟数全局动态；目标分数读当前关目标档；
  *  同名词条数携带本词条名（同 defId）的去重技能（自指·宿主自身计入·孤本时计 1）；空位随机锁 posRel。
- *  by:'hasted' 受需求门控——被关掉则回退 targetScore/affixName/empty（非极速来源）。 */
+ *  by:'hasted' 受需求门控（haste 预算）——被关掉则回退后续来源；by:'allied' 不门控（build-around，无盟时计 0，同 affixName 纪律）。 */
 function pickScaleSource(section: SectionTag, skillResource?: ResourceType, kind?: string): ScaleCountSource {
   const roll = random()
-  if (roll < 0.42) return { by: 'tag', tag: section }
-  if (roll < 0.58) return { by: 'resource', resource: skillResource ?? pickRandom(MATCHED_RESOURCE_POOL) }
-  if (roll < 0.71) return { by: 'rarity', rarity: Math.floor(random() * 4) }
-  if (roll < 0.79 && admitDemand(kind)) return { by: 'hasted' }
-  if (roll < 0.86) return { by: 'targetScore' }
+  if (roll < 0.40) return { by: 'tag', tag: section }
+  if (roll < 0.55) return { by: 'resource', resource: skillResource ?? pickRandom(MATCHED_RESOURCE_POOL) }
+  if (roll < 0.67) return { by: 'rarity', rarity: Math.floor(random() * 4) }
+  if (roll < 0.74 && admitDemand(kind)) return { by: 'hasted' }
+  if (roll < 0.81) return { by: 'allied' }
+  if (roll < 0.87) return { by: 'targetScore' }
   if (roll < 0.93) return { by: 'affixName' }
   return { by: 'empty', posRel: pickRandom(POSREL_VALUES) }
 }
 
-/** 给定 source 选 scope：empty 用自身 posRel、hasted 全局数极速技能、targetScore 读关目标（均 top-level scope 留空）；其余从 SCALE_SCOPE_POOL 抽。 */
+/** 给定 source 选 scope：empty 用自身 posRel、hasted/allied 全局动态计数、targetScore 读关目标（均 top-level scope 留空）；其余从 SCALE_SCOPE_POOL 抽。 */
 function pickScaleScope(source: ScaleCountSource): TargetSelector | undefined {
-  return (source.by === 'empty' || source.by === 'hasted' || source.by === 'targetScore') ? undefined : pickWeightedScope(SCALE_SCOPE_POOL).selector
+  return (source.by === 'empty' || source.by === 'hasted' || source.by === 'allied' || source.by === 'targetScore') ? undefined : pickWeightedScope(SCALE_SCOPE_POOL).selector
 }
 
 /**

@@ -271,7 +271,7 @@ function liveScaleFactor(scale: ScaleByTag | undefined, host?: HostCtx): number 
   return live ? live.factor : 1
 }
 
-/** scale 计数单位的人读名 · 词条/资源/稀有度/空位/极速/目标分数档 */
+/** scale 计数单位的人读名 · 词条/资源/稀有度/空位/极速/结盟数/目标分数档/同名词条 */
 function scaleSourceUnit(source: ScaleCountSource): string {
   const zh = isZh()
   switch (source.by) {
@@ -287,6 +287,8 @@ function scaleSourceUnit(source: ScaleCountSource): string {
       return zh ? `「${locRel(source.posRel)}」空位` : `${locRel(source.posRel)} empty slot`
     case 'hasted':
       return zh ? `极速技能` : `hasted skill`
+    case 'allied':
+      return zh ? `结盟技能` : `allied skill`
     case 'targetScore':
       return zh ? `目标分数档` : `target-score tier`
     case 'affixName':
