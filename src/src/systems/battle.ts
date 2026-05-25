@@ -7,7 +7,8 @@ import { rebuildBigramFreq } from '../data/bigramFrequency';
 import { resolveRelicEffects, resolveRelicEffectsWithBehaviors, queryRelicFlag } from './relics/RelicPipeline';
 import { eventBus } from '../core/events/EventBus';
 import { onKeyV2, consumeHasteFireIfAny } from './affixV2BattleIntegration';
-import { getHaste } from './affixV2State';
+import { getHaste, isAllied, getAllianceSize, isFocused, isSkillConsumed } from './affixV2State';
+import { ALLIANCE_BONUS_PCT } from '../data/affixV2Trigger';
 import { inputHandler } from './typing/InputHandler';
 import { getElements } from '../ui/elements';
 import { RELICS, MAX_RELIC_SLOTS } from '../data/relics';
@@ -491,19 +492,51 @@ function applyLetterStatusBadges(): void {
     const old = span.querySelector(':scope > .letter-status');
     if (old) old.remove();
     span.classList.remove('has-haste');
+    span.classList.remove('has-ally');
+    span.classList.remove('has-mark');
+    span.classList.remove('has-consumed');
 
     const ch = s.word[i];
     const skillId = s.bindings.get(ch.toLowerCase());
     if (!skillId) continue;
 
     const pips: HTMLElement[] = [];
-    const haste = getHaste(skillId);
-    if (haste > 0) {
+
+    if (isSkillConsumed(skillId)) {
+      // 取代/吞噬：本场移除（不再击发/不可被选中）· 只显移除标记（红 X + 删除线），
+      // 不再叠加任何增益 pip —— 技能已不在场，其它状态对玩家无意义。
       const pip = document.createElement('span');
-      pip.className = 'status-pip pip-haste';
-      pip.textContent = `⚡${haste}`;
+      pip.className = 'status-pip pip-consumed';
+      pip.textContent = 'X';
       pips.push(pip);
-      span.classList.add('has-haste');
+      span.classList.add('has-consumed');
+    } else {
+      const haste = getHaste(skillId);
+      if (haste > 0) {
+        const pip = document.createElement('span');
+        pip.className = 'status-pip pip-haste';
+        pip.textContent = `⚡${haste}`;
+        pips.push(pip);
+        span.classList.add('has-haste');
+      }
+      // 结盟：盟员产出 +ALLIANCE_BONUS_PCT × 盟员数 · pip 直接显示当前加成 %（动态随结盟规模变化）
+      if (isAllied(skillId)) {
+        const pct = Math.round(ALLIANCE_BONUS_PCT * getAllianceSize() * 100);
+        const pip = document.createElement('span');
+        pip.className = 'status-pip pip-ally';
+        // & = "结盟"（联合/banded together）· 取 ASCII 字符使其在像素字体(Press Start 2P)原生渲染，契合 CRT 像素风
+        pip.textContent = `&+${pct}%`;
+        pips.push(pip);
+        span.classList.add('has-ally');
+      }
+      // MARK 焦点：取对象效果优先指向它（全局 0/1 · 无数值）· 仅符号；* = "marked"，像素字体原生字符
+      if (isFocused(skillId)) {
+        const pip = document.createElement('span');
+        pip.className = 'status-pip pip-mark';
+        pip.textContent = '*';
+        pips.push(pip);
+        span.classList.add('has-mark');
+      }
     }
     // 未来 status 在此追加 pip
 
@@ -549,6 +582,19 @@ eventBus.on('haste:granted', ({ skillId, amount }) => {
     applyLetterStatusBadges();
   });
 });
+
+eventBus.on('ally:joined', () => {
+  // 新成员入盟 → 结盟规模变大 → 全体盟员 bonus% 同步提升，故整体重刷字母徽章（非仅新成员那格）。
+  // 同 haste：推迟到 microtask，避免在 apply_ally 同步 emit 路径中途改 DOM。
+  queueMicrotask(() => {
+    applyLetterStatusBadges();
+  });
+});
+
+// MARK 焦点改指/清除 + 取代移除 → 重刷字母徽章（焦点/移除是全局单状态，整体重扫）
+eventBus.on('mark:granted', () => { queueMicrotask(() => applyLetterStatusBadges()); });
+eventBus.on('mark:lost',    () => { queueMicrotask(() => applyLetterStatusBadges()); });
+eventBus.on('skill:consumed', () => { queueMicrotask(() => applyLetterStatusBadges()); });
 
 // === 输入处理 ===
 export function initInput(): void {

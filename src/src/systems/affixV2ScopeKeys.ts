@@ -22,6 +22,7 @@ export function extractSelectorFromEffect(effect: EffectSpec): TargetSelector | 
     case 'multiply':     return effect.selector
     case 'grant_haste':  return effect.selector             // haste 系（跳跃）也有作用域，需范围预览
     case 'apply_mark':   return effect.selector             // mark 系（指向性搔抓）标记范围，需范围预览
+    case 'apply_ally':   return effect.selector             // ally 系（联盟攻击）招募范围，需范围预览
     // meta-progression 操纵家族（on_battle_end）的邻位范围
     case 'upgrade_skill': return effect.selector                 // spear_make
     case 'graft_affix':   return effect.from                     // gaze_follow
@@ -101,6 +102,9 @@ export function resolveSelectorToHighlightKeys(
       return []
     case 'marked':
       // 运行时动态范围（依赖战斗内单焦点状态）· 预览无战斗态，不高亮
+      return []
+    case 'allied':
+      // 运行时动态范围（依赖战斗内结盟集）· 预览无战斗态，不高亮
       return []
     case 'workbench':
       // IN-tray 未装配技能不在键盘上 · 无对应键位可高亮

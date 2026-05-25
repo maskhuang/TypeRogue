@@ -79,6 +79,9 @@ function resolveSourceScopeSkillIds(sel: TargetSelector, hostSkillId: string, ho
     case 'marked':
       // 焦点 = 战斗运行时单焦点；继承语义不挂靠焦点（INHERIT_TAGS_SOURCE_POOL 已排除 marked）→ 返空
       return []
+    case 'allied':
+      // 结盟集 = 战斗运行时；继承语义不挂靠结盟（INHERIT_TAGS_SOURCE_POOL 已排除 allied）→ 返空
+      return []
   }
 }
 

@@ -12,7 +12,7 @@ import type { PositionRelation } from './keyboardTopology'
 // 注：完整类型定义在 src/src/systems/fireFilter.ts；此处仅为 TriggerSpec.on_fire 引用。
 // 避免循环 import，FireFilter 的运行时匹配函数在 fireFilter.ts。
 
-/** 完整 fire filter · 6 维正交（详 affix-rewrite-tag-system.md §4.2） */
+/** 完整 fire filter · 7 维正交（详 affix-rewrite-tag-system.md §4.2） */
 export interface FireFilter {
   /** behavior sampling：来源 affix 携带此 tag（any-of）*/
   readonly tag?: Tag | readonly Tag[]
@@ -68,6 +68,10 @@ export type Phase1TriggerSpec =
   /** scope 内某个 skill 失去焦点（MARK 被改指/清除）时触发 · 默认 scope=self ·
    *  单焦点 re-aim 时旧焦点必被剥夺 → 焦点交接 payoff · 关末 teardown 不触发（不发事件）*/
   | { type: 'on_mark_lost'; scope?: TargetSelector }
+  /** scope 内某个 skill 加入结盟时触发 · 默认 scope=self ·
+   *  reactive build-around：无 apply_ally 源时永不触发（与 on_mark_granted 同纪律）·
+   *  结盟单向只进（无 left 触发）· 关末 teardown 清盟不触发（不发事件）*/
+  | { type: 'on_ally_joined'; scope?: TargetSelector }
   /** 每场战斗开始触发一次 · 旧 innate 的 V2 等价物 */
   | { type: 'on_battle_start' }
   /** 每场战斗结束触发一次 · result 决定哪类结局触发（缺省 'win'）·
@@ -157,6 +161,12 @@ export type TargetSelector =
    * 作 effect scope = "作用于焦点"；与 Tier-2 射程内优先互补（详 affixV2State.setFocus）。
    */
   | { type: 'marked'; pick?: 'all' | 'random' }
+  /**
+   * 当前结盟全部成员（结盟集 · 0..N 个）· 运行时动态。
+   * 解析为当前已入盟的所有技能（无成员 → 空集）· 与 hasted/marked 同纪律（装备态/预览返空）。
+   * 作 effect scope = "作用于全体盟员"；与结盟产出加成（每盟员 +bonus×n）互补。
+   */
+  | { type: 'allied'; pick?: 'all' | 'random' }
   /** 指定稀有度（= V2 词条数量 0-3）的技能 · 精确匹配，复合范围交由 composite */
   | { type: 'matched_rarity'; rarity: number; pick?: 'all' | 'random' }
   /**
@@ -262,6 +272,11 @@ export type ConditionSpec =
 // K1 决议：Bazaar 风限流——同一来源每秒最多 4 次触发
 export const FIRE_TARGET_RATE_LIMIT_PER_SEC = 4
 
+// ===== 结盟产出加成常量 =====
+// 结盟集（apply_ally）内每个技能产出 ×(1 + ALLIANCE_BONUS_PCT × n)，n = 当前结盟规模。
+// 平衡可调旋钮：盟越大每个盟员越强（n=2 → +10%，n=5 → +25%）。
+export const ALLIANCE_BONUS_PCT = 0.05
+
 // ===== EffectSpec =====
 // 4 个核心 kind（2026-05-12 锁定）：2 个关内成长 + 2 个一次性。
 // 关内成长 = 每次 trigger 命中累积，battle end 重置（Bazaar "for the fight" pattern）。
@@ -340,6 +355,10 @@ export type EffectSpec =
   /** MARK 给予：把 selector 解析出的候选随机取 1 个设为全局焦点（单焦点寄存器，new 顶 old）·
    *  无数值 · 收益是被标记技能被其它取对象效果优先选中（Tier-2 射程内优先 + marked scope 显式触达）*/
   | { kind: 'apply_mark'; selector: TargetSelector }
+
+  /** 结盟给予：把 selector 解析出的**全部**候选加入结盟集（复数共存，与 apply_mark 取 1 不同）·
+   *  收益是集合内每个技能产出 +ALLIANCE_BONUS_PCT × n（n=结盟规模 · 越大越强）· scope 越宽入盟越多 */
+  | { kind: 'apply_ally'; selector: TargetSelector }
 
   /**
    * 多 effect 顺序执行（加算层 → 乘算层 → 一次性产出 的顺序结算）

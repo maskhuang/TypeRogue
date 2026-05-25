@@ -40,6 +40,7 @@ export const TRIGGER_FREQUENCY: Record<TriggerSpec['type'], TriggerFrequencyEntr
   on_haste_emitted: { fires: 20,  note: 'haste 施加（源侧）频率经验值；依赖场上 grant_haste 源（reactive build-around）' },
   on_mark_granted:  { fires: 10,  note: '焦点上位频率经验值；依赖场上 apply_mark 源（reactive build-around）' },
   on_mark_lost:     { fires: 10,  note: '焦点交接频率经验值；单焦点 re-aim 时旧焦点剥夺（依赖 apply_mark 源）' },
+  on_ally_joined:   { fires: 10,  note: '入盟频率经验值；依赖场上 apply_ally 源（reactive build-around · 单向只进）' },
   on_resource_consumed: { fires: 15, note: '资源消耗频率经验值；依赖场上 convert_resource 源' },
   on_removed:       { fires: 1,   note: '死亡回响；每场被取代一次（依赖场上 consume_skill 源）→ magnitude 应高' },
   on_battle_start:  { fires: 1,   note: '每战仅一次（旧 innate V2 等价物）→ magnitude 应高' },

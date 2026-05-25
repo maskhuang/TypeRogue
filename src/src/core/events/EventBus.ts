@@ -28,6 +28,10 @@ export interface GameEvents {
   // V2 MARK 焦点事件（setFocus 单焦点寄存器改指/清除时发射；on_mark_granted / on_mark_lost 反应链用）
   'mark:granted': { skillId: string; sourceInstanceId: string }
   'mark:lost': { skillId: string; sourceInstanceId: string }
+  // V2 结盟事件（addAlly 新成员入盟时发射；on_ally_joined 反应链用 · 集合单向只进，无 left 事件）
+  'ally:joined': { skillId: string; sourceInstanceId: string }
+  // V2 取代/吞噬事件（consume_skill 本场移除目标 skill 时发射；字母徽章刷新用）
+  'skill:consumed': { skillId: string }
 
   // 效果队列事件
   'effect:queued': { effect: unknown; queueSize: number }

@@ -14,6 +14,7 @@ import {
   type AffixV2Instance,
 } from '../data/affixV2'
 import type { TriggerSpec, EffectSpec, TargetSelector, ConditionSpec, SkillFilter, ScaleByTag, ScaleCountSource } from '../data/affixV2Trigger'
+import { ALLIANCE_BONUS_PCT } from '../data/affixV2Trigger'
 import { scopePosAnchor, triggerPosAnchor } from '../data/keyboardTopology'
 import { SECTION_TAG_NAMES_ZH, SECTION_TAG_NAMES_EN, type Tag, type SectionTag } from '../data/affixTags'
 import { getLocale } from '../demo/demo-i18n'
@@ -153,6 +154,14 @@ export function formatTriggerDescription(trigger: TriggerSpec, host?: HostCtx): 
         : (zh ? '任一资源被消耗时' : 'When any resource is consumed')
     case 'on_removed':
       return zh ? '本技能被移除时' : 'When this skill is removed'
+    case 'on_ally_joined': {
+      const scope = trigger.scope ?? { type: 'self' as const }
+      return scope.type === 'self'
+        ? (zh ? '本技能加入结盟时' : 'When this skill joins an alliance')
+        : (zh
+          ? `${formatSelector(scope, host)}加入结盟时`
+          : `When ${formatSelector(scope, host)} joins an alliance`)
+    }
     case 'on_window_mode': return zh ? `节奏·${trigger.pattern}` : `Rhythm·${trigger.pattern}`
     case 'on_sequence':   return zh ? `序列·${trigger.pattern}` : `Sequence·${trigger.pattern}`
     case 'one_per_window': return zh ? `${trigger.n} 键内仅一次` : `Once per ${trigger.n} keys`
@@ -189,6 +198,9 @@ function formatSelector(sel: TargetSelector, host?: HostCtx): string {
     case 'marked':            return zh
       ? `当前焦点技能${pickSuffix}`
       : `the focused skill${pickSuffix}`
+    case 'allied':            return zh
+      ? `结盟中的技能${pickSuffix}`
+      : `allied skills${pickSuffix}`
     case 'matched_rarity':    return zh
       ? `${locRarity(sel.rarity)}技能${pickSuffix}`
       : `${locRarity(sel.rarity)} skills${pickSuffix}`
@@ -354,6 +366,13 @@ export function formatEffectDescription(effect: EffectSpec, skillResource?: stri
       return zh
         ? `标记 ${formatSelector(effect.selector, host)} 为焦点（取对象效果优先指向它）`
         : `mark ${formatSelector(effect.selector, host)} as focus (targeting effects prefer it)`
+    case 'apply_ally': {
+      // 结盟：把 selector 选出的技能拉入结盟集 → 每个盟员产出 +ALLIANCE_BONUS_PCT × 盟员数
+      const pct = Math.round(ALLIANCE_BONUS_PCT * 1000) / 10
+      return zh
+        ? `让 ${formatSelector(effect.selector, host)} 加入结盟（每个盟员产出 +${pct}%×盟员数）`
+        : `${formatSelector(effect.selector, host)} join an alliance (each ally +${pct}% output × ally count)`
+    }
     case 'composite':
       return effect.effects.map(e => formatEffectDescription(e, skillResource, defSection, host)).join(zh ? '；' : '; ')
     case 'conditional': {

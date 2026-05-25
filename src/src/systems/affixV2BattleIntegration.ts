@@ -30,6 +30,7 @@ import {
   hookOnHasteEmitted,
   hookOnMarkGranted,
   hookOnMarkLost,
+  hookOnAllyJoined,
   hookOnResourceConsumed,
   hookOnRemoved,
   listAllEquipped,
@@ -37,7 +38,7 @@ import {
   chargeToolAffixUses,
   type SourcedResult,
 } from './affixV2Equipped'
-import { listActiveAuras, peekInstanceState, getSkillCumBase, getSkillCumFactor, getFireTargetWaitMs, tryFireTargetQuota, consumeHasteOne, getHaste, markSkillConsumed, isSkillConsumed, getFocus, isFocused } from './affixV2State'
+import { listActiveAuras, peekInstanceState, getSkillCumBase, getSkillCumFactor, getFireTargetWaitMs, tryFireTargetQuota, consumeHasteOne, getHaste, markSkillConsumed, isSkillConsumed, getFocus, isFocused, setFocus, getAllies, isAllied, allianceOutputBonusFor, addAlly, clearAllies } from './affixV2State'
 import { BASE_VALUES, createSkillRuntimeState } from '../data/affixes'
 import { getAscendBaseScale } from '../data/affixTrigger'
 import { triggerSkill, recordSkillTrigger } from './skills'
@@ -236,6 +237,7 @@ function applySkillConsume(targetSkillId: string, ratio: number, sourceKey: stri
   if (!removed) return
   if (isSkillConsumed(targetSkillId)) return
   markSkillConsumed(targetSkillId)
+  eventBus.emit('skill:consumed', { skillId: targetSkillId })
   // 产出 = ratio × 被移除技能主资源 Lv.N base（随其等级缩放）· 直接注入（不经 output bonus / crit 二次放大）
   const base = defaultResourceLv1Base(removed.resource, removed.level ?? 1)
   const payout = ratio * base
@@ -276,6 +278,23 @@ function dispatchMarkLost(skillId: string): void {
     processV2Results(results)
   } finally {
     _inMarkReaction = false
+  }
+}
+
+// 结盟反应链 re-entrancy 防护（深度 1）：on_ally_joined 的 effect 若自身又 apply_ally 拉新盟员，
+// 其引发的 ally:joined 不再二次派发反应链 —— 杜绝 join→react→join→… 无限链（与 MARK 同纪律）。
+// 同一次 apply_ally 拉多名新盟员时各自的 ally:joined 为顺序发射（非嵌套），各跑一次。
+let _inAllyReaction = false
+
+/** 派发 on_ally_joined（深度 1 限流）· 新盟员 skill 上/scope 内的 on_ally_joined 词条触发一次 */
+function dispatchAllyJoined(skillId: string): void {
+  if (_inAllyReaction) return
+  _inAllyReaction = true
+  try {
+    const results = hookOnAllyJoined(skillId, defaultResourceLv1Base, defaultGetPlayerResource, Date.now())
+    processV2Results(results)
+  } finally {
+    _inAllyReaction = false
   }
 }
 
@@ -461,6 +480,12 @@ function resolveSelectorToSkillIds(
       break
     }
 
+    case 'allied': {
+      // 结盟集：当前全部盟员（0..N 个）· consumed 由下方统一过滤
+      candidates = [...getAllies()]
+      break
+    }
+
     case 'matched_rarity': {
       for (const [sid, sk] of state.affixSkills) {
         if (sk.rarity === sel.rarity) candidates.push(sid)
@@ -524,6 +549,7 @@ function selectorMatchesSkill(
     case 'all_skills':        return true
     case 'hasted':            return getHaste(targetSkillId) > 0
     case 'marked':            return isFocused(targetSkillId)
+    case 'allied':            return isAllied(targetSkillId)
     case 'matched_rarity':    return state.affixSkills.get(targetSkillId)?.rarity === sel.rarity
     case 'workbench':         return state.player.inbox.includes(targetSkillId)
     case 'same_word': {
@@ -555,6 +581,8 @@ function applyAuraOutputBonus(
     if (!selectorMatchesSkill(aura.selector, entry.skillId, entry.key, sourceSkillId, sourceKey)) continue
     bonusMult *= (1 + aura.modifier.amount)
   }
+  // 结盟产出加成：盟员产出 ×(1 + ALLIANCE_BONUS_PCT × n)，n=当前结盟规模 · 与 output_bonus_pct aura 同档叠乘
+  bonusMult *= (1 + allianceOutputBonusFor(sourceSkillId))
   if (bonusMult === 1) return [...production]
   return production.map(p => ({ resource: p.resource, amount: p.amount * bonusMult }))
 }
@@ -617,6 +645,12 @@ export function wireV2BattleIntegration(): void {
   })
   eventBus.on('mark:lost', ({ skillId }) => {
     dispatchMarkLost(skillId)
+  })
+
+  // ally:joined → 触发 on_ally_joined 类 V2 affix（scope 内含新盟员 skillId）
+  // 深度 1 反应链限流（dispatchAllyJoined）· 关末 reset 清盟不发事件故不触发
+  eventBus.on('ally:joined', ({ skillId }) => {
+    dispatchAllyJoined(skillId)
   })
 
   // 注：on_key 与 on_skill_fire 不通过 eventBus，需 in-line 调用
@@ -903,5 +937,12 @@ if (typeof window !== 'undefined') {
     clearGhostLog: _clearGhostLog,
     // state 用 getter 暴露（避免 TDZ：state import 在循环依赖下 module-init 时尚未初始化）
     getState: () => state,
+    // 结盟调试：直接拉技能入盟 / 查 / 清（验证字母徽章用）
+    ally: (skillId: string) => addAlly(skillId, 'debug'),
+    allies: getAllies,
+    clearAllies,
+    // MARK 焦点 / 取代 调试（验证字母徽章用）
+    focus: (skillId: string) => setFocus(skillId, 'debug'),
+    consume: (skillId: string) => { markSkillConsumed(skillId); eventBus.emit('skill:consumed', { skillId }) },
   }
 }

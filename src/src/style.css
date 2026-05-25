@@ -1194,46 +1194,95 @@ html[lang^="en"] .menu-style-cover .menu-title {
     100% { transform: scale(1); }
 }
 
-/* === 字母级状态徽章容器 · 多重 status pip 堆叠（flex row-reverse 从右贴边） === */
+/* === 字母级状态徽章 · DPCA「盖章/贴签」视觉语言 ===
+   每个 status = 一枚像素印章 chip（深底 + 同色细描边 + 轻 CRT 辉光），多枚右上角堆叠。
+   不再用漂浮描边裸字（粗糙）；不再各自异频闪烁（杂乱）—— chip 静止，仅字母本体做缓辉呼吸。 */
 .letter-status {
     position: absolute;
-    top: -10px;
-    right: -4px;
+    top: -11px;
+    right: -6px;
     display: flex;
     flex-direction: row-reverse;
-    gap: 1px;
+    gap: 2px;
     pointer-events: none;
-    z-index: 2;
+    z-index: 3;
 }
 
 .status-pip {
+    --pip: #cfcfcf;
     font-family: "Press Start 2P", "Courier New", monospace;
     font-size: 8px;
-    font-weight: bold;
     line-height: 1;
-    padding: 0 1px;
+    letter-spacing: 0.5px;
+    padding: 2px 3px 1px;
+    display: inline-flex;
+    align-items: center;
+    color: var(--pip);
+    background: rgba(6,9,11,0.92);
+    border: 1px solid var(--pip);
+    /* CRT bloom 只放在 chip 外框（box-shadow），不放在字上 —— 否则 7-8px 像素字（尤其 &）会糊成一团。
+       字必须保持锐利：仅 1px 黑描边作分离，无模糊。 */
+    box-shadow: 0 0 0 1px rgba(0,0,0,0.6), 0 0 6px -2px var(--pip);
     white-space: nowrap;
+    text-shadow: 1px 0 0 #000, -1px 0 0 #000, 0 1px 0 #000, 0 -1px 0 #000;
 }
 
-.status-pip.pip-haste {
-    color: #74b9ff;
-    text-shadow: 1px 0 0 #000, 0 1px 0 #000, -1px 0 0 #000, 0 -1px 0 #000;
-    animation: hastePipBlink 0.9s steps(1) infinite;
+.status-pip.pip-haste    { --pip: #74b9ff; }
+.status-pip.pip-ally     { --pip: #f6b93b; }
+.status-pip.pip-mark     { --pip: #c56cf0; }
+.status-pip.pip-consumed { --pip: #ff6b6b; }
+
+/* === 字母本体辉光 · 缓和「磷光呼吸」(ease pulse 代替硬切 steps) · 微妙不抢戏 === */
+.letter.has-haste { animation: haloHaste 2.2s ease-in-out infinite; }
+.letter.has-ally  { animation: haloAlly  2.6s ease-in-out infinite; }
+.letter.has-mark  { animation: haloMark  2.4s ease-in-out infinite; }
+
+@keyframes haloHaste {
+    0%, 100% { filter: drop-shadow(0 0 1px #74b9ff); }
+    50%      { filter: drop-shadow(0 0 4px #74b9ff) drop-shadow(0 0 1px #74b9ff); }
+}
+@keyframes haloAlly {
+    0%, 100% { filter: drop-shadow(0 0 1px #f6b93b); }
+    50%      { filter: drop-shadow(0 0 4px #f6b93b) drop-shadow(0 0 1px #f6b93b); }
+}
+@keyframes haloMark {
+    0%, 100% { filter: drop-shadow(0 0 1px #c56cf0); }
+    50%      { filter: drop-shadow(0 0 4px #c56cf0) drop-shadow(0 0 1px #c56cf0); }
 }
 
-@keyframes hastePipBlink {
-    0%, 65% { opacity: 1; }
-    66%, 100% { opacity: 0.55; }
+/* 多重增益态 halo 优先级：极速 > 焦点 > 结盟（极速最紧迫可消耗 · 焦点次之）·
+   chip 各自仍堆叠显示；此处仅决定字母本体那束辉光用谁的色。靠选择器特异性裁决。 */
+.letter.has-mark.has-ally {              /* 焦点 > 结盟 */
+    animation: haloMark 2.4s ease-in-out infinite;
+}
+.letter.has-haste.has-ally,
+.letter.has-haste.has-mark,
+.letter.has-haste.has-mark.has-ally {    /* 极速 > 全部 */
+    animation: haloHaste 2.2s ease-in-out infinite;
 }
 
-/* === 极速持续 halo · stepped pulse 保持像素风 === */
-.letter.has-haste {
-    animation: hasteHalo 1.6s steps(1) infinite;
+/* === 取代/吞噬 · 「红章 + 撤销」· redaction 气质（区别增益态：不发辉光，改为撤销线 + 微褪）=== */
+.letter.has-consumed {
+    position: relative;
+    opacity: 0.78;
 }
-
-@keyframes hasteHalo {
-    0%, 49% { filter: drop-shadow(0 0 2px #74b9ff); }
-    50%, 100% { filter: drop-shadow(0 0 5px #74b9ff) drop-shadow(0 0 1px #74b9ff); }
+/* 居中撤销线（像素硬线，不依赖字体 line-through 度量 → 各字母位置一致）*/
+.letter.has-consumed::before {
+    content: '';
+    position: absolute;
+    left: 8%;
+    right: 8%;
+    top: 50%;
+    height: 3px;
+    transform: translateY(-50%);
+    background: #ff5b5b;
+    box-shadow: 0 0 0 1px rgba(0,0,0,0.55);
+    pointer-events: none;
+    z-index: 4;
+}
+/* 已被取代 → 技能不在场，抑制 has-skill 黄点（避免「仍有技能」误读）*/
+.letter.has-consumed.has-skill::after {
+    display: none;
 }
 
 /* === 极速消耗 · Bazaar 物品触发式弹跳（子覆盖层，不挤占 .letter 本体的 animation）=== */

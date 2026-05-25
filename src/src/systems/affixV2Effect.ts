@@ -33,6 +33,7 @@ import {
   addSkillCumFactor,
   grantHaste,
   setFocus,
+  addAlly,
 } from './affixV2State'
 import { random } from '../core/seededRandom'
 import { getCandidatePool, widenSkillFilter, spawnSkillFromSeed, filterByNeighborPosRel } from './affixV2SkillFilter'
@@ -318,6 +319,17 @@ function resolveInto(spec: EffectSpec, ctx: ResolveContext, result: ResolveResul
       if (candidates.length === 0) return
       const target = candidates[Math.floor(random() * candidates.length)]
       setFocus(target, ctx.instanceId)
+      return
+    }
+
+    case 'apply_ally': {
+      // 结盟：selector 展开候选 → **全部**加入结盟集（与 apply_mark 取 1 不同 · 复数共存）·
+      // addAlly 内含「新成员才发 ally:joined」去重，重复入盟同技能不刷反应链 ·
+      // 不注入 pick='random'（见 generator），故拿到全候选全部入盟（scope 越宽盟越大）。
+      const candidates = ctx.resolveSelector?.(spec.selector, ctx.skillId, ctx.key) ?? [ctx.skillId]
+      for (const tid of candidates) {
+        addAlly(tid, ctx.instanceId)
+      }
       return
     }
 

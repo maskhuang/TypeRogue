@@ -5,6 +5,7 @@
 // 沿用现 SkillRuntimeState 模式——state 与 schema 分离，battle end 一行 clear。
 
 import type { AuraModifier, TargetSelector, StatusKeyword } from '../data/affixV2Trigger'
+import { ALLIANCE_BONUS_PCT } from '../data/affixV2Trigger'
 import { state } from '../core/state'
 import { eventBus } from '../core/events/EventBus'
 
@@ -350,6 +351,52 @@ export function clearFocus(): void {
 }
 
 // ============================================
+// 结盟 · 全局结盟集（0..N 个技能 · 复数共存）
+// ============================================
+// 与 MARK 单焦点对照：MARK 是单寄存器（0/1）、纯取对象优先级无数值层；
+// 结盟是一个**集合**（每个技能 0/1 在盟，但集合可复数），且带**数值层**——
+// 集合内每个技能产出 +ALLIANCE_BONUS_PCT × n（n = 当前结盟规模），结盟越大每个盟员越强。
+// 加入是单向（本场只进不出）· 重复加入同技能 = no-op（不重复发事件）· 关末 reset 清空（不发事件）。
+
+// ALLIANCE_BONUS_PCT 定义在 affixV2Trigger.ts（纯常量模块），此处仅消费。
+
+const _alliedSkills: Set<string> = new Set()
+
+/** 当前结盟全部成员（无成员 → 空数组）*/
+export function getAllies(): readonly string[] {
+  return Array.from(_alliedSkills)
+}
+
+/** 当前结盟规模 n */
+export function getAllianceSize(): number {
+  return _alliedSkills.size
+}
+
+/** 该 skill 是否已入盟 */
+export function isAllied(skillId: string): boolean {
+  return _alliedSkills.has(skillId)
+}
+
+/** 给定 skill 当前从结盟获得的产出加成倍率增量（未入盟 → 0；入盟 → ALLIANCE_BONUS_PCT × n）·
+ *  消费端：applyAuraOutputBonus 把它作为一条额外乘性因子（与 output_bonus_pct aura 同档叠乘）*/
+export function allianceOutputBonusFor(skillId: string): number {
+  return _alliedSkills.has(skillId) ? ALLIANCE_BONUS_PCT * _alliedSkills.size : 0
+}
+
+/** 入盟统一入口（apply_ally 结算调）· 新加入才发 ally:joined（已在盟 = no-op 不发事件，
+ *  故反复入盟同技能不会刷反应链）· 规模变大自动让全体盟员 bonus 提升（allianceOutputBonusFor 动态读 size，无需事件）*/
+export function addAlly(skillId: string, sourceInstanceId: string): void {
+  if (_alliedSkills.has(skillId)) return
+  _alliedSkills.add(skillId)
+  eventBus.emit('ally:joined', { skillId, sourceInstanceId })
+}
+
+/** 清空结盟（战斗 reset 用）· 不发事件——关末 teardown 不触发 on_ally_joined */
+export function clearAllies(): void {
+  _alliedSkills.clear()
+}
+
+// ============================================
 // 本场被移除技能 · consume_skill（取代）的「本场移除」集
 // ============================================
 // for-the-fight 移除：被取代的技能本场不再击发 / 不可被选中 / 不可再被取代，
@@ -389,4 +436,5 @@ export function resetAllAffixV2State(): void {
   clearAllHaste()
   clearConsumedSkills()
   clearFocus()
+  clearAllies()
 }

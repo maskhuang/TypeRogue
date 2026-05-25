@@ -89,6 +89,9 @@ function collectSkillIdsForScope(
     case 'marked':
       // 焦点 = 战斗运行时单焦点寄存器 · 同 hasted：装备态/预览无战斗态 → 返空安全（SCALE_SCOPE_POOL 不含 marked）
       return []
+    case 'allied':
+      // 结盟集 = 战斗运行时动态 · 同 hasted/marked：装备态/预览无战斗态 → 返空安全（SCALE_SCOPE_POOL 不含 allied）
+      return []
   }
 }
 
@@ -856,6 +859,74 @@ export function hookOnMarkLost(
   nowMs: number,
 ): SourcedResult[] {
   return hookOnMarkChange('on_mark_lost', markedSkillId, resourceLv1Base, getPlayerResource, nowMs)
+}
+
+/**
+ * ally:joined 全局 hook · 任一 skill 加入结盟时调（ally:joined 事件驱动）。
+ * 遍历 on_ally_joined trigger 的 V2 instance，scope 内含 alliedSkillId 才命中。
+ * scope 缺省 = self（仅监听本 affix 所在 skill 入盟）· 与 hookOnMarkChange 同结构。
+ * 与 on_mark_granted 同纪律：无 apply_ally 源时永不触发（reactive build-around）。
+ */
+export function hookOnAllyJoined(
+  alliedSkillId: string,
+  resourceLv1Base: (r: string, level?: number) => number,
+  getPlayerResource: (r: string) => number,
+  nowMs: number,
+): SourcedResult[] {
+  const results: SourcedResult[] = []
+  for (const entry of _equipped.values()) {
+    const def = getAffixV2Definition(entry.defId)
+    if (!def || def.trigger.type !== 'on_ally_joined') continue
+
+    // scope 匹配：缺省 self（与 hookOnMarkChange 同口径）
+    const scope: TargetSelector = def.trigger.scope ?? { type: 'self' }
+    let inScope = false
+    if (scope.type === 'self') {
+      inScope = entry.skillId === alliedSkillId
+    } else if (_selectorResolver) {
+      const targets = _selectorResolver(scope, entry.skillId, entry.key)
+      inScope = targets.includes(alliedSkillId)
+    }
+    if (!inScope) continue
+
+    const triggerCtx: TriggerContext = {
+      selfAffixId: entry.defId,
+      selfKey: entry.key,
+      alliedSkillId,
+    }
+    if (!evaluateTrigger(def.trigger, triggerCtx)) continue
+
+    const lvBase = lvNBaseFor(entry.skillId, resourceLv1Base)
+    const ctx: ResolveContext = {
+      instanceId: entry.instanceId,
+      skillId: entry.skillId,
+      key: entry.key,
+      skillResource: 'score',
+      skillResourceLv1Base: lvBase('score'),
+      resourceLv1Base: lvBase,
+      nowMs,
+      isCrit: false,
+      currentWordLength: 0,
+      hostSkillLevel: gameState.affixSkills.get(entry.skillId)?.level ?? 1,
+      selfSection: def.section,
+      selfDefId: def.id,
+      getPlayerResource,
+      resolveSelector: _selectorResolver,
+      queryEquipped: buildQueryEquipped(entry),
+    }
+    const result = resolveEffect(applyEnchantToEffect(def.effect, getEnchant(entry.instanceId)), ctx)
+    results.push({ sourceInstanceId: entry.instanceId, sourceSkillId: entry.skillId, sourceKey: entry.key, result })
+
+    _ghostLog.push({
+      timestamp: nowMs,
+      instanceId: entry.instanceId,
+      defId: entry.defId,
+      trigger: def.trigger.type,
+      result,
+    })
+    recordApprenticeTriggerHit(entry)
+  }
+  return results
 }
 
 /**

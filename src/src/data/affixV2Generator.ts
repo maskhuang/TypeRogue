@@ -408,7 +408,18 @@ export interface MarkRecipe {
   readonly name_en: string
 }
 
-export type AffixV2Recipe = DripRecipe | GrowthRecipe | EscalateRecipe | ChantRecipe | ChainRecipe | ConvertRecipe | MetabolizeRecipe | HasteRecipe | TeachRecipe | ImitateRecipe | SpearMakeRecipe | GazeFollowRecipe | CrackRecipe | CoprophagyRecipe | DevourRecipe | MarkRecipe
+/** ally 系：apply_ally 给予结盟 · trigger 随机抽（排除高频，同 mark）· scope 随机抽（排除 allied 自身）·
+ *  结盟集 0..N（复数共存）· 收益是集合内每个技能产出 +ALLIANCE_BONUS_PCT × n（n=结盟规模）·
+ *  本身近乎零独立产出，是纯协同放大器（build-around 引擎，越多盟员每个越强）。*/
+export interface AllyRecipe {
+  readonly kind: 'ally'
+  readonly id: string
+  readonly section: SectionTag
+  readonly name_zh: string
+  readonly name_en: string
+}
+
+export type AffixV2Recipe = DripRecipe | GrowthRecipe | EscalateRecipe | ChantRecipe | ChainRecipe | ConvertRecipe | MetabolizeRecipe | HasteRecipe | TeachRecipe | ImitateRecipe | SpearMakeRecipe | GazeFollowRecipe | CrackRecipe | CoprophagyRecipe | DevourRecipe | MarkRecipe | AllyRecipe
 
 // ============================================
 // Scope 池 · 加权抽样 · 范围越广越稀有
@@ -443,6 +454,8 @@ const FULL_SCOPE_POOL: readonly ScopeEntry[] = [
   { selector: { type: 'hasted' },                                              weight: 2 },
   // marked：当前焦点技能（MARK 单焦点）· 运行时动态 · 让其它效果显式"作用于焦点"（跨段汇聚）· 稀有
   { selector: { type: 'marked' },                                              weight: 2 },
+  // allied：当前结盟全体成员（结盟集）· 运行时动态 · 让其它效果显式"作用于全体盟员"· 稀有
+  { selector: { type: 'allied' },                                              weight: 2 },
   // matched_tag：按 section tag 找场上所有挂该 tag 的 affix 所在 skill
   // 每 section 5 weight × 8 sections = 40 total（≈ 15% 命中 matched_tag 抽中）
   ...ALL_SECTION_TAGS.map(tag => ({
@@ -468,8 +481,8 @@ const FULL_SCOPE_POOL: readonly ScopeEntry[] = [
  *  额外纳入 workbench（IN-tray 是 inherit_tags 的签名来源）。其余沿用 FULL_SCOPE_POOL 权重。*/
 const INHERIT_TAGS_SOURCE_POOL: readonly ScopeEntry[] = [
   { selector: { type: 'workbench' }, weight: 25 },
-  // 排除 self/hasted（no-op）+ marked（继承运行时单焦点的 tag 语义糊且 resolveSourceScope 返空 → 死 roll）
-  ...FULL_SCOPE_POOL.filter(e => e.selector.type !== 'self' && e.selector.type !== 'hasted' && e.selector.type !== 'marked'),
+  // 排除 self/hasted（no-op）+ marked/allied（继承运行时动态集的 tag 语义糊且 resolveSourceScope 返空 → 死 roll）
+  ...FULL_SCOPE_POOL.filter(e => e.selector.type !== 'self' && e.selector.type !== 'hasted' && e.selector.type !== 'marked' && e.selector.type !== 'allied'),
 ]
 
 /** scale-by-tag 的 scope 池 · 决定 scale 计数的范围（"仅监听 scope 内的同 tag 词条数"）·
@@ -884,6 +897,21 @@ export function rollAffixV2Spec(
     const markScopePool = FULL_SCOPE_POOL.filter(s => s.selector.type !== 'marked')
     const sel = pickGatedScope(markScopePool, recipe.kind)
     effect = { kind: 'apply_mark', selector: sel }
+  } else if (recipe.kind === 'ally') {
+    // 结盟给予：trigger 随机抽（沿用 triggerEntry.spec）· 排除高频 trigger（freq > 100）——
+    // apply_ally 每次拉一批入盟，高频会每键狂刷 ally:joined 反应链（与 mark/chain 防洪水同纪律）。
+    // scope 靠抽（FULL_SCOPE_POOL，含 self）· 排除 allied 自身（招募当前盟员 = no-op/自指）·
+    // **不**注入 pick='random'：apply_ally 把 scope 内全部候选入盟（scope 越宽盟越大），不取 1。
+    let curFreq = triggerEntry.freq
+    let retries = 8
+    while (curFreq > 100 && retries-- > 0) {
+      const retry = pickTrigger(recipe.section, recipe.kind)
+      triggerSpec = retry.spec
+      curFreq = retry.freq
+    }
+    const allyScopePool = FULL_SCOPE_POOL.filter(s => s.selector.type !== 'allied')
+    const sel = pickGatedScope(allyScopePool, recipe.kind)
+    effect = { kind: 'apply_ally', selector: sel }
   } else {
     throw new Error(`unsupported recipe kind: ${(recipe as { kind: string }).kind}`)
   }
@@ -1187,6 +1215,17 @@ export const RECIPE_DIRECTED_SCRATCH: MarkRecipe = {
   name_en: 'directed scratch',
 }
 
+/** 结盟（联盟攻击）· agonistic 段 · apply_ally 把所指范围内技能拉入结盟集（复数共存）·
+ *  结盟越大每个盟员产出加成越高（+ALLIANCE_BONUS_PCT × n）· 纯协同放大器：
+ *  单独几乎零产出，价值全来自把多个技能拢进同一结盟、彼此抬高。MARK 的复数·数值版对照体。*/
+export const RECIPE_COALITION: AllyRecipe = {
+  kind: 'ally',
+  id: 'coalition',
+  section: 'agonistic',
+  name_zh: '联盟攻击',
+  name_en: 'coalitionary attack',
+}
+
 /** 暂时全部 recipe 列表（生成 shop 选项时遍历此）*/
 export const ALL_RECIPES: readonly AffixV2Recipe[] = [
   RECIPE_FEED,
@@ -1211,6 +1250,7 @@ export const ALL_RECIPES: readonly AffixV2Recipe[] = [
   RECIPE_SPEAR_MAKE,
   RECIPE_GAZE_FOLLOW,
   RECIPE_DIRECTED_SCRATCH,
+  RECIPE_COALITION,
 ]
 
 /** drink(convert) 以这些资源为 source 时降权 · time/gold 转化收益偏强，降低出率 */
