@@ -154,6 +154,8 @@ export function formatTriggerDescription(trigger: TriggerSpec, host?: HostCtx): 
         : (zh ? '任一资源被消耗时' : 'When any resource is consumed')
     case 'on_removed':
       return zh ? '本技能被移除时' : 'When this skill is removed'
+    case 'on_skill_consumed':
+      return zh ? '有技能被移除时' : 'When any skill is removed'
     case 'on_ally_joined': {
       const scope = trigger.scope ?? { type: 'self' as const }
       return scope.type === 'self'

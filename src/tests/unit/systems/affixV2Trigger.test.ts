@@ -143,3 +143,13 @@ describe('evaluateTrigger · on_resource_consumed', () => {
     expect(evaluateTrigger(spec, {})).toBe(false)
   })
 })
+
+describe('evaluateTrigger · on_skill_consumed', () => {
+  it('无被取代技能 → false', () => {
+    expect(evaluateTrigger({ type: 'on_skill_consumed' }, {})).toBe(false)
+  })
+
+  it('有技能被取代（全局观察者，无 scope）→ true', () => {
+    expect(evaluateTrigger({ type: 'on_skill_consumed' }, { consumedSkillId: 'skill_x' })).toBe(true)
+  })
+})

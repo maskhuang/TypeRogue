@@ -85,6 +85,10 @@ export type Phase1TriggerSpec =
    *  本场移除时派发；hook 层只迭代被移除 skill 上的 on_removed 词条。
    *  无移除源（场上无 consume_skill）时永不触发（build-around · 与 on_resource_consumed 同纪律）*/
   | { type: 'on_removed' }
+  /** 「有技能被取代/吞噬」时触发（观察者 · 反应型）· 全局监听 consume_skill 移除事件，**任一**技能被移除即触发 ·
+   *  与 on_removed 的区别：on_removed 是「本技能」死亡回响（仅被移除者自身），本触发是「场上有技能被移除」的旁观者
+   *  （宿主自身在不在场无关，谁被吞都响）· 与 on_resource_consumed 同纪律：无 consume_skill 源时永不触发（build-around）*/
+  | { type: 'on_skill_consumed' }
 
 /** Phase 2 trigger 扩展（详 research §5.2） */
 export type Phase2TriggerSpec =

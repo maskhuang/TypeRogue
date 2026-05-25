@@ -49,6 +49,8 @@ export interface TriggerContext {
   readonly alliedSkillId?: string
   /** 本次被消耗的资源类型（on_resource_consumed 用）*/
   readonly consumedResource?: string
+  /** 本次被取代/吞噬的 skillId（on_skill_consumed 用 · 全局观察者，无 scope 匹配）*/
+  readonly consumedSkillId?: string
 }
 
 // ============================================
@@ -124,6 +126,10 @@ export function evaluateTrigger(spec: TriggerSpec, ctx: TriggerContext): boolean
     case 'on_removed':
       // hook 层（hookOnRemoved）已保证只在被移除 skill 上迭代其 on_removed 词条；恒命中
       return true
+
+    case 'on_skill_consumed':
+      // 全局观察者：任一技能被取代/吞噬即触发（无 scope）· 需有被消耗 skillId
+      return ctx.consumedSkillId !== undefined
 
     // ── Phase 2（占位 · 未实装）──
     case 'on_window_mode':

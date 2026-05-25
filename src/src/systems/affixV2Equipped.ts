@@ -990,6 +990,63 @@ export function hookOnResourceConsumed(
 }
 
 /**
+ * 「有技能被取代/吞噬」全局 hook · 任一 skill 被 consume_skill 本场移除时调（观察者）。
+ * 遍历所有 on_skill_consumed trigger 的 V2 instance 全部触发（无 scope · 与 hookOnResourceConsumed 同结构）。
+ * 与 on_removed 区别：on_removed 只迭代被移除者自身；本 hook 迭代全场的 on_skill_consumed 旁观词条。
+ * 与 on_resource_consumed 同纪律：无 consume_skill 源时永不触发（reactive build-around）。
+ */
+export function hookOnSkillConsumed(
+  consumedSkillId: string,
+  resourceLv1Base: (r: string, level?: number) => number,
+  getPlayerResource: (r: string) => number,
+  nowMs: number,
+): SourcedResult[] {
+  const results: SourcedResult[] = []
+  for (const entry of _equipped.values()) {
+    const def = getAffixV2Definition(entry.defId)
+    if (!def || def.trigger.type !== 'on_skill_consumed') continue
+
+    const triggerCtx: TriggerContext = {
+      selfAffixId: entry.defId,
+      selfKey: entry.key,
+      consumedSkillId,
+    }
+    if (!evaluateTrigger(def.trigger, triggerCtx)) continue
+
+    const lvBase = lvNBaseFor(entry.skillId, resourceLv1Base)
+    const ctx: ResolveContext = {
+      instanceId: entry.instanceId,
+      skillId: entry.skillId,
+      key: entry.key,
+      skillResource: 'score',
+      skillResourceLv1Base: lvBase('score'),
+      resourceLv1Base: lvBase,
+      nowMs,
+      isCrit: false,
+      currentWordLength: 0,
+      hostSkillLevel: gameState.affixSkills.get(entry.skillId)?.level ?? 1,
+      selfSection: def.section,
+      selfDefId: def.id,
+      getPlayerResource,
+      resolveSelector: _selectorResolver,
+      queryEquipped: buildQueryEquipped(entry),
+    }
+    const result = resolveEffect(applyEnchantToEffect(def.effect, getEnchant(entry.instanceId)), ctx)
+    results.push({ sourceInstanceId: entry.instanceId, sourceSkillId: entry.skillId, sourceKey: entry.key, result })
+
+    _ghostLog.push({
+      timestamp: nowMs,
+      instanceId: entry.instanceId,
+      defId: entry.defId,
+      trigger: def.trigger.type,
+      result,
+    })
+    recordApprenticeTriggerHit(entry)
+  }
+  return results
+}
+
+/**
  * skill 被「本场移除」（consume_skill 取代）时调 · 死亡回响。
  * 仅遍历被移除 skill 上的 V2 instance，命中 on_removed trigger 的 resolve。
  * skillResource 用被移除 skill 自身资源（死亡回响 gain_resource 按其 Lv 缩放）。

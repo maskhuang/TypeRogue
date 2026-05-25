@@ -32,6 +32,7 @@ import {
   hookOnMarkLost,
   hookOnAllyJoined,
   hookOnResourceConsumed,
+  hookOnSkillConsumed,
   hookOnRemoved,
   listAllEquipped,
   setSelectorResolver,
@@ -230,6 +231,22 @@ function dispatchResourceConsumed(resource: string, amount: number): void {
 // 但不再二次派发 on_removed —— 杜绝 consume→on_removed→consume→… 无限链（与 on_resource_consumed 同纪律）。
 let _inRemovalReaction = false
 
+// on_skill_consumed 观察者 re-entrancy 防护（深度 1）：旁观词条若自身又取代别的 skill，
+// 其取代照常结算但不再二次派发观察者反应 —— 杜绝 consume→observe→consume→… 无限链（独立于 on_removed 桶）。
+let _inSkillConsumedReaction = false
+
+/** 派发「有技能被取代」观察者反应（深度 1 限流）· 全场 on_skill_consumed 词条各触发一次 */
+function dispatchSkillConsumed(consumedSkillId: string): void {
+  if (_inSkillConsumedReaction) return
+  _inSkillConsumedReaction = true
+  try {
+    const reactions = hookOnSkillConsumed(consumedSkillId, defaultResourceLv1Base, defaultGetPlayerResource, Date.now())
+    processV2Results(reactions)
+  } finally {
+    _inSkillConsumedReaction = false
+  }
+}
+
 /** 取代（consume_skill）：本场移除目标 skill（consumed 集）· 注入 ratio×被移除技能基础产出（其资源）·
  *  派发 on_removed 死亡回响 · 目标已不存在 / 本场已被移除 → 跳过（防多个取代词条争抢同一目标）。 */
 function applySkillConsume(targetSkillId: string, ratio: number, sourceKey: string, sourceSkillId: string, isCrit: boolean): void {
@@ -249,6 +266,8 @@ function applySkillConsume(targetSkillId: string, ratio: number, sourceKey: stri
   }
   // 死亡回响：被移除 skill 上的 on_removed 词条派发一次
   dispatchSkillRemoved(targetSkillId)
+  // 观察者：全场 on_skill_consumed 词条各派发一次（"有技能被取代时"）
+  dispatchSkillConsumed(targetSkillId)
 }
 
 // MARK 焦点反应链 re-entrancy 防护（深度 1）：
