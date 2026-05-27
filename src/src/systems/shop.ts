@@ -2202,12 +2202,16 @@ const WORD_EFFECT_ICONS: Record<string, string> = {
   multiplier: '✖',
   time: '⏳',
   gold: '🪙',
+  crit: '💥',
+  init_time: '⏱',
 };
 
 export function formatWordEffectLabel(effect: WordEffect): string {
   const icon = WORD_EFFECT_ICONS[effect.type] || '';
   const letterHint = effect.targetLetter ? ` [${effect.targetLetter.toUpperCase()}]` : '';
-  return `${icon} ${t('wordeffect.' + effect.type, { value: effect.value })}${letterHint}`;
+  // crit 的 value 是暴击率小数（0.01）→ 显示为百分比整数；其余直接显示
+  const value = effect.type === 'crit' ? Math.round(effect.value * 100) : effect.value;
+  return `${icon} ${t('wordeffect.' + effect.type, { value })}${letterHint}`;
 }
 
 function getPackIcon(condType: PackConditionType): string {
@@ -2452,7 +2456,11 @@ export function showWordPackReward(onComplete: () => void): void {
     row?.classList.add('active');
 
     state.player.wordDeck.push(chosen.word);
-    if (chosen.effect) state.wordEffects.set(chosen.word, chosen.effect);
+    if (chosen.effect) {
+      state.wordEffects.set(chosen.word, chosen.effect);
+      // init_time 是一次性元效果：收录瞬间永久加到初始时间（startTimer 读 timeMax + timeBonus）
+      if (chosen.effect.type === 'init_time') state.player.timeBonus += chosen.effect.value;
+    }
 
     stampEl.classList.add('show');
     stage.classList.add('thunk');

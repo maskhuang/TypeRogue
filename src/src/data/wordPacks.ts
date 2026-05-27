@@ -293,10 +293,23 @@ const WORD_EFFECT_POOL: { type: WordEffectType; epicVal: number; legendVal: numb
 ];
 
 function rollWordEffect(rarity: 0 | 1 | 2 | 3, word?: string): WordEffect {
-  // 普通/稀有/史诗：固定 base_score，作用于所有独特字母
+  // 普通：固定 base_score
+  if (rarity === 0) {
+    return { type: 'base_score', value: 1 };
+  }
+  // 稀有/史诗：roll 一种词效（否则回退 base_score）：
+  //   crit      — 作用于词内所有字母 → 绑定这些键的技能 +暴击率（0.01=1%，多词叠加）
+  //   init_time — 永久 +(词长×0.1)s 初始时间（收录瞬间累加到 player.timeBonus）
   if (rarity < 3) {
-    const values: Record<0 | 1 | 2, number> = { 0: 1, 1: 1, 2: 2 };
-    return { type: 'base_score', value: values[rarity as 0 | 1 | 2] };
+    const r = random();
+    if (r < 0.35) {
+      return { type: 'crit', value: rarity === 2 ? 0.02 : 0.01 };
+    }
+    const initVal = word ? word.length / 10 : 0;
+    if (r < 0.65 && initVal > 0) {
+      return { type: 'init_time', value: initVal };
+    }
+    return { type: 'base_score', value: rarity === 2 ? 2 : 1 };
   }
   // 传说：随机 1 个字母，效果是该字母底分 ×2（也作用于其他词包的底分加成）
   const uniqueLetters = word

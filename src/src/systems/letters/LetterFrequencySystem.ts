@@ -66,6 +66,22 @@ export function calculateLetterScores(wordEffects: Map<string, WordEffect>): Map
   return result
 }
 
+/**
+ * 词语效果·暴击率：所有 type==='crit' 的词效，对「包含该 key 的词」累加 value。
+ * 返回值 = 绑定在该键上的技能 fire 时的额外暴击率（与 crit_chance_add aura 同口径，0.01 = 1%）。
+ * 多张含此字母的暴击词会叠加。
+ */
+export function getWordEffectCritRate(wordEffects: Map<string, WordEffect>, key: string): number {
+  const k = key.toLowerCase()
+  if (k < 'a' || k > 'z') return 0
+  let total = 0
+  for (const [word, effect] of wordEffects) {
+    if (effect.type !== 'crit') continue
+    if (word.toLowerCase().includes(k)) total += effect.value
+  }
+  return total
+}
+
 /** WordEffectType → ModifierEffectType 映射 */
 const EFFECT_TYPE_MAP: Record<string, ModifierEffectType> = {
   base_score: 'score',

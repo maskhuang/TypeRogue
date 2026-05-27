@@ -45,6 +45,7 @@ import { BASE_VALUES, createSkillRuntimeState } from '../data/affixes'
 import { getAscendBaseScale } from '../data/affixTrigger'
 import { triggerSkill, recordSkillTrigger } from './skills'
 import { getBindingState, getSkillKeys } from './bindingManager'
+import { getWordEffectCritRate } from './letters/LetterFrequencySystem'
 import { getHasteRelicOutputBonus, applyCritOverflow } from './relics/StackingRelicBehaviors'
 import {
   getRelicCritRate, isCritChargeReady, consumeCritCharge, advanceCritCharge,
@@ -719,9 +720,10 @@ export function onSkillFireV2(
   isCrit: boolean,
   amount: number,
 ): void {
-  // 暴击判定：V2 crit_chance_add aura + 全遗物暴击率源
+  // 暴击判定：V2 crit_chance_add aura + 全遗物暴击率源 + 词语效果暴击率（绑定该键的词条加成）
   const wordLen = state.player.word?.length ?? 0
   let critChance = sumCritChanceAuras(skillId, sourceKey) + getRelicCritRate(sourceKey, wordLen)
+    + getWordEffectCritRate(state.wordEffects, sourceKey)
   const chargeReady = isCritChargeReady()   // crit_charge：保底必暴
 
   // fate_coin：暴击率封顶 50%，超出部分转暴击倍率

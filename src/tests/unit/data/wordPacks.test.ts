@@ -504,36 +504,41 @@ describe('generateWordPacks — 词语效果', () => {
     }
   });
 
-  it('rarity 0/1 → base_score=1', () => {
+  it('rarity 0 → base_score=1', () => {
     let found = false;
-    for (let i = 0; i < 50; i++) {
+    for (let i = 0; i < 50 && !found; i++) {
       const packs = generateWordPacks([], undefined, [], 5);
       for (const p of packs) {
-        if (p.rarity === 0 || p.rarity === 1) {
+        if (p.rarity === 0) {
           expect(p.wordEffect?.type).toBe('base_score');
           expect(p.wordEffect?.value).toBe(1);
           found = true;
         }
       }
-      if (found) break;
     }
     expect(found).toBe(true);
   });
 
-  it('史诗 (rarity 2) → base_score=2', () => {
-    let found = false;
-    for (let i = 0; i < 100; i++) {
+  it('稀有/史诗 → base_score / crit / init_time，值正确', () => {
+    let sawRare = false, sawEpic = false, sawCrit = false, sawInitTime = false;
+    const checkEffect = (p: { rarity: number; words: string[]; wordEffect?: { type: string; value: number } }, baseVal: number) => {
+      const e = p.wordEffect;
+      if (e?.type === 'base_score') expect(e.value).toBe(baseVal);
+      else if (e?.type === 'crit') { expect(e.value).toBe(baseVal === 2 ? 0.02 : 0.01); sawCrit = true; }
+      else if (e?.type === 'init_time') { expect(e.value).toBeCloseTo(p.words[0].length / 10, 5); sawInitTime = true; }
+      else throw new Error(`unexpected rarity-${p.rarity} effect: ${e?.type}`);
+    };
+    for (let i = 0; i < 300; i++) {
       const packs = generateWordPacks([], undefined, [], 5);
       for (const p of packs) {
-        if (p.rarity === 2) {
-          expect(p.wordEffect?.type).toBe('base_score');
-          expect(p.wordEffect?.value).toBe(2);
-          found = true;
-        }
+        if (p.rarity === 1) { sawRare = true; checkEffect(p, 1); }
+        if (p.rarity === 2) { sawEpic = true; checkEffect(p, 2); }
       }
-      if (found) break;
     }
-    expect(found).toBe(true);
+    expect(sawRare).toBe(true);
+    expect(sawEpic).toBe(true);
+    expect(sawCrit).toBe(true);      // ~35% · 300 轮内必现
+    expect(sawInitTime).toBe(true);  // ~30% · 300 轮内必现
   });
 
   it('传说 (rarity 3) → base_multiplier=2 含 targetLetter', () => {
