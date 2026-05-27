@@ -11,13 +11,14 @@ import { showScreen, startLevel, renderRelicDisplay } from './battle';
 import { openShop } from './shop';
 import { getNextBattleNode } from './stage/stageFlow';
 import { queryRelicFlag } from './relics/RelicPipeline';
-import { playSound } from '../effects/sound';
+import { playSound, playDeskSound } from '../effects/sound';
 import { t, localizeItemName, getLocale } from '../demo/demo-i18n';
 import { grantIntermissionFreeRefreshes } from './relics/StageRelicBehaviors';
 import { applyAffixLevelScaling } from '../data/affixes';
 import { BALANCE } from '../core/constants';
-import { listAllEquipped, setEnchant, getEnchant } from './affixV2Equipped';
-import { rollEnchantResource, getEnchantDisplay, applyEnchantToEffect, type EnchantSpec } from '../data/affixV2Enchant';
+import { listAllEquipped, setEnchant, getEnchant, listAllEnchants, takePendingV2EnchantSkillIds } from './affixV2Equipped';
+import { isEnchantGuaranteed } from './relics/EnchantmentRelicBehaviors';
+import { rollEnchantResource, getEnchantDisplay, applyEnchantToEffect, ENCHANT_RESOURCE_POOL, type EnchantSpec, type EnchantResource } from '../data/affixV2Enchant';
 import { getAffixV2Definition } from '../data/affixV2';
 import { formatEffectDescription } from '../ui/affixV2TooltipAdapter';
 import { random } from '../core/seededRandom';
@@ -32,12 +33,33 @@ export function consumePendingEnchantSkillIds(): string[] {
 
 // === V2 附魔获取 · roll + picker ===
 
-/** 4 附魔等权 roll · resource 类型再 roll 一个具体资源（玩家预览随机结果） */
-function rollEnchant(): EnchantSpec {
-  const types = ['haste', 'crit', 'resource', 'multi_fire'] as const;
-  const t = types[Math.floor(random() * types.length)];
-  if (t === 'resource') return { id: 'resource', resource: rollEnchantResource(random) };
-  return { id: t };
+/** 附魔加权 roll · supplant 稀缺（权重远低于其余）· resource/rr 再 roll 具体资源（玩家预览随机结果）·
+ *  rr 的 from = 宿主 skill 资源（自我消耗闭环），to = 其余资源随机 */
+function rollEnchant(skillResource: string): EnchantSpec {
+  const pool: Array<{ w: number; make: () => EnchantSpec }> = [
+    { w: 10, make: () => ({ id: 'haste' }) },
+    { w: 10, make: () => ({ id: 'crit' }) },
+    { w: 10, make: () => ({ id: 'resource', resource: rollEnchantResource(random) }) },
+    { w: 10, make: () => ({ id: 'multi_fire' }) },
+    { w: 10, make: () => ({ id: 'mark' }) },
+    { w: 10, make: () => ({ id: 'ally' }) },
+    { w: 10, make: () => rollRrEnchant(skillResource) },
+    { w: 2,  make: () => ({ id: 'supplant' }) },   // 稀缺
+  ];
+  const total = pool.reduce((s, x) => s + x.w, 0);
+  let r = random() * total;
+  for (const x of pool) { if ((r -= x.w) < 0) return x.make(); }
+  return pool[0].make();
+}
+
+/** rr 附魔：from = 宿主 skill 资源，to = 其余资源随机（宿主资源不在附魔资源池时回退为随机 from） */
+function rollRrEnchant(skillResource: string): EnchantSpec {
+  const from: EnchantResource = (ENCHANT_RESOURCE_POOL as readonly string[]).includes(skillResource)
+    ? (skillResource as EnchantResource)
+    : rollEnchantResource(random);
+  const others = ENCHANT_RESOURCE_POOL.filter(r => r !== from);
+  const to = others[Math.floor(random() * others.length)] ?? from;
+  return { id: 'rr', from, to };
 }
 
 /** 附魔显示 · 委托到 affixV2Enchant.getEnchantDisplay（注册表派发，扩展时只改 handler）*/
@@ -45,8 +67,9 @@ function enchantDisplayInfo(e: EnchantSpec): { name: string; desc: string } {
   return getEnchantDisplay(e, getLocale() === 'zh' ? 'zh' : 'en');
 }
 
-/** 显示 V2 附魔 picker · skillId 范围内列 V2 affix 让玩家选挂载 ·
- *  无 V2 affix / 跳过 → onComplete(null) */
+/** 显示 V2 附魔 picker · 文牍风格「封装工单」（复用遗物申请表 desk 视觉）·
+ *  抽 1 个附魔 → 列出该 skill 的 V2 词条作封装目标（A/B/C），键入字母或点击行提交 ·
+ *  无 V2 affix / 跳过 → onComplete() */
 function showV2EnchantPicker(skillId: string, onComplete: () => void): void {
   const equipped = listAllEquipped().filter(e => e.skillId === skillId);
   if (equipped.length === 0) {
@@ -55,90 +78,217 @@ function showV2EnchantPicker(skillId: string, onComplete: () => void): void {
     return;
   }
 
-  const enchant = rollEnchant();
-  const info = enchantDisplayInfo(enchant);
   const zh = getLocale() === 'zh';
   const skill = state.affixSkills.get(skillId);
   const skillResource = skill?.resource ?? 'score';
+  const enchant = rollEnchant(skillResource);
+  const info = enchantDisplayInfo(enchant);
 
-  // === DPCA-VT220 CRT modal · ENCHANT_PROTOCOL ===
+  const RARITY_CLASS = ['common', 'rare', 'epic', 'legendary'];
+  const rarityClass = RARITY_CLASS[Number(skill?.rarity) || 0] ?? 'common';
+  const workerId = (() => {
+    try { return localStorage.getItem('dpca-worker-id') || 'OP. PRIMATE-7842'; }
+    catch { return 'OP. PRIMATE-7842'; }
+  })();
+  const skillName = (skill?.name ?? skillId).toString().toUpperCase();
+  const skillLv = skill?.level ?? 1;
+  const letters = ['A', 'B', 'C', 'D', 'E'];
+
+  // === 文牍式封装工单（desk-paper.requisition 视觉，与遗物申请表同源）===
   const overlay = document.createElement('div');
-  overlay.className = 'crt-modal-overlay';
+  overlay.className = 'v2-enchant-desk-overlay';
+  overlay.style.cssText = 'position:fixed;inset:0;z-index:9999;';
 
-  const bezel = document.createElement('div');
-  bezel.className = 'crt-modal-bezel';
+  const stage = document.createElement('div');
+  stage.className = 'desk-stage';
 
-  const top = document.createElement('div');
-  top.className = 'crt-modal-bezel-top';
-  top.innerHTML = `
-    <span class="crt-modal-led"></span>
-    <span>DPCA · VT220 · ENCHANT-PROTOCOL</span>
-    <span style="margin-left:auto;font-size:9px;color:#888;letter-spacing:2px;">SESSION 0x${(Date.now() & 0xffff).toString(16).toUpperCase()}</span>
+  const vignette = document.createElement('div');
+  vignette.className = 'desk-vignette';
+
+  const paperStage = document.createElement('div');
+  paperStage.className = 'desk-paper-stage';
+
+  const paper = document.createElement('div');
+  paper.className = 'desk-paper requisition';
+  paper.innerHTML = `
+    <div class="desk-paper-header">
+      <div class="seal" aria-label="DPCA seal"><img src="/assets/ui/seal-mark.png" alt=""></div>
+      <div class="h-text">
+        <div class="org">${zh ? 'DPCA · 工事科 / ENGRAVING' : 'DPCA · ENGRAVING DIV.'}</div>
+        <div class="title">${zh ? '封装工单 · ENCHANT ORDER' : 'ENCHANT ORDER · 封装工单'}</div>
+      </div>
+      <div class="form-id">FORM-EN3<br>SEC 4</div>
+    </div>
+    <div class="req-form-fields">
+      <div class="desk-paper-field">
+        <div class="label">${zh ? '申领人' : 'APPLICANT'}</div>
+        <div class="value printed">${workerId}</div>
+      </div>
+      <div class="desk-paper-field">
+        <div class="label">${zh ? '签发附魔' : 'ISSUED'}</div>
+        <div class="value printed">${info.name}</div>
+      </div>
+    </div>
+    <div class="req-instruction">${info.desc}</div>
+    <div class="req-instruction">${zh
+      ? `工件 [${skillName}] Lv.${skillLv} · 勾选封装词条 · CHECK ONE · 备注栏键入字母提交`
+      : `ITEM [${skillName}] Lv.${skillLv} · CHECK ONE AFFIX · type letter in note to submit`}</div>
+    <div class="req-list"></div>
+    <div class="desk-input-line">
+      <div class="label">${zh ? '▸ 备注栏' : '▸ NOTE'}</div>
+      <input type="text" placeholder="A / B / C" maxlength="1" autocomplete="off" style="text-transform:uppercase">
+      <div class="desk-enter-hint"><span class="key">↵</span><span>${zh ? '提交' : 'SUBMIT'}</span></div>
+    </div>
+    <div class="req-skip-row">
+      <button class="req-skip">${zh ? '□ 跳过本次封装 · DECLINE' : '□ DECLINE · skip enchant'}</button>
+    </div>
+    <div class="desk-stamp-mark" data-tint="green">
+      <div class="ring"></div>
+      <div class="ring inner"></div>
+      <div class="seal-img"><img src="/assets/ui/seal-mark.png" alt=""></div>
+      <div class="label">${zh ? 'SEALED<br>已封装' : 'SEALED'}</div>
+      <div class="date">${zh ? 'DPCA · 工事科' : 'DPCA · ENGRAVING'}</div>
+    </div>
   `;
 
-  const screen = document.createElement('div');
-  screen.className = 'crt-modal-screen';
-  const headerHtml = `
-    <div><span class="crt-modal-prompt">&gt;</span> CONNECT DPCA-CORE-04 ... <span class="crt-modal-dim">OK</span></div>
-    <div><span class="crt-modal-prompt">&gt;</span> ROLL ENCHANT ... ${zh ? '抽配' : 'rolled'} <span class="crt-modal-alert">${info.name}</span></div>
-    <div class="crt-modal-divider">────────────────────────────────────────────────────</div>
-    <div class="crt-modal-field"><span>UPGRADED_SKILL</span><span class="v">[${(skill?.name ?? skillId).toString().toUpperCase()}] Lv.${skill?.level ?? 1}</span></div>
-    <div class="crt-modal-section">▸ ${zh ? 'ASSIGN TO AFFIX 选择词条' : 'ASSIGN TO AFFIX'}</div>
-  `;
-  screen.innerHTML = headerHtml;
+  const listEl = paper.querySelector('.req-list') as HTMLElement;
+  const inputEl = paper.querySelector('input') as HTMLInputElement;
+  const skipBtn = paper.querySelector('.req-skip') as HTMLButtonElement;
+  const stampEl = paper.querySelector('.desk-stamp-mark') as HTMLElement;
 
-  equipped.forEach((entry, i) => {
+  let completed = false;
+  const finish = () => {
+    if (completed) return;
+    completed = true;
+    overlay.remove();
+    onComplete();
+  };
+
+  // 词条行（= 封装目标）
+  equipped.forEach((entry, idx) => {
     const def = getAffixV2Definition(entry.defId);
     const affName = def ? (zh ? def.name_zh : def.name_en) : entry.defId;
     const existing = getEnchant(entry.instanceId);
-    const note = existing ? `<span class="crt-modal-item-note">(now: ${enchantDisplayInfo(existing).name})</span>` : '';
     const previewText = def
       ? formatEffectDescription(applyEnchantToEffect(def.effect, enchant), skillResource)
       : '—';
-    const btn = document.createElement('button');
-    btn.className = 'crt-modal-item';
-    btn.dataset.marker = String(i + 1);
-    btn.innerHTML = `
-      <div class="crt-modal-item-name">[${entry.key.toUpperCase()}] ${affName}${note}</div>
-      <div class="crt-modal-item-desc">${previewText}</div>
+    const letter = letters[idx] ?? String(idx + 1);
+    const overwriteNote = existing
+      ? (zh ? ` · 覆盖原附魔[${enchantDisplayInfo(existing).name}]` : ` · replaces [${enchantDisplayInfo(existing).name}]`)
+      : '';
+
+    const row = document.createElement('div');
+    row.className = `req-row rarity-${rarityClass}`;
+    row.dataset.key = letter;
+    row.dataset.instanceId = entry.instanceId;
+    row.innerHTML = `
+      <div class="checkbox"></div>
+      <div class="key-letter">${letter}</div>
+      <div>
+        <div class="name">[${entry.key.toUpperCase()}] ${affName}</div>
+        <div class="code">AFX-${(def?.section ?? 'GEN').slice(0, 3).toUpperCase()}-${String(idx + 1).padStart(3, '0')}</div>
+        <div class="desc">${previewText}${overwriteNote}</div>
+      </div>
+      <div class="clr">${zh ? '词条' : 'AFFIX'}</div>
     `;
-    btn.onclick = () => {
-      setEnchant(entry.instanceId, enchant);
-      overlay.remove();
-      playSound('skill');
-      onComplete();
-    };
-    screen.appendChild(btn);
+    row.addEventListener('click', () => {
+      if (inputEl.disabled) return;
+      playDeskSound('paper');
+      inputEl.value = letter;
+      highlightFromInput();
+      setTimeout(() => { if (!inputEl.disabled) submit(); }, 200);
+    });
+    listEl.appendChild(row);
   });
 
-  const skipBtn = document.createElement('button');
-  skipBtn.className = 'crt-modal-item';
-  skipBtn.dataset.marker = '0';
-  skipBtn.innerHTML = `
-    <div class="crt-modal-item-name">${zh ? 'ABORT · 跳过本次挂载' : 'ABORT · skip enchant'}</div>
-    <div class="crt-modal-item-desc">SKIP · 不挂载附魔</div>
-  `;
-  skipBtn.onclick = () => { overlay.remove(); onComplete(); };
-  screen.appendChild(skipBtn);
+  function highlightFromInput(): void {
+    const v = inputEl.value.toUpperCase();
+    listEl.querySelectorAll<HTMLElement>('.req-row').forEach(r => r.classList.remove('active'));
+    const row = listEl.querySelector<HTMLElement>(`.req-row[data-key="${v}"]`);
+    row?.classList.add('active');
+  }
 
-  const cursor = document.createElement('div');
-  cursor.innerHTML = `<span class="crt-modal-prompt">&gt;</span> INPUT TARGET [1${equipped.length > 1 ? `–${equipped.length}` : ''}/0]:_<span class="crt-modal-cursor"></span>`;
-  cursor.style.marginTop = '8px';
-  screen.appendChild(cursor);
+  function submit(): void {
+    const v = inputEl.value.toUpperCase();
+    const row = listEl.querySelector<HTMLElement>(`.req-row[data-key="${v}"]`);
+    const instanceId = row?.dataset.instanceId;
+    if (!instanceId) return;
+    inputEl.disabled = true;
+    row?.classList.add('active');
 
-  const bottom = document.createElement('div');
-  bottom.className = 'crt-modal-bezel-bottom';
-  bottom.innerHTML = `
-    <span style="border:1px solid #555;padding:1px 6px;color:#aaa;font-size:8px;letter-spacing:2px;">EVENT-LOG OK</span>
-    <span>${zh ? 'CLICK ROW / ENTER TO CONFIRM' : 'CLICK ROW · ENTER TO CONFIRM'}</span>
-    <span style="border:1px solid #555;padding:1px 6px;color:#aaa;font-size:8px;letter-spacing:2px;">OUT-BUF 0%</span>
-  `;
+    setEnchant(instanceId, enchant);
 
-  bezel.appendChild(top);
-  bezel.appendChild(screen);
-  bezel.appendChild(bottom);
-  overlay.appendChild(bezel);
+    // 绿章「已封装」+ 桌面震动
+    stampEl.classList.add('show');
+    stage.classList.add('thunk');
+    playDeskSound('stamp');
+    setTimeout(() => {
+      stampEl.classList.remove('show');
+      playDeskSound('whoosh');
+      finish();
+    }, 1000);
+  }
+
+  inputEl.oninput = highlightFromInput;
+  inputEl.onkeydown = (e) => {
+    if (e.key === 'Enter') { e.preventDefault(); if (!inputEl.disabled) submit(); }
+  };
+  skipBtn.onclick = () => { if (completed) return; playDeskSound('paper'); finish(); };
+
+  paperStage.appendChild(paper);
+  stage.appendChild(vignette);
+  stage.appendChild(paperStage);
+  overlay.appendChild(stage);
   document.body.appendChild(overlay);
+
+  // 入场：纸张滑入 + 聚焦备注栏
+  requestAnimationFrame(() => {
+    paper.classList.add('active');
+    inputEl.focus();
+  });
+}
+
+// === Lv.3 概率附魔 · V2 路径（替代 legacy checkAutoEnchantment）===
+
+/** 升到 Lv.3 时按概率授予一个 V2 附魔（概率随已有 V2 附魔数递减，与旧公式一致）·
+ *  概率门控数的是**V2 附魔数**（listAllEnchants），非 legacy enchantmentIds ·
+ *  命中 → 弹 showV2EnchantPicker；未命中 / 技能不存在 / **无 V2 词条** → 直接 onComplete（静默）。
+ *  无词条技能没有挂载对象，连概率都不掷，附魔机会不显化（不弹界面、无反馈）。*/
+export function maybeGrantV2Enchant(skillId: string, onComplete: () => void): void {
+  const targetSkill = state.affixSkills.get(skillId);
+  if (!targetSkill) { onComplete(); return; }
+  // 无 V2 词条的技能没有可挂载的对象 → 静默跳过（不掷概率、不弹界面，附魔机会不显化）
+  if (!listAllEquipped().some(e => e.skillId === skillId)) { onComplete(); return; }
+  const targetRarity = targetSkill.rarity;
+
+  // V2 附魔计数：全局总数 + 同稀有度技能上的附魔数
+  const ench = listAllEnchants();
+  const totalEnch = ench.size;
+  let sameRarityEnch = 0;
+  for (const entry of listAllEquipped()) {
+    if (!ench.has(entry.instanceId)) continue;
+    const sk = state.affixSkills.get(entry.skillId);
+    if (sk && sk.rarity === targetRarity) sameRarityEnch++;
+  }
+
+  // 贪婪铭刻 → 必定；同稀有度无附魔 / 全局无附魔 → 必定；否则概率递减（公式不变）
+  const prob = isEnchantGuaranteed() ? 1.0
+    : sameRarityEnch === 0 ? 1.0
+    : totalEnch === 0 ? 1.0
+    : Math.max(0.1, 0.8 - 0.15 * (totalEnch - 1));
+  if (random() >= prob) { onComplete(); return; }
+
+  showV2EnchantPicker(skillId, onComplete);
+}
+
+/** 处理局内升级到 Lv.3 留下的待附魔队列（shop 打开时调用）· 逐个弹 picker（一次一个）。*/
+export function processPendingV2Enchants(onDone: () => void): void {
+  const queue = takePendingV2EnchantSkillIds();
+  const step = (i: number): void => {
+    if (i >= queue.length) { onDone(); return; }
+    maybeGrantV2Enchant(queue[i], () => step(i + 1));
+  };
+  step(0);
 }
 
 // === 打开休息关 ===

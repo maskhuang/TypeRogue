@@ -37,6 +37,7 @@ import {
   listAllEquipped,
   setSelectorResolver,
   chargeToolAffixUses,
+  notePotentialLv3Enchant,
   type SourcedResult,
 } from './affixV2Equipped'
 import { listActiveAuras, peekInstanceState, getSkillCumBase, getSkillCumFactor, getFireTargetWaitMs, tryFireTargetQuota, consumeHasteOne, getHaste, markSkillConsumed, isSkillConsumed, getFocus, isFocused, setFocus, getAllies, isAllied, allianceOutputBonusFor, addAlly, clearAllies } from './affixV2State'
@@ -334,11 +335,14 @@ function applySkillUpgrade(skillId: string, amount: number): void {
   const skill = state.affixSkills.get(skillId)
   if (!skill) return
   const maxLv = skill.baseValues?.length ?? skill.level
+  const prevLv = skill.level
   const newLv = Math.min(maxLv, skill.level + Math.max(1, Math.floor(amount)))
   if (newLv === skill.level) return
   skill.level = newLv
   const ps = state.player.skills.get(skillId)
   if (ps) ps.level = newLv
+  // 局内升级跨越 Lv.3 → 入队，留待 shop 弹 picker（避免丢失附魔机会）
+  notePotentialLv3Enchant(skillId, prevLv, newLv)
 }
 
 /** 词条嫁接 · 把 defId 装到宿主 skill · 更新 v2Ids + rarity（cap 3）· 已满或重复则跳过 */

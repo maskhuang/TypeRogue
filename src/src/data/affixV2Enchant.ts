@@ -14,6 +14,8 @@ export const ENCHANT_HASTE_AMOUNT = 1          // 迅疾：+1 极速
 export const ENCHANT_CRIT_AMOUNT = 0.2         // 致命：+20% 暴击率
 export const ENCHANT_RESOURCE_RATIO = 0.1      // 资源附魔：ratio 0.1
 export const ENCHANT_MULTI_FIRE_AMOUNT = 1     // 闪亮：+1 multi_fire
+export const ENCHANT_RR_RATIO = 0.1            // 反刍：convert_resource ratio（消耗/产出 1:1 Lv1-单位 × 0.1）
+export const ENCHANT_SUPPLANT_RATIO = 0.5      // 取代：吸收被移除技能基础产出的比例（平衡旋钮）
 
 // 学徒：threshold(skill.level) = 3 × 2^(level-1) → Lv1→2 用 3 次，Lv2→3 用 6 次，Lv3→4 用 12 次...
 // 不设 level 上限——V2 baseValues 表仅 4 entries (Lv4 封顶按表查值)，但 skill.level 本身可继续涨，
@@ -36,6 +38,20 @@ export type EnchantSpec =
   | { id: 'crit' }
   | { id: 'resource'; resource: EnchantResource }
   | { id: 'multi_fire' }
+  /** MARK 焦点：触发时把宿主同 scope 内 1 个技能设为全场焦点（apply_mark）·
+   *  无数值层（MARK 不变式②）→ doubleIfMatch 用 B：宿主已是 apply_mark 则不重复挂 */
+  | { id: 'mark' }
+  /** 结盟：触发时把宿主同 scope 内技能拉入结盟集（apply_ally · 盟越大每员产出越高）·
+   *  无数值层（加成按全局 n 算）→ doubleIfMatch 同 B：宿主已是 apply_ally 则不重复挂 */
+  | { id: 'ally' }
+  /** rr 反吐再食：触发时消耗 from 资源、产出 to 资源（convert_resource · 无 scope，作用于资源池）·
+   *  from = 宿主 skill 资源（自我消耗闭环）· to = 其余资源（roll 时定）·
+   *  doubleIfMatch：宿主已 convert_resource(同 from/to) → ratio ×2 */
+  | { id: 'rr'; from: EnchantResource; to: EnchantResource }
+  /** 取代（稀缺）：触发时移除宿主同 scope 内 1 个技能并吸收其产出（consume_skill）·
+   *  scope 退化为 self 时移除宿主自身（allowSelf）· 高频破坏是其稀缺代价 ·
+   *  doubleIfMatch：宿主已 consume_skill → ratio ×2 */
+  | { id: 'supplant' }
   /** 学徒：监听本词条 trigger 命中次数 → 达阈值 → 宿主 skill level++（无上限）
    *  阈值递增 3 → 6 → 12 → 24...（× 2），跨战永久。
    *  effect 本身不变（doubleIfMatch / parallel 均 noop），实际副作用在 hook 层 */
@@ -56,6 +72,9 @@ function inheritSelector(spec: EffectSpec): TargetSelector | undefined {
     case 'grant_haste':
     case 'fire_target':
     case 'apply_aura':
+    case 'apply_mark':
+    case 'apply_ally':
+    case 'consume_skill':
       return spec.selector
     case 'apply_status':
       return spec.target
@@ -149,6 +168,63 @@ const ENCHANT_HANDLERS: Record<EnchantId, EnchantHandler> = {
     display: (_spec, locale) => locale === 'zh'
       ? { name: '闪亮', desc: '触发时挂 +1 多重释放 aura；若词条已含 multi_fire_add aura，数值 ×2' }
       : { name: 'Shiny', desc: 'On fire: +1 multi-fire aura; if affix has multi_fire_add, amount ×2' },
+  },
+
+  // MARK 焦点：并行挂 apply_mark 到宿主同 scope；无数值层 → doubleIfMatch 用 B
+  // （宿主已是 apply_mark → 返回原 effect 不变，避免重复设焦点的冗余/重 roll）
+  mark: {
+    doubleIfMatch: (effect) =>
+      effect.kind === 'apply_mark' ? effect : null,
+    parallel: (_spec, selector) =>
+      ({ kind: 'apply_mark', selector }),
+    display: (_spec, locale) => locale === 'zh'
+      ? { name: '瞩目', desc: '触发时把同范围内 1 个技能设为全场焦点；若词条已是焦点给予(apply_mark)，则不重复挂' }
+      : { name: 'Focal', desc: 'On fire: mark 1 skill in the affix’s scope as global focus; if affix already grants mark, no extra effect' },
+  },
+
+  // 结盟：并行挂 apply_ally 到宿主同 scope；无数值层 → 同 B
+  ally: {
+    doubleIfMatch: (effect) =>
+      effect.kind === 'apply_ally' ? effect : null,
+    parallel: (_spec, selector) =>
+      ({ kind: 'apply_ally', selector }),
+    display: (_spec, locale) => locale === 'zh'
+      ? { name: '聚众', desc: '触发时把同范围内技能拉入结盟（盟越大每员产出越高）；若词条已是结盟给予(apply_ally)，则不重复挂' }
+      : { name: 'Rallying', desc: 'On fire: rally skills in the affix’s scope into the alliance (bigger alliance = more output each); if affix already grants ally, no extra effect' },
+  },
+
+  // rr 反吐再食：并行挂 convert_resource（无 scope，作用于资源池，忽略 selector）
+  rr: {
+    doubleIfMatch: (effect, spec) => {
+      if (spec.id !== 'rr') return null
+      if (effect.kind === 'convert_resource' && effect.from === spec.from && effect.to === spec.to) {
+        return { ...effect, ratio: effect.ratio * 2 }
+      }
+      return null
+    },
+    parallel: (spec, _selector) => {
+      if (spec.id !== 'rr') throw new Error('rr handler got non-rr spec')
+      return { kind: 'convert_resource', from: spec.from, to: spec.to, ratio: ENCHANT_RR_RATIO }
+    },
+    display: (spec, locale) => {
+      if (spec.id !== 'rr') return { name: '?', desc: '' }
+      const fromN = locale === 'zh' ? (RES_DISPLAY_ZH[spec.from] ?? spec.from) : spec.from
+      const toN = locale === 'zh' ? (RES_DISPLAY_ZH[spec.to] ?? spec.to) : spec.to
+      return locale === 'zh'
+        ? { name: '回流', desc: `触发时消耗 ${fromN} 转化产出 ${toN}（ratio 0.1）；若词条已含同向 convert_resource，ratio ×2` }
+        : { name: 'Refluent', desc: `On fire: consume ${spec.from} → produce ${spec.to} (ratio 0.1); if affix has the same convert_resource, ratio ×2` }
+    },
+  },
+
+  // 取代（稀缺）：并行挂 consume_skill 到宿主同 scope；scope 退化 self 时 allowSelf → 移除宿主自身
+  supplant: {
+    doubleIfMatch: (effect) =>
+      effect.kind === 'consume_skill' ? { ...effect, ratio: effect.ratio * 2 } : null,
+    parallel: (_spec, selector) =>
+      ({ kind: 'consume_skill', selector, ratio: ENCHANT_SUPPLANT_RATIO, allowSelf: selector.type === 'self' }),
+    display: (_spec, locale) => locale === 'zh'
+      ? { name: '取代', desc: '触发时移除同范围内 1 个技能并吸收其基础产出（ratio 0.5）；范围退化为自身时移除宿主技能本身；若词条已含 consume_skill，ratio ×2' }
+      : { name: 'Supplant', desc: 'On fire: remove 1 skill in the affix’s scope and absorb its base output (ratio 0.5); if scope falls back to self, removes the host skill itself; if affix has consume_skill, ratio ×2' },
   },
 
   // 学徒：effect 完全不变；副作用在 hook 层

@@ -58,12 +58,12 @@ import type { EnchantmentType } from '../data/affixes';
 import type { CategorizedEnchantments } from '../data/affixTrigger';
 import { getMonoAffixCategory } from './relics/RelicPipeline';
 import { applyRitualEnchantment, generateRitualCandidates, pickRitualChoices, getEligibleSkills as getRitualEligibleSkills } from './ritualEnchantment';
-import { consumePendingEnchantSkillIds } from './restStage';
+import { consumePendingEnchantSkillIds, maybeGrantV2Enchant, processPendingV2Enchants } from './restStage';
 import type { RitualCandidate } from './ritualEnchantment';
 import { applyTrainingManual, rerollAllAffixes } from './relics/SkillRelicBehaviors';
 import { hasGlassCannon } from './relics/TypingRelicBehaviors';
 import { getAscendBaseScale } from '../data/affixTrigger';
-import { getEnchantmentChoiceCount, getEnchantAnchorSlotBonus, getEnchantAnchorPriceMultiplier, getMinEnchantmentLevel, getQuestEquipReduction, isEnchantGuaranteed } from './relics/EnchantmentRelicBehaviors';
+import { getEnchantmentChoiceCount, getEnchantAnchorSlotBonus, getEnchantAnchorPriceMultiplier, getMinEnchantmentLevel, getQuestEquipReduction } from './relics/EnchantmentRelicBehaviors';
 import { bindShapeToKeys, unbindSkill, unbindKey, autoBindSkill, getBindingState, getSkillAnchorKey } from './bindingManager';
 import { getShapeCells, mapShapeToKeys, getShapeRotationCount } from '../data/skillShapes';
 
@@ -1424,6 +1424,9 @@ export function openShop(_won: boolean): void {
   // 补偿：检查商店外升到Lv.3但未附魔的技能（如休息关升级）
   checkPendingEnchantments();
 
+  // V2：局内升级（学徒附魔 / upgrade_skill）跨越 Lv.3 的待附魔队列，逐个弹 V2 picker
+  processPendingV2Enchants(() => {});
+
   // Story 60.5: feature flag 派发到 terminal 商店 UI
   // (classic UI 已废弃 · 教程模式也走 terminal · 保留 isTutorial 参数仅供单测用)
   dispatchShopMode(_won, state.isTutorial);
@@ -2426,36 +2429,10 @@ function purchasePackItem(index: number): void {
   }
 }
 
-// === Lv.3 自动附魔检查（概率递减，按稀有度分组） ===
+// === Lv.3 自动附魔检查（概率递减）· 迁移到 V2 附魔层 ===
+// 概率门控 + 授予均委托 restStage.maybeGrantV2Enchant（数 V2 附魔数、公式不变、命中弹 V2 picker）。
 function checkAutoEnchantment(skillId: string): void {
-  const targetSkill = state.affixSkills.get(skillId);
-  if (!targetSkill) return;
-  const targetRarity = targetSkill.rarity;
-
-  // 统计同稀有度技能已有附魔总数
-  let sameRarityEnch = 0;
-  // 统计全局附魔总数（用于递减概率）
-  let totalEnch = 0;
-  for (const [, affixSkill] of state.affixSkills) {
-    totalEnch += affixSkill.enchantmentIds.length;
-    if (affixSkill.rarity === targetRarity) {
-      sameRarityEnch += affixSkill.enchantmentIds.length;
-    }
-  }
-  // 贪婪铭刻 → 必定成功；同稀有度无附魔 → 必定成功；否则概率递减
-  const prob = isEnchantGuaranteed() ? 1.0
-    : sameRarityEnch === 0 ? 1.0
-    : totalEnch === 0 ? 1.0
-    : Math.max(0.1, 0.8 - 0.15 * (totalEnch - 1));
-  if (random() >= prob) {
-    // showFeedback('附魔失败', '#ff6b6b');
-    return;
-  }
-  // 成功：展示 2 选 1 附魔面板
-  const candidates = generateRitualCandidates(targetSkill);
-  if (candidates.length === 0) return;
-  const choices = pickRitualChoices(candidates);
-  showAutoEnchantmentPanel(skillId, targetSkill, choices);
+  maybeGrantV2Enchant(skillId, () => renderUnifiedShop());
 }
 
 /** 展示 Lv.3 触发的附魔选择面板（复用仪式附魔 UI 逻辑） */

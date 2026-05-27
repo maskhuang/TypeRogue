@@ -459,8 +459,10 @@ export type EffectSpec =
    * - 移除是「本场」级（consumed 集 · battle reset 恢复），**不**改 run 级 state；
    * - 被移除技能上的 on_removed 词条在移除时派发一次（死亡回响）。
    * 产出由集成层按被移除技能的 resource × level 计算并注入（不经 output_bonus / crit 二次放大）。
+   * - allowSelf：缺省 false（强制排除宿主，见上）；true 时允许移除宿主自身 ——
+   *   仅 supplant 附魔在作用域退化为 self 时设置（取代自身换一次性产出，详 affixV2Enchant）。
    */
-  | { kind: 'consume_skill'; selector: TargetSelector; ratio: number; filter?: SkillFilter }
+  | { kind: 'consume_skill'; selector: TargetSelector; ratio: number; filter?: SkillFilter; allowSelf?: boolean }
 
 // ===== 默认值 =====
 

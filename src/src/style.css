@@ -10060,6 +10060,10 @@ html[lang^="en"] .desk-paper.duty-roster .roster-row .role .section-en {
   display: grid;
   grid-template-columns: 22px 28px 36px 1fr 76px;
   gap: 12px;
+}
+/* 封装工单（V2 附魔）无图标列 → 4 列网格 */
+.v2-enchant-desk-overlay .desk-paper.requisition .req-row {
+  grid-template-columns: 22px 28px 1fr 76px;
   align-items: flex-start;
   padding: 8px 4px;
   border-bottom: 1px dotted var(--desk-ink-dim);

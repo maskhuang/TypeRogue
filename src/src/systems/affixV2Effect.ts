@@ -495,7 +495,10 @@ function resolveInto(spec: EffectSpec, ctx: ResolveContext, result: ResolveResul
         : []
       if (candidates.length === 0) return
       // filter AND 过滤（活体 skill · resource/rarity/tag）；缺省 = 不过滤
-      const uniq = [...new Set(candidates)].filter(id => id !== ctx.skillId)
+      // allowSelf=true（supplant 附魔 self-fallback）时保留宿主自身 → 可取代自己
+      const uniq = spec.allowSelf
+        ? [...new Set(candidates)]
+        : [...new Set(candidates)].filter(id => id !== ctx.skillId)
       const matches = spec.filter
         ? uniq.filter(id => matchLiveSkill(id, spec.filter!))
         : uniq

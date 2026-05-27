@@ -15,6 +15,7 @@ import { state as gameState } from '../core/state'
 import { BALANCE } from '../core/constants'
 import { hasRelation, getKeysWithRelation, scopePosAnchor } from '../data/keyboardTopology'
 import type { Tag } from '../data/affixTags'
+import { getMinEnchantmentLevel } from './relics/EnchantmentRelicBehaviors'
 
 /** 把 (resource)→base 回调按 skill 等级柯里化为 Lv.N 查询 ·
  *  resourceLv1Base 接受可选 level 参数（defaultResourceLv1Base），缺省 Lv1 */
@@ -204,6 +205,27 @@ export function clearAllEnchants(): void {
 export function listAllEnchants(): ReadonlyMap<string, EnchantSpec> {
   return _enchants
 }
+
+// ============================================
+// Lv.3 附魔触发 · 待处理队列（局内升级到 Lv.3 时弹不了 picker，入队留到 shop 处理）
+// ============================================
+// run 级（跨战斗保留：局内入队 → 进 shop 处理）· clearAllEquipped（切 run）时清空。
+
+const _pendingV2EnchantSkillIds: string[] = []
+
+/** 升级到达附魔门槛（Lv.3）时登记 · 仅"跨越"门槛那一次入队（prev<门槛 且 new≥门槛）·
+ *  局内升级（applySkillUpgrade / 学徒附魔）无法弹 picker，入队留待 shop processPendingV2Enchants 处理，避免丢失。
+ *  商店升级有自己的即时路径（checkAutoEnchantment），不走此队列。*/
+export function notePotentialLv3Enchant(skillId: string, prevLevel: number, newLevel: number): void {
+  const min = getMinEnchantmentLevel()
+  if (prevLevel >= min || newLevel < min) return
+  if (!_pendingV2EnchantSkillIds.includes(skillId)) _pendingV2EnchantSkillIds.push(skillId)
+}
+
+/** 取出并清空待附魔队列（shop 处理入口调用）*/
+export function takePendingV2EnchantSkillIds(): string[] {
+  return _pendingV2EnchantSkillIds.splice(0)
+}
 import {
   getInstanceState,
   resetAllAffixV2State,
@@ -225,11 +247,14 @@ function recordApprenticeTriggerHit(entry: EquippedEntry): void {
   if (!skill) return
   const prog = getApprenticeProgress(entry.instanceId)
   prog.progress += 1
+  const prevLevel = skill.level
   // while 而非 if：进度可能跨多级（一般 +1 不会，但保险）
   while (prog.progress >= apprenticeNextThreshold(skill.level)) {
     prog.progress -= apprenticeNextThreshold(skill.level)
     skill.level += 1
   }
+  // 局内升级跨越 Lv.3 → 入队，留待 shop 弹 picker（避免丢失附魔机会）
+  if (skill.level !== prevLevel) notePotentialLv3Enchant(entry.skillId, prevLevel, skill.level)
 }
 
 // === resolveSelector 注入点（integration 层提供，避免循环依赖）===
@@ -343,6 +368,7 @@ export function clearAllEquipped(): void {
   _equipped.clear()
   _bySkill.clear()
   _enchants.clear()
+  _pendingV2EnchantSkillIds.length = 0
   clearAllApprenticeProgress()
 }
 
