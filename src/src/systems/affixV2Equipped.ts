@@ -119,6 +119,7 @@ export function previewCountScaleSource(
   if (source.by === 'targetScore') return Math.round(gameState.targetScore / BALANCE.TARGET_BASE)
   if (source.by === 'hasted') return null   // 极速数运行时动态 · 预览无战斗态 → 只显规则不显数
   if (source.by === 'allied') return null   // 结盟数运行时动态 · 预览无战斗态 → 只显规则不显数
+  if (source.by === 'critChance') return null   // 暴击率含遗物/词效战斗动态项 · 预览无战斗态 → 只显规则不显数
   const sc: TargetSelector = scope ?? { type: 'all_skills' }
   if (sc.type === 'self' || sc.type === 'hasted') return null
   if (sc.type === 'neighbors' && (hostSkillId === undefined || hostKey === undefined)) return null

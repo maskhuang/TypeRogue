@@ -104,9 +104,9 @@ export type TriggerSpec = Phase1TriggerSpec | Phase2TriggerSpec
 //   curve（type）：count — 乘性连续 factor = 1 + n × factor（n=0 → ×1 全产出）
 //                  per_n — 步进整数 factor = floor(n / perN)（n<perN → 0，门控）
 //   source       ：数 scope 内的什么单位 —— 词条(tag) / 资源(resource) / 稀有度(rarity) /
-//                  空位(empty) / 极速(hasted) / 结盟数(allied) / 目标分数档(targetScore) / 同名词条(affixName)
+//                  空位(empty) / 极速(hasted) / 结盟数(allied) / 目标分数档(targetScore) / 同名词条(affixName) / 暴击率(critChance)
 // 都按"乘性 scale 因子"接入 add / multiply / gain_resource / apply_aura。
-// scope 决定计数范围（缺省 all_skills）；empty / hasted / allied / targetScore 例外——不使用 scope（见各 source 注释）。
+// scope 决定计数范围（缺省 all_skills）；empty / hasted / allied / targetScore / critChance 例外——不使用 scope（见各 source 注释）。
 
 /** scale 计数来源 · 决定"数 scope 内的什么" */
 export type ScaleCountSource =
@@ -128,6 +128,10 @@ export type ScaleCountSource =
   /** 同名词条：scope 内携带「与宿主同名词条」（同 defId）的去重技能数 · 自指，无参数（计数对象恒为挂载本 scale 的词条名）·
    *  宿主自身那个技能也计入（≥1）· 宿主 defId 运行时取 ctx.selfDefId、tooltip 预览取 hostDefId · 协同放大「越多技能装了我，我越强」*/
   | { readonly by: 'affixName' }
+  /** 暴击率：宿主技能自身当前暴击率（aura + 遗物 + 词效，同 onSkillFireV2 口径），换算为「每 10% = 1 档」·
+   *  宿主自锚（读 ctx.skillId/ctx.key），不使用 scope · 运行时动态（含战斗态 relic/词效），预览只显规则 ·
+   *  build-around：暴击率堆得越高，挂此 scale 的产出/倍率越强 */
+  | { readonly by: 'critChance' }
 
 export type ScaleByTag =
   | {

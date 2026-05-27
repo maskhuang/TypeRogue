@@ -3,7 +3,7 @@
 // ============================================
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
-import { resolveEffect, evaluateCondition, type ResolveContext } from '../../../src/systems/affixV2Effect'
+import { resolveEffect, evaluateCondition, setCritChanceGetter, type ResolveContext } from '../../../src/systems/affixV2Effect'
 import { resetAllAffixV2State, peekInstanceState, listActiveAuras, listStatuses, getInstanceState, addAlly } from '../../../src/systems/affixV2State'
 import { state as gameState } from '../../../src/core/state'
 import { BALANCE } from '../../../src/core/constants'
@@ -459,6 +459,48 @@ describe('ScaleByTag · affixName（同名词条 · 自指计数去重技能）'
     }, ctxQ)
     // selfDefId 缺省 → n=0 → 11 × 1 = 11
     expect(r.resourceProduced[0].amount).toBe(11)
+  })
+})
+
+describe('ScaleByTag · critChance（宿主暴击率 · 每 10% = 1 档 · 宿主自锚 · 不用 scope）', () => {
+  afterEach(() => { setCritChanceGetter(() => 0) })   // 复位注入，避免泄漏到后续 describe
+
+  it('未注入 getter → 计数 0（factor=1，原样产出）', () => {
+    setCritChanceGetter(undefined as never)
+    const r = resolveEffect({
+      kind: 'gain_resource', resource: 'score', ratio: 1,
+      scale: { type: 'count', source: { by: 'critChance' }, factor: 0.1 },
+    }, baseCtx)
+    expect(r.resourceProduced[0].amount).toBeCloseTo(11, 5)   // 11 × (1 + 0×0.1)
+  })
+
+  it('count 曲线 · n = round(暴击率 × 10)', () => {
+    setCritChanceGetter((skillId, key) => (skillId === 'skill_1' && key === 'K' ? 0.4 : 0))   // 40% → n=4
+    const r = resolveEffect({
+      kind: 'gain_resource', resource: 'score', ratio: 1,
+      scale: { type: 'count', source: { by: 'critChance' }, factor: 0.1 },
+    }, baseCtx)
+    // n=4 → 1 × 11 × (1 + 4×0.1) = 15.4
+    expect(r.resourceProduced[0].amount).toBeCloseTo(15.4, 5)
+  })
+
+  it('档位四舍五入 · 暴击率 0.37 → n = 4', () => {
+    setCritChanceGetter(() => 0.37)   // round(3.7) = 4
+    const r = resolveEffect({
+      kind: 'gain_resource', resource: 'score', ratio: 1,
+      scale: { type: 'count', source: { by: 'critChance' }, factor: 0.1 },
+    }, baseCtx)
+    expect(r.resourceProduced[0].amount).toBeCloseTo(15.4, 5)   // 11 × 1.4
+  })
+
+  it('per_n 曲线 · floor(n / perN)', () => {
+    setCritChanceGetter(() => 0.7)   // n=7
+    const r = resolveEffect({
+      kind: 'gain_resource', resource: 'score', ratio: 1,
+      scale: { type: 'per_n', source: { by: 'critChance' }, perN: 3 },
+    }, baseCtx)
+    // floor(7/3) = 2 → 11 × 2 = 22
+    expect(r.resourceProduced[0].amount).toBe(22)
   })
 })
 

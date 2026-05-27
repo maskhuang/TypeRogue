@@ -54,6 +54,7 @@ import {
   getCritBonusGold, recordWordCrit, getCritStormBonus,
 } from './relics/CritRelicBehaviors'
 import type { ResourceProduction } from './affixV2Effect'
+import { setCritChanceGetter } from './affixV2Effect'
 import type { FireEvent } from './fireFilter'
 import type { TargetSelector } from '../data/affixV2Trigger'
 import { skillHasEffectiveTag } from './affixV2InheritedTags'
@@ -629,6 +630,14 @@ export function wireV2BattleIntegration(): void {
 
   // 把 selector → skillId[] 解析器注入到 affixV2Equipped（add/multiply 的 scope 展开用）
   setSelectorResolver(resolveSelectorToSkillIds)
+
+  // 把宿主暴击率读取器注入到 affixV2Effect（scale source by:'critChance' 用）·
+  // 与 onSkillFireV2 暴击判定同口径（aura + 遗物 + 词效），fate_coin 封顶前的原始值
+  setCritChanceGetter((skillId, key) => {
+    const wordLen = state.player.word?.length ?? 0
+    return sumCritChanceAuras(skillId, key) + getRelicCritRate(key, wordLen)
+      + getWordEffectCritRate(state.wordEffects, key)
+  })
 
   // battle:start → 从 state.player.bindings 重同步 V2 装配 + reset + 应用 passive aura
   //               + 触发 on_battle_start 词条（旧 innate 等价物，hookOnBattleStart 返回结果）

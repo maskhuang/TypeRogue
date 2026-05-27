@@ -163,25 +163,26 @@ const CHANT_TAG_PER_N_MIN = 2
 const CHANT_TAG_PER_N_MAX = 4
 const CHANT_TAG_COUNT_FACTOR = 0.1
 
-/** 抽 scale 计数来源（变体）· 词条 40% / 资源 15% / 稀有度 12% / 极速 7% / 结盟数 7% / 目标分数 6% / 同名词条 6% / 空位 7%。
+/** 抽 scale 计数来源（变体）· 词条 34% / 资源 15% / 稀有度 12% / 极速 7% / 结盟数 7% / 目标分数 6% / 同名词条 6% / 暴击率 6% / 空位 7%。
  *  资源用宿主资源（"数同资源技能"，无则随机）；稀有度 0-3 随机；极速数/结盟数全局动态；目标分数读当前关目标档；
- *  同名词条数携带本词条名（同 defId）的去重技能（自指·宿主自身计入·孤本时计 1）；空位随机锁 posRel。
- *  by:'hasted' 受需求门控（haste 预算）——被关掉则回退后续来源；by:'allied' 不门控（build-around，无盟时计 0，同 affixName 纪律）。 */
+ *  同名词条数携带本词条名（同 defId）的去重技能（自指·宿主自身计入·孤本时计 1）；暴击率读宿主自身暴击率（每 10% 1 档）；空位随机锁 posRel。
+ *  by:'hasted' 受需求门控（haste 预算）——被关掉则回退后续来源；by:'allied' / by:'critChance' 不门控（build-around，无投入时计 0，同 affixName 纪律）。 */
 function pickScaleSource(section: SectionTag, skillResource?: ResourceType, kind?: string): ScaleCountSource {
   const roll = random()
-  if (roll < 0.40) return { by: 'tag', tag: section }
-  if (roll < 0.55) return { by: 'resource', resource: skillResource ?? pickRandom(MATCHED_RESOURCE_POOL) }
-  if (roll < 0.67) return { by: 'rarity', rarity: Math.floor(random() * 4) }
-  if (roll < 0.74 && admitDemand(kind)) return { by: 'hasted' }
-  if (roll < 0.81) return { by: 'allied' }
-  if (roll < 0.87) return { by: 'targetScore' }
-  if (roll < 0.93) return { by: 'affixName' }
+  if (roll < 0.34) return { by: 'tag', tag: section }
+  if (roll < 0.49) return { by: 'resource', resource: skillResource ?? pickRandom(MATCHED_RESOURCE_POOL) }
+  if (roll < 0.61) return { by: 'rarity', rarity: Math.floor(random() * 4) }
+  if (roll < 0.68 && admitDemand(kind)) return { by: 'hasted' }
+  if (roll < 0.75) return { by: 'allied' }
+  if (roll < 0.81) return { by: 'targetScore' }
+  if (roll < 0.87) return { by: 'affixName' }
+  if (roll < 0.93) return { by: 'critChance' }
   return { by: 'empty', posRel: pickRandom(POSREL_VALUES) }
 }
 
-/** 给定 source 选 scope：empty 用自身 posRel、hasted/allied 全局动态计数、targetScore 读关目标（均 top-level scope 留空）；其余从 SCALE_SCOPE_POOL 抽。 */
+/** 给定 source 选 scope：empty 用自身 posRel、hasted/allied/critChance 全局/宿主自锚、targetScore 读关目标（均 top-level scope 留空）；其余从 SCALE_SCOPE_POOL 抽。 */
 function pickScaleScope(source: ScaleCountSource): TargetSelector | undefined {
-  return (source.by === 'empty' || source.by === 'hasted' || source.by === 'allied' || source.by === 'targetScore') ? undefined : pickWeightedScope(SCALE_SCOPE_POOL).selector
+  return (source.by === 'empty' || source.by === 'hasted' || source.by === 'allied' || source.by === 'targetScore' || source.by === 'critChance') ? undefined : pickWeightedScope(SCALE_SCOPE_POOL).selector
 }
 
 /**

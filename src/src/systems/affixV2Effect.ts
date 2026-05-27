@@ -606,6 +606,15 @@ function matchLiveSkill(skillId: string, filter: SkillFilter): boolean {
 // ScaleByTag 解析
 // ============================================
 
+// === 暴击率 getter 注入点（integration 层提供，避免循环依赖）===
+// 返回宿主技能(skillId+key)当前暴击率（aura + 遗物 + 词效，同 onSkillFireV2 口径）·
+// 缺省（未注入 / 预览态）→ by:'critChance' 计数返 0。
+type CritChanceGetter = (skillId: string, key: string) => number
+let _critChanceGetter: CritChanceGetter | undefined
+export function setCritChanceGetter(fn: CritChanceGetter): void {
+  _critChanceGetter = fn
+}
+
 /**
  * 把 ScaleByTag 解析为乘法因子。
  * `magnitude_final = base_magnitude × applyScale(scale, ctx)`
@@ -628,6 +637,7 @@ function applyScale(scale: ScaleByTag | undefined, ctx: ResolveContext): number 
  *   - empty    → 与宿主键位成该 posRel 的空键位数（getKeysWithRelation − bindings · 不用 scope）
  *   - targetScore → 当前关目标分数档 round(targetScore / TARGET_BASE)（全局 · 不用 scope）
  *   - affixName → scope 内携带「与宿主同 defId 词条」的去重技能数（含宿主自身 · 需 ctx.selfDefId）
+ *   - critChance → 宿主技能自身暴击率 round(critChance × 10)（每 10% = 1 档 · 宿主自锚 · 不用 scope · 需注入 getter）
  */
 function countScaleSource(source: ScaleCountSource, scope: TargetSelector | undefined, ctx: ResolveContext): number {
   switch (source.by) {
@@ -682,6 +692,11 @@ function countScaleSource(source: ScaleCountSource, scope: TargetSelector | unde
         if (e.defId === ctx.selfDefId) skills.add(e.skillId)
       }
       return skills.size
+    }
+    case 'critChance': {
+      // 宿主技能自身暴击率 · 每 10% = 1 档（round）· 全局/宿主自锚，与 scope 无关 · 缺 getter（预览态）→ 0
+      const cc = _critChanceGetter?.(ctx.skillId, ctx.key) ?? 0
+      return Math.round(cc * 10)
     }
   }
 }

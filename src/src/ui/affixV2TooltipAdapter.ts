@@ -273,7 +273,7 @@ function liveScaleFactor(scale: ScaleByTag | undefined, host?: HostCtx): number 
   return live ? live.factor : 1
 }
 
-/** scale 计数单位的人读名 · 词条/资源/稀有度/空位/极速/结盟数/目标分数档/同名词条 */
+/** scale 计数单位的人读名 · 词条/资源/稀有度/空位/极速/结盟数/目标分数档/同名词条/暴击率 */
 function scaleSourceUnit(source: ScaleCountSource): string {
   const zh = isZh()
   switch (source.by) {
@@ -295,6 +295,8 @@ function scaleSourceUnit(source: ScaleCountSource): string {
       return zh ? `目标分数档` : `target-score tier`
     case 'affixName':
       return zh ? `携带本词条的技能` : `skill bearing this affix`
+    case 'critChance':
+      return zh ? `10% 暴击率` : `10% crit`
   }
 }
 
