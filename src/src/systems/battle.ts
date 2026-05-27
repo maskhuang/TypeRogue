@@ -20,7 +20,7 @@ import { installSkipListener, type SkipController } from '../effects/skipAnimati
 import { initFloatTextCanvas, spawnFloatText, spawnFloatTextAt, spawnFlightText, clearFloatTexts, preheatFloatTexts } from '../ui/effects/FloatTextPool';
 import { triggerSkill, clearPseudoInfinite, resetWordResourceTypes, getWordResourceTypeCount, updateChargeProducers, getWordResourceOutput, isChargeSkill, isReechoSkill, resetStageProduced } from './skills';
 import { HAND_MAP } from '../data/keyboardTopology';
-import { openShop } from './shop';
+import { openShop, showWordPackReward } from './shop';
 import { shouldShowRitual, openRitualEnchantment } from './ritualEnchantment';
 import { hasUnownedRelics, showRelicPicker, RELIC_WEIGHT_PRESETS } from './relicPicker';
 import { openRestStage } from './restStage';
@@ -2212,8 +2212,8 @@ function endLevel(): void {
         return;
       }
 
-      // 普通关/校准关胜利 → 金币奖励 → 致命礼物 → 商店
-      showGoldReward(() => continueAfterDeadlyGift(() => openShop(true)));
+      // 普通关/校准关胜利 → 金币奖励 → 致命礼物 → 词包三选一 → 商店
+      showGoldReward(() => continueAfterDeadlyGift(() => showWordPackReward(() => openShop(true))));
     }, playRatingSound);
   } else {
     // Story 36.10: 不死鸟 — 失败前检查复活

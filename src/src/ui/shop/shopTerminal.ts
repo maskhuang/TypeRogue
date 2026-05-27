@@ -17,10 +17,8 @@ import {
   buildAffixTooltipFields,
   applyMaxSkillLevelOnPurchase,
   calculateAffixSkillPrice,
-  getAdjustedPrice,
 } from '../../systems/shop';
 import { getRecycleSellMultiplier, getBlackMarketExtraSlots, canSmuggleFree, consumeSmuggleFree, isTimedAuction } from '../../systems/relics/ShopRelicBehaviors';
-import { getThickDeckPackDiscount } from '../../systems/relics/WordRelicBehaviors';
 import { shouldAnimateShop } from '../../core/UserSettings';
 // Story 60.7: 副作用 hook（事件总线 + quest 重算 + 遗物购入瞬时效果）
 import { eventBus } from '../../core/events/EventBus';
@@ -30,8 +28,6 @@ import { getQuestEquipReduction } from '../../systems/relics/EnchantmentRelicBeh
 import { rerollAllAffixes } from '../../systems/relics/SkillRelicBehaviors';
 import { initFurnace } from '../../systems/relics/ResourceRelicBehaviors';
 import { random } from '../../core/seededRandom';
-import { generateWordPacks } from '../../data/wordPacks';
-import { calculateLetterFrequency } from '../../systems/letters/LetterFrequencySystem';
 import { getBattleNumber, getPositionInCycle, getStageType, getNextBattleNode } from '../../systems/stage/stageFlow';
 import { STAGE_ICONS } from '../../systems/actTransition';
 import { t, localizeItemName, localizeItemDesc, localizeItemFlavor } from '../../demo/demo-i18n';
@@ -189,8 +185,6 @@ export function ensureSeed(): void {
     try {
       // black_market（黑市）：额外技能位
       const items = generateAffixShopItems(3 + getBlackMarketExtraSlots());
-      const packs = generateShopPackItems(2);
-      items.push(...packs);
       const relic = generateShopRelicItem(1);
       if (relic) items.push(relic);
       state.shop.items = items;
@@ -201,26 +195,6 @@ export function ensureSeed(): void {
   if (state.gold < 1) state.gold = PREVIEW_SEED_GOLD;
 }
 
-// Story 60.2 fix: 把 generateWordPacks 输出包成 ShopItem，让 catalog 出现 pack 商品
-function generateShopPackItems(count: number): ShopItem[] {
-  try {
-    const ownedWords = state.player.wordDeck;
-    const playerFreqs = calculateLetterFrequency(ownedWords);
-    const boundKeys = [...state.player.bindings.keys()];
-    const packs = generateWordPacks(ownedWords, playerFreqs, boundKeys, count);
-    return packs.map((pack, i): ShopItem => ({
-      id: `si-pack-${i}-${Date.now()}`,
-      type: 'pack',
-      pack,
-      // 与 classic 一致：套用全部价格修正（含折扣卡 getDiscountMultiplier）+ 厚牌折扣
-      cost: Math.max(1, getAdjustedPrice(pack.cost) - getThickDeckPackDiscount()),
-      isUpgrade: false,
-      locked: false,
-    }));
-  } catch {
-    return [];
-  }
-}
 
 // === Descriptor cache ===
 
@@ -1420,7 +1394,6 @@ export function cmdReshuffle(): void {
   try {
     const items: ShopItem[] = [
       ...generateAffixShopItems(3 + getBlackMarketExtraSlots()),  // black_market 额外技能位
-      ...generateShopPackItems(2),
     ];
     const relic = generateShopRelicItem(1);
     if (relic) items.push(relic);

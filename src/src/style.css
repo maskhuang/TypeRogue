@@ -10060,9 +10060,11 @@ html[lang^="en"] .desk-paper.duty-roster .roster-row .role .section-en {
   display: grid;
   grid-template-columns: 22px 28px 36px 1fr 76px;
   gap: 12px;
+  align-items: flex-start;
 }
-/* 封装工单（V2 附魔）无图标列 → 4 列网格 */
-.v2-enchant-desk-overlay .desk-paper.requisition .req-row {
+/* 封装工单（V2 附魔）/ 词语补录单 无图标列 → 4 列网格 */
+.v2-enchant-desk-overlay .desk-paper.requisition .req-row,
+.wordpack-desk-overlay .desk-paper.requisition .req-row {
   grid-template-columns: 22px 28px 1fr 76px;
   align-items: flex-start;
   padding: 8px 4px;
@@ -10073,6 +10075,28 @@ html[lang^="en"] .desk-paper.duty-roster .roster-row .role .section-en {
 }
 .desk-paper.requisition .req-row.active {
   background: rgba(240, 208, 64, 0.22);
+}
+
+/* 词语补录 · 字母覆盖条（未解锁=红色虚线格）+ 候选词内未解锁字母标红 */
+.wordpack-desk-overlay .wp-keycov {
+  display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap;
+  margin: 2px 0 6px; border-top: 1px dashed var(--desk-ink-dim); padding-top: 8px;
+}
+.wordpack-desk-overlay .wp-keycov-label {
+  font-size: 11px; letter-spacing: 0.14em; color: var(--desk-ink-dim);
+  text-transform: uppercase; white-space: nowrap;
+}
+.wordpack-desk-overlay .wp-keycov-strip { display: flex; flex-wrap: wrap; gap: 3px; }
+.wordpack-desk-overlay .wp-kc {
+  font-family: var(--desk-font-body); font-size: 12px; font-weight: 700;
+  color: var(--desk-ink); width: 16px; text-align: center; line-height: 1.5;
+}
+.wordpack-desk-overlay .wp-kc.lk {
+  color: var(--desk-stamp-red); font-weight: 400;
+  border: 1px dashed var(--desk-stamp-red); border-radius: 2px;
+}
+.wordpack-desk-overlay .wp-newkey {
+  color: var(--desk-stamp-red); border-bottom: 2px solid var(--desk-stamp-red);
 }
 .desk-paper.requisition .req-row .checkbox {
   width: 18px; height: 18px;

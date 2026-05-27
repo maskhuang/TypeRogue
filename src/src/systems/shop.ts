@@ -13,7 +13,7 @@ import { getKeysWithRelation, hasRelation, PositionRelation } from '../data/keyb
 import { calculateDeckStats } from '../data/words';
 import { generateWordPacks, getConditionMeta } from '../data/wordPacks';
 import { getElements } from '../ui/elements';
-import { playSound } from '../effects/sound';
+import { playSound, playDeskSound } from '../effects/sound';
 import { juiceUp, calculateRating, getRatingTier } from '../effects/juice';
 import { showScreen, startLevel, renderRelicDisplay, showFeedback, randomizeScreenBackground, getCalibrationInfo } from './battle';
 import type { ShopItem, ResourceType, PackConditionType } from '../core/types';
@@ -24,7 +24,7 @@ import { RELICS, MAX_RELIC_SLOTS } from '../data/relics';
 import type { RelicWeights } from './relicPicker';
 import { generateRelicCandidates, showRelicReplaceUI } from './relicPicker';
 // row_medal deleted — autoSelectRowMedal/getRowMedalRowName removed
-import { setWordDealerFlag, consumeWordDealerFreeRefresh, getThickDeckPackDiscount } from './relics/WordRelicBehaviors';
+import { setWordDealerFlag, consumeWordDealerFreeRefresh } from './relics/WordRelicBehaviors';
 import { checkUniversalFurnace, initFurnace, getFurnaceConfig } from './relics/ResourceRelicBehaviors';
 import { checkBountyOnStageEnd } from './relics/StageRelicBehaviors';
 import { getBountyHunterDiscount } from './relics/BossModifierRelicBehaviors';
@@ -43,7 +43,7 @@ import { renderMetamorphPanel } from './classes/MetamorphStation';
 import { eventBus } from '../core/events/EventBus';
 import type { DragPayload } from './dragManager';
 import { IS_DEMO } from '../demo/demo-config';
-import { t, localizeItemName, localizeItemDesc, localizeItemFlavor } from '../demo/demo-i18n';
+import { t, getLocale, localizeItemName, localizeItemDesc, localizeItemFlavor } from '../demo/demo-i18n';
 import { formatAffixRef } from '../ui/affixAbbrev';
 // Story 60.5: feature flag dispatcher 用 — 按 UserSettings.shopUI 决定 classic / terminal
 import { getSettings } from '../core/UserSettings';
@@ -1598,25 +1598,7 @@ function generateShopItems(count: number, guaranteeRare: boolean = false): ShopI
     }
   }
 
-  // 构建牌包池（替代词语池）— 职业门控：造词师失去牌包系统
-  const packPool: ShopItem[] = [];
-  if (isFeatureEnabled('pack-system')) {
-    const boundKeys = [...state.player.bindings.keys()];
-    const playerFreqs = calculateLetterFrequency(state.player.wordDeck);
-    const packs = generateWordPacks(state.player.wordDeck, playerFreqs, boundKeys, 8, act, getActMaxRarity());
-    for (const pack of packs) {
-      packPool.push({
-        id: `si-${nextId++}`,
-        type: 'pack',
-        pack,
-        cost: Math.max(1, getAdjustedPrice(pack.cost) - getThickDeckPackDiscount()),
-        isUpgrade: false,
-        locked: false,
-      });
-    }
-  }
-
-  // 保底：≥2 技能（优先升级） + ≥1 牌包（如果有的话）
+  // 保底：≥2 技能（优先升级）—— 牌包已移出商店，改为每关结束三选一
   // 优先从升级项中选保底技能，确保玩家看到升级选项
   const guaranteedSkillCount = Math.min(2, skillPool.length);
   for (let g = 0; g < guaranteedSkillCount; g++) {
@@ -1627,10 +1609,6 @@ function generateShopItems(count: number, guaranteeRare: boolean = false): ShopI
     } else {
       items.push(skillPool.splice(0, 1)[0]);
     }
-  }
-  // 保底2个牌包（单词更便宜，需要更多购买机会）
-  for (let p = 0; p < 2 && packPool.length > 0; p++) {
-    items.push(packPool.splice(0, 1)[0]);
   }
 
   // 遗物商品（最多 1 个，占总 5 槽之一，40%概率刷新）
@@ -1665,7 +1643,7 @@ function generateShopItems(count: number, guaranteeRare: boolean = false): ShopI
   }
 
   // 合并剩余池，随机填满
-  const remaining = shuffleArray([...skillPool, ...packPool]);
+  const remaining = shuffleArray([...skillPool]);
   while (items.length < count && remaining.length > 0) {
     items.push(remaining.shift()!);
   }
@@ -2300,6 +2278,208 @@ function showWordPicker(words: string[], onPick: (word: string) => void, wordEff
   });
 
   modal.classList.remove('word-picker-hidden');
+}
+
+// === 每关结束 · 词语补录（文牍式三选一 · 免费 · 可跳过） ===
+// 牌包已移出商店：普通关通关后弹出申领单，三个单词候选选 1（或弃用）。
+// 视觉与遗物申请表 / 封装工单同源（desk-paper.requisition）。
+// 沿用商店原有的 pack-system 职业门控：若某职业失去牌包系统则直接跳过。
+export function showWordPackReward(onComplete: () => void): void {
+  if (!isFeatureEnabled('pack-system')) {
+    onComplete();
+    return;
+  }
+
+  const boundKeys = [...state.player.bindings.keys()];
+  const playerFreqs = calculateLetterFrequency(state.player.wordDeck);
+  const packs = generateWordPacks(state.player.wordDeck, playerFreqs, boundKeys, 3, state.cycle, getActMaxRarity());
+
+  // 拍平为单词候选：取每个牌包首词 + 其词效；按词去重
+  const seen = new Set<string>();
+  const candidates: { word: string; rarity: 0 | 1 | 2 | 3; effect?: WordEffect }[] = [];
+  for (const pack of packs) {
+    const word = pack.words[0];
+    if (!word || seen.has(word)) continue;
+    seen.add(word);
+    candidates.push({ word, rarity: pack.rarity, effect: pack.wordEffect });
+  }
+  if (candidates.length === 0) {
+    onComplete();
+    return;
+  }
+
+  const zh = getLocale() === 'zh';
+  const workerId = (() => {
+    try { return localStorage.getItem('dpca-worker-id') || 'OP. PRIMATE-7842'; }
+    catch { return 'OP. PRIMATE-7842'; }
+  })();
+  const letters = ['A', 'B', 'C', 'D', 'E'];
+
+  // 未解锁字母 = 词库中出现次数 < 阈值（=0）→ 该键位锁定，打字时不会出现、技能/计分无法触发。
+  // 在补录单上显出来，让玩家知道还缺哪些字母（选含红字母的词即可解锁该键）。
+  const ALPHA = 'abcdefghijklmnopqrstuvwxyz';
+  const lockedSet = new Set([...ALPHA].filter(c => (playerFreqs.get(c) ?? 0) < FREQ_UNLOCK_THRESHOLD));
+  const keycovLabel = lockedSet.size === 0
+    ? (zh ? '字母已全部解锁' : 'ALL KEYS UNLOCKED')
+    : (zh ? `未解锁键位 ${lockedSet.size}` : `${lockedSet.size} KEYS LOCKED`);
+  const keycovStrip = [...ALPHA]
+    .map(c => `<span class="wp-kc${lockedSet.has(c) ? ' lk' : ''}">${c.toUpperCase()}</span>`)
+    .join('');
+  const keycovHtml = `<div class="wp-keycov"><span class="wp-keycov-label">${keycovLabel}</span><span class="wp-keycov-strip">${keycovStrip}</span></div>`;
+  // 候选词内把"当前未解锁"的字母标红 —— 选它即可点亮这些键位
+  const renderWordName = (w: string) => w.toUpperCase().split('').map(ch =>
+    lockedSet.has(ch.toLowerCase()) ? `<span class="wp-newkey">${ch}</span>` : ch
+  ).join('');
+
+  const overlay = document.createElement('div');
+  overlay.className = 'wordpack-desk-overlay';
+  // 挂进 #game-container（900×600 带边框）而非 body：position:absolute 让外框继续框住它。
+  // z-index 9999 > CRT 扫描线层(#game-container::after = 9998) → 申领单盖在扫描线之上，
+  // 但仍被容器 border + overflow:hidden 裁进框内（边框由容器自身绘制，不受子元素 z 影响）。
+  overlay.style.cssText = 'position:absolute;inset:0;z-index:9999;';
+
+  const stage = document.createElement('div');
+  stage.className = 'desk-stage';
+  const vignette = document.createElement('div');
+  vignette.className = 'desk-vignette';
+  const paperStage = document.createElement('div');
+  paperStage.className = 'desk-paper-stage';
+
+  const paper = document.createElement('div');
+  paper.className = 'desk-paper requisition';
+  paper.innerHTML = `
+    <div class="desk-paper-header">
+      <div class="seal" aria-label="DPCA seal"><img src="/assets/ui/seal-mark.png" alt=""></div>
+      <div class="h-text">
+        <div class="org">${zh ? 'DPCA · 外部文本回收科' : 'DPCA · EXT. TEXT RECYCLING'}</div>
+        <div class="title">${zh ? '词语补录 · WORD INTAKE' : 'WORD INTAKE · 词语补录'}</div>
+      </div>
+      <div class="form-id">FORM-RC1<br>SEC 4</div>
+    </div>
+    <div class="req-form-fields">
+      <div class="desk-paper-field">
+        <div class="label">${zh ? '申领人' : 'APPLICANT'}</div>
+        <div class="value printed">${workerId}</div>
+      </div>
+      <div class="desk-paper-field">
+        <div class="label">${zh ? '词库存量' : 'ON FILE'}</div>
+        <div class="value printed">${state.player.wordDeck.length}</div>
+      </div>
+    </div>
+    ${keycovHtml}
+    <div class="req-instruction">${zh
+      ? '勾选补录词语 · CHECK ONE WORD · 备注栏键入字母提交'
+      : 'CHECK ONE WORD · type letter in note to submit'}</div>
+    <div class="req-list"></div>
+    <div class="desk-input-line">
+      <div class="label">${zh ? '▸ 备注栏' : '▸ NOTE'}</div>
+      <input type="text" placeholder="A / B / C" maxlength="1" autocomplete="off" style="text-transform:uppercase">
+      <div class="desk-enter-hint"><span class="key">↵</span><span>${zh ? '提交' : 'SUBMIT'}</span></div>
+    </div>
+    <div class="req-skip-row">
+      <button class="req-skip">${zh ? '□ 跳过本次补录 · DECLINE' : '□ DECLINE · skip word'}</button>
+    </div>
+    <div class="desk-stamp-mark" data-tint="green">
+      <div class="ring"></div>
+      <div class="ring inner"></div>
+      <div class="seal-img"><img src="/assets/ui/seal-mark.png" alt=""></div>
+      <div class="label">${zh ? 'FILED<br>已录' : 'FILED'}</div>
+      <div class="date">${zh ? 'DPCA · 外部文本回收科' : 'DPCA · RECYCLING'}</div>
+    </div>
+  `;
+
+  const listEl = paper.querySelector('.req-list') as HTMLElement;
+  const inputEl = paper.querySelector('input') as HTMLInputElement;
+  const skipBtn = paper.querySelector('.req-skip') as HTMLButtonElement;
+  const stampEl = paper.querySelector('.desk-stamp-mark') as HTMLElement;
+
+  let completed = false;
+  const finish = () => {
+    if (completed) return;
+    completed = true;
+    overlay.remove();
+    onComplete();
+  };
+
+  candidates.forEach(({ word, rarity, effect }, idx) => {
+    const letter = letters[idx] ?? String(idx + 1);
+    const rarityClass = RARITY_KEYS[rarity] ?? 'common';
+    const freqHint = getFreqHints(word);
+    const descParts = [
+      zh ? `${word.length} 字母` : `${word.length} letters`,
+      freqHint,
+      effect ? formatWordEffectLabel(effect) : '',
+    ].filter(Boolean);
+
+    const row = document.createElement('div');
+    row.className = `req-row rarity-${rarityClass}`;
+    row.dataset.key = letter;
+    row.dataset.word = word;
+    row.innerHTML = `
+      <div class="checkbox"></div>
+      <div class="key-letter">${letter}</div>
+      <div>
+        <div class="name">${renderWordName(word)}</div>
+        <div class="code">WORD-${rarityClass.slice(0, 3).toUpperCase()}-${String(idx + 1).padStart(3, '0')}</div>
+        <div class="desc">${descParts.join(' · ')}</div>
+      </div>
+      <div class="clr">${zh ? '词语' : 'WORD'} · ${rarityLabel(rarity)}</div>
+    `;
+    row.addEventListener('click', () => {
+      if (inputEl.disabled) return;
+      playDeskSound('paper');
+      inputEl.value = letter;
+      highlightFromInput();
+      setTimeout(() => { if (!inputEl.disabled) submit(); }, 200);
+    });
+    listEl.appendChild(row);
+  });
+
+  function highlightFromInput(): void {
+    const v = inputEl.value.toUpperCase();
+    listEl.querySelectorAll<HTMLElement>('.req-row').forEach(r => r.classList.remove('active'));
+    listEl.querySelector<HTMLElement>(`.req-row[data-key="${v}"]`)?.classList.add('active');
+  }
+
+  function submit(): void {
+    const v = inputEl.value.toUpperCase();
+    const row = listEl.querySelector<HTMLElement>(`.req-row[data-key="${v}"]`);
+    const word = row?.dataset.word;
+    if (!word) return;
+    const chosen = candidates.find(c => c.word === word);
+    if (!chosen) return;
+    inputEl.disabled = true;
+    row?.classList.add('active');
+
+    state.player.wordDeck.push(chosen.word);
+    if (chosen.effect) state.wordEffects.set(chosen.word, chosen.effect);
+
+    stampEl.classList.add('show');
+    stage.classList.add('thunk');
+    playDeskSound('stamp');
+    setTimeout(() => {
+      stampEl.classList.remove('show');
+      playDeskSound('whoosh');
+      finish();
+    }, 1000);
+  }
+
+  inputEl.oninput = highlightFromInput;
+  inputEl.onkeydown = (e) => {
+    if (e.key === 'Enter') { e.preventDefault(); if (!inputEl.disabled) submit(); }
+  };
+  skipBtn.onclick = () => { if (completed) return; playDeskSound('paper'); playDeskSound('whoosh'); finish(); };
+
+  paperStage.appendChild(paper);
+  stage.appendChild(vignette);
+  stage.appendChild(paperStage);
+  overlay.appendChild(stage);
+  (document.getElementById('game-container') ?? document.body).appendChild(overlay);
+
+  requestAnimationFrame(() => {
+    paper.classList.add('active');
+    inputEl.focus();
+  });
 }
 
 /** 展开三选一词包：在卡片下方显示候选词行 */

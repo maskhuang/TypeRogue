@@ -906,7 +906,9 @@ Branching 不在 META 而在 MACRO 终点：升（endless）/ 降（完全猴子
 |---|---|---|
 | ~~X Company~~ | **X 集团** | D12 |
 | ~~第七打字室~~ | **文牍科 · 第七打字室** | 文牍科下属作业室；in-game 工位称呼仍可用"第七打字室" |
-| ~~未受理文本研究室 / 外部文本回收科~~ | **DPCA · 外部文本回收科** / **DPCA · 风险控制科** | 挂在 DPCA 下，新增不冲突 D12 |
+| ~~未受理文本研究室 / 外部文本回收科~~ | **DPCA · 外部文本回收科** / **DPCA · 风险控制科** | 挂在 DPCA 下，新增不冲突 D12；**外部文本回收科**为词包（玩家词库素材）来源，对应 in-game「词语补录 WORD INTAKE / FORM-RC1」 |
+| —（支援科室·v4.1 转正）| **DPCA · 后勤科 / FACILITIES** | 向录入员签发工件（遗物）；in-game「工件签发 REQUISITION / FORM-IM7」+「工位调整申请 / FORM-WS-12」letterhead 已在用 |
+| —（支援科室·v4.1 转正）| **DPCA · 工事科 / ENGRAVING** | 受理工件封装（附魔）；in-game「封装工单 ENCHANT ORDER / FORM-EN3」letterhead 已在用 |
 | ~~MOKO 游戏化界面~~ | **MOKO** | **新 LOCK**：双关——既指人，也指 D26 v2 的"灵长类 species protocol"；玩家以为在玩 typing 游戏，实际是 DPCA 的MOKO在 process 自己 |
 
 ### D. 处置去向（深度作者化）
