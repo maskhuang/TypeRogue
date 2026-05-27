@@ -20,6 +20,7 @@ import {
   listActiveAuras,
 } from '../../../src/systems/affixV2State'
 import { state as gameState } from '../../../src/core/state'
+import { setLocale } from '../../../src/demo/demo-i18n'
 import type { AffixSkillInstance } from '../../../src/core/types'
 
 const ctx: ResolveContext = {
@@ -38,6 +39,7 @@ const ctx: ResolveContext = {
 
 beforeEach(() => {
   resetAllAffixV2State()
+  setLocale('zh')   // tooltip 措辞断言依赖中文 · 显式锁定，免受跨文件 locale 污染（详 tests/setup.ts）
 })
 
 describe('PILOT specs · 10 个全在', () => {
