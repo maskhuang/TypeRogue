@@ -3,7 +3,7 @@
 // ============================================
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
-import { generateAffixV2, pickRecipeForSkill, META_RECIPE_KINDS, ALL_RECIPES, RECIPE_PILOERECTION, RECIPE_ARM_RAISE, RECIPE_BIPEDAL_SWAGGER, RECIPE_SUPINE, RECIPE_HUDDLE, RECIPE_GAZE_FOLLOW, RECIPE_IMITATE, RECIPE_REGURGITATE, RECIPE_RR, RECIPE_COPROPHAGY, RECIPE_FEED, RECIPE_NUT_CRACK } from '../../../src/data/affixV2Generator'
+import { generateAffixV2, pickRecipeForSkill, META_RECIPE_KINDS, ALL_RECIPES, RECIPE_PILOERECTION, RECIPE_ARM_RAISE, RECIPE_BIPEDAL_SWAGGER, RECIPE_SUPINE, RECIPE_HUDDLE, RECIPE_GAZE_FOLLOW, RECIPE_IMITATE, RECIPE_REGURGITATE, RECIPE_RR, RECIPE_COPROPHAGY, RECIPE_FEED, RECIPE_NUT_CRACK, RECIPE_CACHE } from '../../../src/data/affixV2Generator'
 import { getAffixV2Definition, TOOL_AFFIX_USES_MIN, TOOL_AFFIX_USES_MAX } from '../../../src/data/affixV2'
 import { setSeededMode, setNormalMode } from '../../../src/core/seededRandom'
 
@@ -158,6 +158,59 @@ describe('chant generator · scale roll', () => {
       }
       expect(lo).toBeGreaterThan(4)                                  // 确实"更多"——超出默认 tool 上限
       expect(seen.size).toBeGreaterThan(1)                           // 随机非常量
+    })
+  })
+
+  describe('double_stock 系 · cache 存量翻倍（消耗型工具）', () => {
+    it('已注册进 ALL_RECIPES', () => {
+      expect(ALL_RECIPES).toContain(RECIPE_CACHE)
+    })
+
+    it('生成 on_self_fire + gain_proportional(source=target=宿主资源 · ratio=recipe.ratio)', () => {
+      setSeededMode(17)
+      for (const host of ['score', 'gold', 'shield', 'time', 'base', 'multiplier'] as const) {
+        for (let i = 0; i < 30; i++) {
+          const def = getAffixV2Definition(generateAffixV2(RECIPE_CACHE, host))
+          expect(def?.section).toBe('tool')
+          expect(def?.trigger.type).toBe('on_self_fire')   // trigger 固定，不随机
+          expect(def?.effect.kind).toBe('gain_proportional')
+          if (def?.effect.kind !== 'gain_proportional') continue
+          // 存量翻倍：source=target=宿主资源（产出资源与所在技能产出资源一致）
+          expect(def.effect.source).toBe(host)
+          expect(def.effect.target).toBe(host)
+          expect(def.effect.ratio).toBe(RECIPE_CACHE.ratio)  // ratio=1 → 产出=当前存量 → ×2
+        }
+      }
+    })
+
+    it('金币宿主 → maxUses 收紧到 goldUsesRange（跨关累计·防复利失控）', () => {
+      setSeededMode(23)
+      const [lo, hi] = RECIPE_CACHE.goldUsesRange
+      const seen = new Set<number>()
+      for (let i = 0; i < 100; i++) {
+        const def = getAffixV2Definition(generateAffixV2(RECIPE_CACHE, 'gold'))
+        expect(def?.maxUses).toBeDefined()
+        expect(Number.isInteger(def!.maxUses)).toBe(true)
+        expect(def!.maxUses!).toBeGreaterThanOrEqual(lo)
+        expect(def!.maxUses!).toBeLessThanOrEqual(hi)
+        seen.add(def!.maxUses!)
+      }
+      // goldUsesRange 严格收紧于默认 usesRange（仅金币特殊处理）
+      expect(RECIPE_CACHE.goldUsesRange[1]).toBeLessThan(RECIPE_CACHE.usesRange[1])
+    })
+
+    it('非金币宿主 → maxUses 用默认 usesRange（每关重置·复利风险有限）', () => {
+      setSeededMode(29)
+      const [lo, hi] = RECIPE_CACHE.usesRange
+      for (const host of ['score', 'shield', 'time', 'base', 'multiplier'] as const) {
+        for (let i = 0; i < 40; i++) {
+          const def = getAffixV2Definition(generateAffixV2(RECIPE_CACHE, host))
+          expect(def?.maxUses).toBeDefined()
+          expect(Number.isInteger(def!.maxUses)).toBe(true)
+          expect(def!.maxUses!).toBeGreaterThanOrEqual(lo)
+          expect(def!.maxUses!).toBeLessThanOrEqual(hi)
+        }
+      }
     })
   })
 

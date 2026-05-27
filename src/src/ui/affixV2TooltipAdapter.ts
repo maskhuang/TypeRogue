@@ -335,6 +335,13 @@ export function formatEffectDescription(effect: EffectSpec, skillResource?: stri
     case 'gain_resource':
       return `+${lv1Amount(effect.resource, effect.ratio * liveScaleFactor(effect.scale, host))} ${locResource(effect.resource)}` + formatScaleSuffix(effect.scale)
     case 'gain_proportional': {
+      // source==target（cache 存量翻倍）：产出 = ratio × 当前存量 → 存量 ×(1+ratio)
+      if (effect.source === effect.target) {
+        const mult = 1 + effect.ratio
+        return zh
+          ? `当前 ${locResource(effect.target)} 存量 ×${mult}`
+          : `current ${locResource(effect.target)} stock ×${mult}`
+      }
       // 每 1 Lv1[source] 持有量产出 ratio × Lv1[target] target
       const perUnit = lv1Amount(effect.target, effect.ratio)
       const sourceUnit = lv1Amount(effect.source, 1)

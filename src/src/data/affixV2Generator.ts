@@ -372,6 +372,22 @@ export interface CrackRecipe {
   readonly usesRange: readonly [number, number]    // 覆盖 tool 段默认 maxUses（闭区间整数）
 }
 
+/** double_stock 系：gain_proportional(source=target=宿主资源) · 对宿主自身资源「存量」翻倍 ·
+ *  trigger 固定 on_self_fire（fire 宿主技能 = 翻一次）· tool 段消耗型（用完消失 · maxUses）·
+ *  ratio=1 → 产出 = ratio × Lv1[host] × (player[host]/Lv1[host]) = 当前存量 → 存量×2（翻倍）·
+ *  产出资源恒等于宿主产出资源（source=target=host），故「与所在技能产出资源一致」·
+ *  on_self_fire 反复触发会复利叠乘（×2^n），靠 usesRange 限次封顶（防指数失控）。*/
+export interface DoubleStockRecipe {
+  readonly kind: 'double_stock'
+  readonly id: string
+  readonly section: SectionTag
+  readonly name_zh: string
+  readonly name_en: string
+  readonly ratio: number                            // 1 = 翻倍（产出 = ratio × 当前存量）
+  readonly usesRange: readonly [number, number]     // 非金币宿主：maxUses 闭区间（per-battle 资源每关重置，复利风险有限）
+  readonly goldUsesRange: readonly [number, number] // 金币宿主：收紧的 maxUses（金币跨关累计 → 复利更危险，封顶更低）
+}
+
 /** coprophagy 系：on_resource_consumed + reclaim_consumed · 反应式回收（食粪）·
  *  trigger 固定 on_resource_consumed（任意 affix 消耗资源即触发）·
  *  effect 固定 reclaim_consumed：回收 fraction × 本次被消耗量，产出同种资源 ·
@@ -420,7 +436,7 @@ export interface AllyRecipe {
   readonly name_en: string
 }
 
-export type AffixV2Recipe = DripRecipe | GrowthRecipe | EscalateRecipe | ChantRecipe | ChainRecipe | ConvertRecipe | MetabolizeRecipe | HasteRecipe | TeachRecipe | ImitateRecipe | SpearMakeRecipe | GazeFollowRecipe | CrackRecipe | CoprophagyRecipe | DevourRecipe | MarkRecipe | AllyRecipe
+export type AffixV2Recipe = DripRecipe | GrowthRecipe | EscalateRecipe | ChantRecipe | ChainRecipe | ConvertRecipe | MetabolizeRecipe | HasteRecipe | TeachRecipe | ImitateRecipe | SpearMakeRecipe | GazeFollowRecipe | CrackRecipe | DoubleStockRecipe | CoprophagyRecipe | DevourRecipe | MarkRecipe | AllyRecipe
 
 // ============================================
 // Scope 池 · 加权抽样 · 范围越广越稀有
@@ -836,6 +852,14 @@ export function rollAffixV2Spec(
     const resource = pickRandom(recipe.resourcePool)
     const avgUses = Math.round((recipe.usesRange[0] + recipe.usesRange[1]) / 2)
     effect = { kind: 'gain_resource', resource, ratio: recipe.T / avgUses }
+  } else if (recipe.kind === 'double_stock') {
+    // double_stock: 对宿主自身资源「存量」翻倍 · gain_proportional source=target=宿主资源 ·
+    // ratio=1 → 产出 = 当前存量（resolver: ratio × Lv1[host] × player[host]/Lv1[host]）→ 存量×2 ·
+    // trigger 固定 on_self_fire（fire 宿主 = 翻一次）· tool 段消耗型，maxUses 限复利次数（防 ×2^n 失控）·
+    // host=base/multiplier 同 drink 路径合法（resolver player[host]<=0 守卫空转）
+    triggerSpec = { type: 'on_self_fire' }
+    const host: ResourceType = skillResource ?? 'score'
+    effect = { kind: 'gain_proportional', source: host, target: host, ratio: recipe.ratio }
   } else if (recipe.kind === 'teach') {
     // teach: trigger 固定 on_battle_end(any) · 胜败都触发
     // filter 三维度复合 · 生成时独立 roll · 每个实例锁死：
@@ -921,8 +945,10 @@ export function rollAffixV2Spec(
 }
 
 /** tool 段词条的 maxUses roll 区间 · crack recipe 用 usesRange 覆盖默认 [MIN, MAX] */
-function toolUsesRange(recipe: AffixV2Recipe): readonly [number, number] {
+function toolUsesRange(recipe: AffixV2Recipe, skillResource?: ResourceType): readonly [number, number] {
   if (recipe.kind === 'crack') return recipe.usesRange
+  // double_stock：金币宿主收紧封顶（跨关累计·复利更危险），其余资源用默认 usesRange
+  if (recipe.kind === 'double_stock') return skillResource === 'gold' ? recipe.goldUsesRange : recipe.usesRange
   return [TOOL_AFFIX_USES_MIN, TOOL_AFFIX_USES_MAX]
 }
 
@@ -953,7 +979,7 @@ export function generateAffixV2(
   // crack recipe 用 usesRange 覆盖默认 [MIN, MAX]（坚果耐砸 · 次数多于一般工具）
   let maxUses: number | undefined
   if (recipe.section === 'tool') {
-    const [usesLo, usesHi] = toolUsesRange(recipe)
+    const [usesLo, usesHi] = toolUsesRange(recipe, skillResource)
     maxUses = usesLo + Math.floor(random() * (usesHi - usesLo + 1))
   }
 
@@ -1172,6 +1198,23 @@ export const RECIPE_NUT_CRACK: CrackRecipe = {
   usesRange: [6, 10],       // 比一般工具（默认 2-4）耐砸 · 战中多次大额但有限，用完即弃
 }
 
+/** 储藏 cache（tool · §2.1.10）· 对宿主自身资源「存量」翻倍（gain_proportional source=target=host · ratio=1）·
+ *  行为学：储藏 = 囤积食物；触发时把已囤的同种资源翻一倍 → 字面"存量翻倍"。
+ *  trigger 固定 on_self_fire（fire 宿主 = 翻一次）· tool 消耗型（用完消失）·
+ *  on_self_fire 反复触发复利叠乘（×2、×4...），靠 maxUses 限次封顶（防 ×2^n 失控）；
+ *  金币跨关累计、复利后果永久，故金币宿主收紧到 [1,2]（封顶 ×4）；其余资源每关重置，用默认 [2,4]。
+ *  产出资源恒 = 宿主产出资源（与所在技能产出资源一致）。balance 旋钮：ratio（翻几倍）/ usesRange（翻几次）。*/
+export const RECIPE_CACHE: DoubleStockRecipe = {
+  kind: 'double_stock',
+  id: 'cache',
+  section: 'tool',
+  name_zh: '储藏',
+  name_en: 'cache',
+  ratio: 1,                 // 产出 = 当前存量 × 1 → 存量翻倍（×2）
+  usesRange: [2, 4],        // 非金币：默认 tool 区间（×4 ~ ×16，但 per-battle 资源每关重置）
+  goldUsesRange: [1, 2],    // 金币：收紧封顶（1 次 ×2 · 2 次 ×4 · 防跨关复利失控）
+}
+
 export const RECIPE_TEACH: TeachRecipe = {
   kind: 'teach',
   id: 'teach',
@@ -1246,6 +1289,7 @@ export const ALL_RECIPES: readonly AffixV2Recipe[] = [
   RECIPE_LEAP,
   RECIPE_WADGE,
   RECIPE_NUT_CRACK,
+  RECIPE_CACHE,
   RECIPE_TEACH,
   RECIPE_IMITATE,
   RECIPE_SPEAR_MAKE,
