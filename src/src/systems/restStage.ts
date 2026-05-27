@@ -88,6 +88,12 @@ function showV2EnchantPicker(skillId: string, onComplete: () => void): void {
   const enchant = rollEnchant(skillResource, hasToolTag);
   const info = enchantDisplayInfo(enchant);
 
+  // 永恒只能封装到 tool 段（消耗型）词条——移除使用次数限制对非 tool 词条无意义，故仅列 tool 目标 ·
+  // hasToolTag 门控保证 eternal 出现时至少有 1 个 tool 词条，targets 非空
+  const targets = enchant.id === 'eternal'
+    ? equipped.filter(e => getAffixV2Definition(e.defId)?.section === 'tool')
+    : equipped;
+
   const RARITY_CLASS = ['common', 'rare', 'epic', 'legendary'];
   const rarityClass = RARITY_CLASS[Number(skill?.rarity) || 0] ?? 'common';
   const workerId = (() => {
@@ -168,8 +174,8 @@ function showV2EnchantPicker(skillId: string, onComplete: () => void): void {
     onComplete();
   };
 
-  // 词条行（= 封装目标）
-  equipped.forEach((entry, idx) => {
+  // 词条行（= 封装目标）· 永恒时仅列 tool 段词条
+  targets.forEach((entry, idx) => {
     const def = getAffixV2Definition(entry.defId);
     const affName = def ? (zh ? def.name_zh : def.name_en) : entry.defId;
     const existing = getEnchant(entry.instanceId);
