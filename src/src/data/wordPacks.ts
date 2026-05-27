@@ -298,16 +298,24 @@ function rollWordEffect(rarity: 0 | 1 | 2 | 3, word?: string): WordEffect {
     return { type: 'base_score', value: 1 };
   }
   // 稀有/史诗：roll 一种词效（否则回退 base_score）：
-  //   crit      — 作用于词内所有字母 → 绑定这些键的技能 +暴击率（0.01=1%，多词叠加）
-  //   init_time — 永久 +(词长×0.1)s 初始时间（收录瞬间累加到 player.timeBonus）
+  //   crit        — 作用于词内所有字母 → 绑定这些键的技能 +暴击率（0.01=1%，多词叠加）
+  //   init_time   — 收录瞬间永久 +(词长×0.1)s 初始时间（累加 player.timeBonus）
+  //   init_gold   — 收录瞬间按词长入账 (词长×2) 金币（一次性）
+  //   grant_skill — 收录瞬间获得 1 个随机技能（派入收件槽）· 史诗专属（较强）
   if (rarity < 3) {
     const r = random();
-    if (r < 0.35) {
+    const len = word ? word.length : 0;
+    if (r < 0.3) {
       return { type: 'crit', value: rarity === 2 ? 0.02 : 0.01 };
     }
-    const initVal = word ? word.length / 10 : 0;
-    if (r < 0.65 && initVal > 0) {
-      return { type: 'init_time', value: initVal };
+    if (r < 0.5 && len > 0) {
+      return { type: 'init_time', value: len / 10 };
+    }
+    if (r < 0.7 && len > 0) {
+      return { type: 'init_gold', value: len * 2 };
+    }
+    if (r < 0.85 && rarity === 2) {
+      return { type: 'grant_skill', value: 1 };
     }
     return { type: 'base_score', value: rarity === 2 ? 2 : 1 };
   }

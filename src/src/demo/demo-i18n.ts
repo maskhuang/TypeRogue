@@ -1510,6 +1510,8 @@ const ZH: Record<string, string> = {
   'wordeffect.gold': '采蕉+{value}',
   'wordeffect.crit': '暴击率+{value}%',
   'wordeffect.init_time': '初始时间+{value}s',
+  'wordeffect.init_gold': '入账+{value}',
+  'wordeffect.grant_skill': '获得随机技能',
   'wordeffect.desc': '含有字母击键时额外产出',
 
   // --- 排行榜 ---
@@ -3015,6 +3017,8 @@ const EN: Record<string, string> = {
   'wordeffect.gold': 'Gold+{value}',
   'wordeffect.crit': 'Crit +{value}%',
   'wordeffect.init_time': 'Init time +{value}s',
+  'wordeffect.init_gold': 'Cash +{value}',
+  'wordeffect.grant_skill': 'Random skill',
   'wordeffect.desc': 'Keystroke bonus for contained letters',
 
   // --- Leaderboard ---

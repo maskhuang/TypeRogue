@@ -519,16 +519,18 @@ describe('generateWordPacks — 词语效果', () => {
     expect(found).toBe(true);
   });
 
-  it('稀有/史诗 → base_score / crit / init_time，值正确', () => {
-    let sawRare = false, sawEpic = false, sawCrit = false, sawInitTime = false;
+  it('稀有/史诗 → base_score / crit / init_time / init_gold / grant_skill，值正确', () => {
+    let sawRare = false, sawEpic = false, sawCrit = false, sawInitTime = false, sawInitGold = false, sawGrantSkill = false;
     const checkEffect = (p: { rarity: number; words: string[]; wordEffect?: { type: string; value: number } }, baseVal: number) => {
       const e = p.wordEffect;
       if (e?.type === 'base_score') expect(e.value).toBe(baseVal);
       else if (e?.type === 'crit') { expect(e.value).toBe(baseVal === 2 ? 0.02 : 0.01); sawCrit = true; }
       else if (e?.type === 'init_time') { expect(e.value).toBeCloseTo(p.words[0].length / 10, 5); sawInitTime = true; }
+      else if (e?.type === 'init_gold') { expect(e.value).toBe(p.words[0].length * 2); sawInitGold = true; }
+      else if (e?.type === 'grant_skill') { expect(e.value).toBe(1); expect(p.rarity).toBe(2); sawGrantSkill = true; } // 史诗专属
       else throw new Error(`unexpected rarity-${p.rarity} effect: ${e?.type}`);
     };
-    for (let i = 0; i < 300; i++) {
+    for (let i = 0; i < 500; i++) {
       const packs = generateWordPacks([], undefined, [], 5);
       for (const p of packs) {
         if (p.rarity === 1) { sawRare = true; checkEffect(p, 1); }
@@ -537,8 +539,10 @@ describe('generateWordPacks — 词语效果', () => {
     }
     expect(sawRare).toBe(true);
     expect(sawEpic).toBe(true);
-    expect(sawCrit).toBe(true);      // ~35% · 300 轮内必现
-    expect(sawInitTime).toBe(true);  // ~30% · 300 轮内必现
+    expect(sawCrit).toBe(true);
+    expect(sawInitTime).toBe(true);
+    expect(sawInitGold).toBe(true);
+    expect(sawGrantSkill).toBe(true);  // 史诗 ~15% · 500 轮内必现
   });
 
   it('传说 (rarity 3) → base_multiplier=2 含 targetLetter', () => {

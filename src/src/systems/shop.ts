@@ -5,7 +5,7 @@
 
 import { state, isRelicSlotsFull, addRelicWithCapacity } from '../core/state';
 import { resolveRelicEffects, resolveRelicEffectsWithBehaviors, queryRelicFlag } from './relics/RelicPipeline';
-import { KEYS, KEYBOARD_ROWS, RESOURCE_LABELS, RESOURCE_ICONS, RESOURCE_COLORS, PUNCTUATION_KEYS, PUNCTUATION_KEYBOARD_EXTENSION, A2_PRICE_MULT, A5_REFRESH_COST_MULT, computePracticeGold } from '../core/constants';
+import { KEYS, KEYBOARD_ROWS, RESOURCE_LABELS, RESOURCE_ICONS, RESOURCE_COLORS, PUNCTUATION_KEYS, PUNCTUATION_KEYBOARD_EXTENSION, A2_PRICE_MULT, A5_REFRESH_COST_MULT, computePracticeGold, INBOX_MAX } from '../core/constants';
 import { getKeysWithRelation, hasRelation, PositionRelation } from '../data/keyboardTopology';
 
 
@@ -20,6 +20,8 @@ import type { ShopItem, ResourceType, PackConditionType } from '../core/types';
 import { GENERIC_RESOURCES, getActiveResources } from './classes/ClassResourceFilter';
 import { getNextBattleNode, isSecondHalf, getPositionInCycle } from './stage/stageFlow';
 import { calculateLetterFrequency, calculateLetterScores, FREQ_UNLOCK_THRESHOLD } from './letters/LetterFrequencySystem';
+import { getCandidatePool, widenSkillFilter, spawnSkillFromSeed } from './affixV2SkillFilter';
+import type { SkillFilter } from '../data/affixV2Trigger';
 import { RELICS, MAX_RELIC_SLOTS } from '../data/relics';
 import type { RelicWeights } from './relicPicker';
 import { generateRelicCandidates, showRelicReplaceUI } from './relicPicker';
@@ -2204,6 +2206,8 @@ const WORD_EFFECT_ICONS: Record<string, string> = {
   gold: '🪙',
   crit: '💥',
   init_time: '⏱',
+  init_gold: '💰',
+  grant_skill: '🎁',
 };
 
 export function formatWordEffectLabel(effect: WordEffect): string {
@@ -2282,6 +2286,24 @@ function showWordPicker(words: string[], onPick: (word: string) => void, wordEff
   });
 
   modal.classList.remove('word-picker-hidden');
+}
+
+/** 一次性元效果：获得 1 个「满足条件」的随机技能，派入收件槽（玩家在随后的商店工作台绑定）。
+ *  复用 teach 的 gain_skill 管线：recipe_pool 候选 → SkillFilter（稀有度限当前 Act 区间）→ widen 兜底 → spawnSkillFromSeed。
+ *  state 写入与 affixV2BattleIntegration 的 gain_skill 同款（含 affixSkillStates，否则 rarity0 技能零产出）。收件槽满则放弃。 */
+function grantRandomSkill(): void {
+  if (state.player.inbox.length >= INBOX_MAX) return;
+  const pool = getCandidatePool('recipe_pool');
+  if (pool.length === 0) return;
+  const filter: SkillFilter = { rarity: { min: 0, max: getActMaxRarity() } };
+  const widen = widenSkillFilter(filter, pool);
+  if (widen.matches.length === 0) return;
+  const seed = widen.matches[Math.floor(random() * widen.matches.length)];
+  const skill = spawnSkillFromSeed(seed, 1, widen.filter);
+  state.affixSkills.set(skill.id, skill);
+  state.player.skills.set(skill.id, { level: skill.level });
+  state.affixSkillStates.set(skill.id, createSkillRuntimeState(skill.id));
+  state.player.inbox.push(skill.id);
 }
 
 // === 每关结束 · 词语补录（文牍式三选一 · 免费 · 可跳过） ===
@@ -2458,8 +2480,10 @@ export function showWordPackReward(onComplete: () => void): void {
     state.player.wordDeck.push(chosen.word);
     if (chosen.effect) {
       state.wordEffects.set(chosen.word, chosen.effect);
-      // init_time 是一次性元效果：收录瞬间永久加到初始时间（startTimer 读 timeMax + timeBonus）
-      if (chosen.effect.type === 'init_time') state.player.timeBonus += chosen.effect.value;
+      // 一次性元效果（收录瞬间结算）：
+      if (chosen.effect.type === 'init_time') state.player.timeBonus += chosen.effect.value;  // 永久 +初始时间（startTimer 读 timeMax + timeBonus）
+      if (chosen.effect.type === 'init_gold') state.gold = (state.gold ?? 0) + chosen.effect.value;  // 按词长入账金币
+      if (chosen.effect.type === 'grant_skill') grantRandomSkill();  // 派入收件槽（随后商店绑定）
     }
 
     stampEl.classList.add('show');
