@@ -38,11 +38,20 @@ describe('restStage - executeEffect', () => {
   })
 
   describe('rest_upgrade_skill', () => {
-    it('升级随机技能 +1 级', () => {
-      const totalLevels = [...state.player.skills.values()].reduce((sum, d) => sum + d.level, 0)
+    it('随机升级一个 < Lv.3 的技能至 Lv.3（TARGET_LEVEL）', () => {
+      // upgradeRandomSkill 把随机挑中的可升级技能直接拉到 Lv.3，升幅随其原等级变化
+      // （prod_burst Lv1→3 = +2 / prod_boost Lv2→3 = +1）。故断言 RNG-不变量：
+      // 恰有一个技能被改动，且其现等级为 3、原等级 < 3 —— 无论挑中哪个都成立（无需固定随机种子）。
+      const before = new Map<string, number>()
+      for (const [id, d] of state.player.skills) before.set(id, d.level)
+
       const result = executeEffect('rest_upgrade_skill')
-      const newTotalLevels = [...state.player.skills.values()].reduce((sum, d) => sum + d.level, 0)
-      expect(newTotalLevels).toBe(totalLevels + 1)
+
+      const changed = [...state.player.skills.entries()].filter(([id, d]) => d.level !== before.get(id))
+      expect(changed).toHaveLength(1)
+      const [changedId, changedData] = changed[0]
+      expect(changedData.level).toBe(3)
+      expect(before.get(changedId)!).toBeLessThan(3)
       expect(result).toContain('Lv.')
     })
 
