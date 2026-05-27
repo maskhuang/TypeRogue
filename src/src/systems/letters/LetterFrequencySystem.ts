@@ -82,6 +82,18 @@ export function getWordEffectCritRate(wordEffects: Map<string, WordEffect>, key:
   return total
 }
 
+/**
+ * 词语效果·目标分数减免：累加所有 type==='target_reduce' 的 value（小数，0.02 = 2%）。
+ * 在每关目标分数结算时按此比例下调（调用方负责封顶）。
+ */
+export function getWordEffectTargetReduction(wordEffects: Map<string, WordEffect>): number {
+  let total = 0
+  for (const [, effect] of wordEffects) {
+    if (effect.type === 'target_reduce') total += effect.value
+  }
+  return total
+}
+
 /** WordEffectType → ModifierEffectType 映射 */
 const EFFECT_TYPE_MAP: Record<string, ModifierEffectType> = {
   base_score: 'score',

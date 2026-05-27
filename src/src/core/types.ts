@@ -295,7 +295,7 @@ export interface SkillInstance {
 }
 
 // === 词语效果系统 ===
-export type WordEffectType = 'base_score' | 'base_multiplier' | 'multiplier' | 'time' | 'gold' | 'crit' | 'init_time' | 'init_gold' | 'grant_skill';
+export type WordEffectType = 'base_score' | 'base_multiplier' | 'multiplier' | 'time' | 'gold' | 'crit' | 'init_time' | 'init_gold' | 'grant_skill' | 'init_mult' | 'target_reduce';
 export interface WordEffect { type: WordEffectType; value: number; targetLetter?: string; }
 
 // === 词库系统 ===

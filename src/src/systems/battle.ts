@@ -24,7 +24,7 @@ import { openShop, showWordPackReward } from './shop';
 import { shouldShowRitual, openRitualEnchantment } from './ritualEnchantment';
 import { hasUnownedRelics, showRelicPicker, RELIC_WEIGHT_PRESETS } from './relicPicker';
 import { openRestStage } from './restStage';
-import { getWordEffectModifiers } from './letters/LetterFrequencySystem';
+import { getWordEffectModifiers, getWordEffectTargetReduction } from './letters/LetterFrequencySystem';
 import { ModifierRegistry } from './modifiers/ModifierRegistry';
 import { EffectPipeline } from './modifiers/EffectPipeline';
 import { keyTooltip } from '../ui/keyboard/KeyTooltip';
@@ -2445,6 +2445,12 @@ export async function startLevel(): Promise<void> {
     if (buff.type === 'multiplier') state.player.baseMultiplier += buff.value;
     if (buff.type === 'time') state.timeMax += buff.value;
     if (buff.type === 'targetScore') state.targetScore = Math.floor(state.targetScore * buff.value);
+  }
+
+  // 词语效果·目标分数减免（target_reduce 词效按词库累加，封顶 60%）
+  const wpTargetReduce = getWordEffectTargetReduction(state.wordEffects);
+  if (wpTargetReduce > 0 && state.targetScore > 0) {
+    state.targetScore = Math.max(1, Math.round(state.targetScore * (1 - Math.min(0.6, wpTargetReduce))));
   }
 
   // Story 36.10: 续航电池 — 每关基础时间 +10s（tempBuff 之后、startTimer 之前）

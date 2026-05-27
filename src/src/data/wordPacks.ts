@@ -292,15 +292,17 @@ const WORD_EFFECT_POOL: { type: WordEffectType; epicVal: number; legendVal: numb
   { type: 'gold',       epicVal: 1, legendVal: 2 },
 ];
 
-/** 6 类词效在各稀有度均匀分布（每类 ~1/6）；数值随稀有度递增（rar+1 = 1..4）。
+/** 8 类词效在各稀有度均匀分布（每类 ~1/8）；数值随稀有度递增（rar+1 = 1..4）。
  *  - base_score      底分 +(rar+1)
  *  - base_multiplier 单字母底分 ×(1.5 + 0.5·rar)
  *  - crit            +暴击率 (rar+1)%（绑定词内字母的技能）
- *  - init_time       +(词长×(rar+1)×0.1)s 初始时间（一次性）
+ *  - init_time       +(词长×(rar+1)×0.1)s 初始时间（永久）
  *  - init_gold       +(词长×(rar+1)×2) 金币（一次性）
  *  - grant_skill     获得 1 个随机技能，稀有度 = 本词稀有度（见 shop.grantRandomSkill）
+ *  - init_mult       初始倍率 +(rar+1)×0.1（永久 · 累加 player.baseMultiplier）
+ *  - target_reduce   目标分数 -(rar+1)×2%（永久 · 各关结算时按词库累加，封顶 60%）
  *  需词长/字母的效果在词缺失时回退 base_score。*/
-const WORD_EFFECT_KINDS: WordEffectType[] = ['base_score', 'base_multiplier', 'crit', 'init_time', 'init_gold', 'grant_skill'];
+const WORD_EFFECT_KINDS: WordEffectType[] = ['base_score', 'base_multiplier', 'crit', 'init_time', 'init_gold', 'grant_skill', 'init_mult', 'target_reduce'];
 
 function rollWordEffect(rarity: 0 | 1 | 2 | 3, word?: string): WordEffect {
   const rar = rarity;
@@ -322,6 +324,10 @@ function rollWordEffect(rarity: 0 | 1 | 2 | 3, word?: string): WordEffect {
       return { type: 'init_gold', value: len * (rar + 1) * 2 };
     case 'grant_skill':
       return { type: 'grant_skill', value: 1 };
+    case 'init_mult':
+      return { type: 'init_mult', value: (rar + 1) * 0.1 };
+    case 'target_reduce':
+      return { type: 'target_reduce', value: (rar + 1) * 0.02 };
     case 'base_multiplier': {
       const targetLetter = uniqueLetters[Math.floor(random() * uniqueLetters.length)];
       return { type: 'base_multiplier', value: 1.5 + rar * 0.5, targetLetter };

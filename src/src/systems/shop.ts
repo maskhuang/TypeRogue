@@ -2208,13 +2208,16 @@ const WORD_EFFECT_ICONS: Record<string, string> = {
   init_time: '⏱',
   init_gold: '💰',
   grant_skill: '🎁',
+  init_mult: '✴',
+  target_reduce: '🎯',
 };
 
 export function formatWordEffectLabel(effect: WordEffect): string {
   const icon = WORD_EFFECT_ICONS[effect.type] || '';
   const letterHint = effect.targetLetter ? ` [${effect.targetLetter.toUpperCase()}]` : '';
-  // crit 的 value 是暴击率小数（0.01）→ 显示为百分比整数；其余直接显示
-  const value = effect.type === 'crit' ? Math.round(effect.value * 100) : effect.value;
+  // crit / target_reduce 的 value 是小数比例（0.01）→ 显示为百分比整数；其余直接显示
+  const isPct = effect.type === 'crit' || effect.type === 'target_reduce';
+  const value = isPct ? Math.round(effect.value * 100) : effect.value;
   return `${icon} ${t('wordeffect.' + effect.type, { value })}${letterHint}`;
 }
 
@@ -2485,6 +2488,8 @@ export function showWordPackReward(onComplete: () => void): void {
       if (chosen.effect.type === 'init_time') state.player.timeBonus += chosen.effect.value;  // 永久 +初始时间（startTimer 读 timeMax + timeBonus）
       if (chosen.effect.type === 'init_gold') state.gold = (state.gold ?? 0) + chosen.effect.value;  // 按词长入账金币
       if (chosen.effect.type === 'grant_skill') grantRandomSkill(chosen.rarity);  // 技能稀有度 = 词稀有度
+      if (chosen.effect.type === 'init_mult') state.player.baseMultiplier += chosen.effect.value;  // 永久 +初始倍率（每关起始 multiplier = baseMultiplier）
+      // target_reduce 无需收录时结算：每关目标分数按词库 getWordEffectTargetReduction 实时减免
     }
 
     stampEl.classList.add('show');

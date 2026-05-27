@@ -504,10 +504,10 @@ describe('generateWordPacks — 词语效果', () => {
     }
   });
 
-  it('6 类词效在各稀有度均匀分布，数值随稀有度递增', () => {
+  it('8 类词效在各稀有度均匀分布，数值随稀有度递增', () => {
     // 每个 "rarity:type" 观测点；并就地校验数值公式
     const seen = new Set<string>();
-    for (let i = 0; i < 600; i++) {
+    for (let i = 0; i < 800; i++) {
       const packs = generateWordPacks([], undefined, [], 5);
       for (const p of packs) {
         const e = p.wordEffect;
@@ -522,16 +522,18 @@ describe('generateWordPacks — 词语效果', () => {
           case 'init_time': expect(e.value).toBeCloseTo((len * (rar + 1)) / 10, 5); break;
           case 'init_gold': expect(e.value).toBe(len * (rar + 1) * 2); break;
           case 'grant_skill': expect(e.value).toBe(1); break;
+          case 'init_mult': expect(e.value).toBeCloseTo((rar + 1) * 0.1, 5); break;
+          case 'target_reduce': expect(e.value).toBeCloseTo((rar + 1) * 0.02, 5); break;
           default: throw new Error(`unexpected effect: ${e.type}`);
         }
       }
     }
-    // 均匀性弱验证：普通(频繁)应见到多种「高级」词效，证明不再局限 base_score
+    // 均匀性弱验证：普通(频繁)应见到多种「高级」词效（含两个新加的），证明不局限 base_score
     expect(seen.has('0:crit')).toBe(true);
     expect(seen.has('0:init_gold')).toBe(true);
     expect(seen.has('0:grant_skill')).toBe(true);
-    // 史诗也应见到多种
-    expect(seen.has('2:crit')).toBe(true);
+    expect(seen.has('0:init_mult')).toBe(true);
+    expect(seen.has('0:target_reduce')).toBe(true);
     expect(seen.has('2:base_multiplier')).toBe(true);
   });
 });
