@@ -137,6 +137,15 @@ export interface SkillGranted {
   readonly widened: boolean
 }
 
+export interface TempSkillGranted {
+  readonly sourceInstanceId: string
+  readonly skill: AffixSkillInstance
+  /** 临时技能要落到的作用域（host 键位相关）· 集成层解析为 scope 内空键位后绑定 */
+  readonly placement: TargetSelector
+  /** filter 是否走了 widen 兜底 */
+  readonly widened: boolean
+}
+
 export interface SkillUpgrade {
   readonly sourceInstanceId: string
   readonly skillId: string
@@ -174,6 +183,8 @@ export interface ResolveResult {
   statusesApplied: StatusApplied[]
   /** 申请的新技能（已 spawn 但未入 inbox · 由 caller 写入 state.affixSkills/player.skills/player.inbox）*/
   skillsGranted: SkillGranted[]
+  /** 申请的临时技能（gain_temp_skill）· 由 caller 绑定到 placement 内空键位 + 标记本场临时 + 关末移除 */
+  tempSkillsGranted: TempSkillGranted[]
   /** 申请的 skill 升级（由 caller 增 skill.level）*/
   skillUpgrades: SkillUpgrade[]
   /** 申请的词条嫁接（由 caller equip 到 host + 更新 v2Ids）*/
@@ -192,6 +203,7 @@ function freshResult(): ResolveResult {
     aurasApplied: [],
     statusesApplied: [],
     skillsGranted: [],
+    tempSkillsGranted: [],
     skillUpgrades: [],
     affixGrafts: [],
     skillsRemoved: [],
@@ -224,6 +236,65 @@ export function resolveEffect(spec: EffectSpec, ctx: ResolveContext): ResolveRes
   const result = freshResult()
   resolveInto(spec, ctx, result)
   return result
+}
+
+/** gain_skill / gain_temp_skill 共用：按 filter 在候选池 spawn count 个 skill（含 levelMode / widen / fallback）。
+ *  返回已 spawn 的 skill 列表；空池 / 命中 0 → 返空（caller 不产出）。 */
+function spawnFilteredSkills(
+  spec: {
+    filter: SkillFilter
+    source?: 'recipe_pool' | 'shop_pool' | 'altar_pool' | 'player_skill_pool'
+    count?: number
+    levelMode?: 'inherit_host' | { type: 'fixed'; level: number } | { type: 'host_minus'; delta: number }
+    fallback?: 'widen' | 'refund' | 'skip'
+  },
+  ctx: ResolveContext,
+): { skill: AffixSkillInstance; widened: boolean }[] {
+  // 解析 levelMode → 目标 Lv
+  const mode = spec.levelMode ?? 'inherit_host'
+  let targetLv: number
+  if (mode === 'inherit_host') {
+    targetLv = ctx.hostSkillLevel
+  } else if (mode.type === 'fixed') {
+    targetLv = mode.level
+  } else {
+    targetLv = Math.max(1, ctx.hostSkillLevel - mode.delta)
+  }
+
+  // 解析候选池 + filter widen 兜底
+  const source = spec.source ?? 'recipe_pool'
+  // player_skill_pool 需排除宿主自身（防自我无限克隆）· 其他 source 不需 hostId
+  let pool = getCandidatePool(source, source === 'player_skill_pool' ? ctx.skillId : undefined)
+  // neighborPosRel · 仅 player_skill_pool 有键位信息可计算邻位 · 收紧候选到宿主键位邻位
+  if (spec.filter.neighborPosRel !== undefined && source === 'player_skill_pool') {
+    pool = filterByNeighborPosRel(pool, ctx.key, spec.filter.neighborPosRel)
+  }
+  if (pool.length === 0) return []  // 空池（shop/altar stub · 无邻位兄弟 · player_skill_pool 空等）直接放弃
+
+  // hasTagFromHost · 用本词条 def 的 section 覆盖 filter.hasTag（缺 selfSection 时退化为去掉该字段）
+  let effectiveFilter = spec.filter
+  if (spec.filter.hasTagFromHost) {
+    const { hasTagFromHost: _drop, ...rest } = spec.filter
+    effectiveFilter = ctx.selfSection
+      ? { ...rest, hasTag: ctx.selfSection }
+      : rest
+  }
+
+  const widen = widenSkillFilter(effectiveFilter, pool)
+  if (widen.matches.length === 0) return []   // fallback skip/refund 等价 → 不产出
+
+  // 从命中集合无放回抽 count 个（同 seed 可重抽不同 spawn instance · 这里实现 seed 不重）
+  // spawn 时传 widen 后的 effectiveFilter · spawnSkillFromSeed 用 filter.resource/rarity 约束生成参数
+  const count = Math.max(1, spec.count ?? 1)
+  const remaining = [...widen.matches]
+  const out: { skill: AffixSkillInstance; widened: boolean }[] = []
+  for (let i = 0; i < count && remaining.length > 0; i++) {
+    const idx = Math.floor(random() * remaining.length)
+    const [seed] = remaining.splice(idx, 1)
+    const skill = spawnSkillFromSeed(seed, targetLv, widen.filter)
+    out.push({ skill, widened: widen.droppedFields.length > 0 })
+  }
+  return out
 }
 
 function resolveInto(spec: EffectSpec, ctx: ResolveContext, result: ResolveResult): void {
@@ -402,56 +473,24 @@ function resolveInto(spec: EffectSpec, ctx: ResolveContext, result: ResolveResul
     }
 
     case 'gain_skill': {
-      // 解析 levelMode → 目标 Lv
-      const mode = spec.levelMode ?? 'inherit_host'
-      let targetLv: number
-      if (mode === 'inherit_host') {
-        targetLv = ctx.hostSkillLevel
-      } else if (mode.type === 'fixed') {
-        targetLv = mode.level
-      } else {
-        targetLv = Math.max(1, ctx.hostSkillLevel - mode.delta)
-      }
-
-      // 解析候选池 + filter widen 兜底
-      const source = spec.source ?? 'recipe_pool'
-      // player_skill_pool 需排除宿主自身（防自我无限克隆）· 其他 source 不需 hostId
-      let pool = getCandidatePool(source, source === 'player_skill_pool' ? ctx.skillId : undefined)
-      // neighborPosRel · 仅 player_skill_pool 有键位信息可计算邻位 · 收紧候选到宿主键位邻位
-      if (spec.filter.neighborPosRel !== undefined && source === 'player_skill_pool') {
-        pool = filterByNeighborPosRel(pool, ctx.key, spec.filter.neighborPosRel)
-      }
-      if (pool.length === 0) return  // 空池（shop/altar stub · 无邻位兄弟 · player_skill_pool 空等）直接放弃
-
-      // hasTagFromHost · 用本词条 def 的 section 覆盖 filter.hasTag（缺 selfSection 时退化为去掉该字段）
-      let effectiveFilter = spec.filter
-      if (spec.filter.hasTagFromHost) {
-        const { hasTagFromHost: _drop, ...rest } = spec.filter
-        effectiveFilter = ctx.selfSection
-          ? { ...rest, hasTag: ctx.selfSection }
-          : rest
-      }
-
-      const widen = widenSkillFilter(effectiveFilter, pool)
-      if (widen.matches.length === 0) {
-        // 全 widen 仍空（不应到这里因为 widenSkillFilter 兜底返全池）→ 按 fallback 处理
-        const fb = spec.fallback ?? 'widen'
-        if (fb === 'skip' || fb === 'refund') return   // refund 当前 stub → 等价 skip
-        return
-      }
-
-      // 从命中集合无放回抽 count 个（同 seed 可重抽不同 spawn instance · 这里实现 seed 不重）
-      // spawn 时传 widen 后的 effectiveFilter · spawnSkillFromSeed 用 filter.resource/rarity 约束生成参数
-      const count = Math.max(1, spec.count ?? 1)
-      const remaining = [...widen.matches]
-      for (let i = 0; i < count && remaining.length > 0; i++) {
-        const idx = Math.floor(random() * remaining.length)
-        const [seed] = remaining.splice(idx, 1)
-        const skill = spawnSkillFromSeed(seed, targetLv, widen.filter)
+      for (const sp of spawnFilteredSkills(spec, ctx)) {
         result.skillsGranted.push({
           sourceInstanceId: ctx.instanceId,
-          skill,
-          widened: widen.droppedFields.length > 0,
+          skill: sp.skill,
+          widened: sp.widened,
+        })
+      }
+      return
+    }
+
+    case 'gain_temp_skill': {
+      // 与 gain_skill 同款 spawn，但写到 tempSkillsGranted（集成层绑定到 placement 空键位 + 关末移除）
+      for (const sp of spawnFilteredSkills(spec, ctx)) {
+        result.tempSkillsGranted.push({
+          sourceInstanceId: ctx.instanceId,
+          skill: sp.skill,
+          placement: spec.placement,
+          widened: sp.widened,
         })
       }
       return

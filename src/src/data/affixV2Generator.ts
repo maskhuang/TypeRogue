@@ -436,7 +436,20 @@ export interface AllyRecipe {
   readonly name_en: string
 }
 
-export type AffixV2Recipe = DripRecipe | GrowthRecipe | EscalateRecipe | ChantRecipe | ChainRecipe | ConvertRecipe | MetabolizeRecipe | HasteRecipe | TeachRecipe | ImitateRecipe | SpearMakeRecipe | GazeFollowRecipe | CrackRecipe | DoubleStockRecipe | CoprophagyRecipe | DevourRecipe | MarkRecipe | AllyRecipe
+/** nest_build 系：gain_temp_skill · 关内随机 trigger（排除高频）在 placement 作用域内空键位生成「临时技能」，
+ *  战斗结束时移除（gain_skill 的对照体：gain_skill→on_battle_end 永久入 inbox；这里关内临时落位）·
+ *  source 固定 recipe_pool（全新生成满足 filter 的技能）· filter 生成时锁定（hasTag 段 + 可选 resource）·
+ *  placement 从 neighbors/all_skills 抽（其它作用域无明确空位语义）·
+ *  设计意图：与 supplant（取代）协同——生成可弃临时技能作 supplant 的口粮。*/
+export interface NestBuildRecipe {
+  readonly kind: 'nest_build'
+  readonly id: string
+  readonly section: SectionTag
+  readonly name_zh: string
+  readonly name_en: string
+}
+
+export type AffixV2Recipe = DripRecipe | GrowthRecipe | EscalateRecipe | ChantRecipe | ChainRecipe | ConvertRecipe | MetabolizeRecipe | HasteRecipe | TeachRecipe | ImitateRecipe | SpearMakeRecipe | GazeFollowRecipe | CrackRecipe | DoubleStockRecipe | CoprophagyRecipe | DevourRecipe | MarkRecipe | AllyRecipe | NestBuildRecipe
 
 // ============================================
 // Scope 池 · 加权抽样 · 范围越广越稀有
@@ -492,6 +505,12 @@ const FULL_SCOPE_POOL: readonly ScopeEntry[] = [
     weight: 3,
   })),
 ]
+
+/** nest_build 临时技能落位作用域池 · 仅 neighbors（就近落位 · supplant 协同友好）+ all_skills（任意空位 · 稀有）·
+ *  其它作用域（self、matched_tag/resource/rarity、hasted、marked、allied、workbench）无明确「空键位」语义，findEmptyKeysInScope 返空 → 不入池。*/
+const NEST_PLACEMENT_POOL: readonly ScopeEntry[] = FULL_SCOPE_POOL.filter(
+  e => e.selector.type === 'neighbors' || e.selector.type === 'all_skills',
+)
 
 /** inherit_tags 的「tag 来源 scope」池（apply_aura.selector 在此 modifier 下语义反转为来源）·
  *  排除 self（继承自身 = no-op）与 hasted（继承不挂靠战斗极速态，resolveSourceScope 对其返空）·
@@ -937,6 +956,33 @@ export function rollAffixV2Spec(
     const allyScopePool = FULL_SCOPE_POOL.filter(s => s.selector.type !== 'allied')
     const sel = pickGatedScope(allyScopePool, recipe.kind)
     effect = { kind: 'apply_ally', selector: sel }
+  } else if (recipe.kind === 'nest_build') {
+    // nest_build（筑巢）：trigger 随机抽（沿用 triggerEntry.spec）· 排除高频 trigger（freq>100 = 每键/每2键/每3键）——
+    // 生成技能是重操作（建注册 + 绑键），每键 spawn 会刷爆键盘并反复重绑（与 mark/ally/chain 防洪水同纪律）。
+    let curFreq = triggerEntry.freq
+    let retries = 8
+    while (curFreq > 100 && retries-- > 0) {
+      const retry = pickTrigger(recipe.section, recipe.kind)
+      triggerSpec = retry.spec
+      curFreq = retry.freq
+    }
+    // filter：hasTag 锁 1 段（决定临时技能的行为族）+ 40% resource（与 teach 同纪律）· recipe_pool 全新生成 · widen 兜底
+    const recipeSections = [...new Set(ALL_RECIPES.map(r => r.section))]
+    let nestFilter: SkillFilter = { hasTag: pickRandom(recipeSections), notOwned: false }
+    if (random() < 0.4) {
+      nestFilter = { ...nestFilter, resource: pickRandom(MATCHED_RESOURCE_POOL) }
+    }
+    // placement：临时技能落位作用域（neighbors 偏多 → 就近落位，供 supplant 取食；all_skills 稀有 → 任意空位）
+    const placement = pickGatedScope(NEST_PLACEMENT_POOL, recipe.kind)
+    effect = {
+      kind: 'gain_temp_skill',
+      filter: nestFilter,
+      source: 'recipe_pool',
+      count: 1,
+      levelMode: 'inherit_host',
+      fallback: 'widen',
+      placement,
+    }
   } else {
     throw new Error(`unsupported recipe kind: ${(recipe as { kind: string }).kind}`)
   }
@@ -1247,6 +1293,19 @@ export const RECIPE_GAZE_FOLLOW: GazeFollowRecipe = {
   name_en: 'gaze-follow',
 }
 
+/** 筑巢 nest-build（maintenance · §2.1.2）· gain_temp_skill ·
+ *  类人猿每晚就近取材新筑睡巢、从不复用、用毕即弃 → 关内随机 trigger 在 scope 内空键位生成临时技能，战毕移除。
+ *  section=maintenance（非 tool · 无 maxUses）· 列入 META_RECIPE_KINDS：被 spawn 出来的技能其筑巢 effect 置 noop，
+ *  切断「临时技能再筑巢」的递归滚雪球（与 teach/imitate 同纪律）。
+ *  设计意图：与 supplant（取代）协同——生成可弃临时技能作 supplant 的口粮。*/
+export const RECIPE_NEST_BUILD: NestBuildRecipe = {
+  kind: 'nest_build',
+  id: 'nest_build',
+  section: 'maintenance',
+  name_zh: '筑巢',
+  name_en: 'nest-build',
+}
+
 /** 指向性搔抓 directed-scratch（gesture · §2.1.8）· mark 给予 ·
  *  行为学：在自己身上搔一处向理毛伙伴示意"理我这儿" = 指涉性手势的字面形态 →
  *  机制为"把所指物设为全场焦点，其它取对象效果优先汇聚"。gesture 段首个 live recipe。
@@ -1296,6 +1355,7 @@ export const ALL_RECIPES: readonly AffixV2Recipe[] = [
   RECIPE_GAZE_FOLLOW,
   RECIPE_DIRECTED_SCRATCH,
   RECIPE_COALITION,
+  RECIPE_NEST_BUILD,
 ]
 
 /** drink(convert) 以这些资源为 source 时降权 · time/gold 转化收益偏强，降低出率 */
@@ -1303,12 +1363,13 @@ const DRINK_LOW_WEIGHT_SOURCES: ReadonlySet<string> = new Set(['time', 'gold'])
 /** drink 在降权资源上的权重（其余 recipe 等权 1）*/
 const DRINK_LOW_WEIGHT = 0.25
 
-/** meta-progression recipe 种类（操纵家族 · teach/imitate/spear_make/gaze_follow）·
- *  这些词条会"创建/改造其他技能"。从 **gain_skill spawn** 中排除（候选池 + spawn 出来技能的随机槽位）：
- *  防递归 spawn / 失控滚雪球——被生成的技能不该自己再带 meta。
+/** meta-progression recipe 种类（操纵家族 · teach/imitate/spear_make/gaze_follow/nest_build）·
+ *  这些词条会"创建/改造其他技能"。从 **gain_skill / gain_temp_skill spawn** 中排除（候选池 + spawn 出来技能的随机槽位）：
+ *  防递归 spawn / 失控滚雪球——被生成的技能不该自己再带 meta（如临时技能再筑巢）。
  *  但 shop / 普通 generateSkill **不排除**，meta 词条照常刷新出现（玩家主动获取）。
- *  注：排除按 kind（meta 操纵家族），tool/cog 段本身不排除——普通 tool 词条不受影响。 */
-export const META_RECIPE_KINDS: ReadonlySet<string> = new Set(['teach', 'imitate', 'spear_make', 'gaze_follow'])
+ *  注：排除按 kind（meta 操纵家族），tool/cog 段本身不排除——普通 tool 词条不受影响。
+ *  nest_build 虽在 maintenance 段，但因「生成技能」性质同列此集（递归防护按 kind 不按段）。 */
+export const META_RECIPE_KINDS: ReadonlySet<string> = new Set(['teach', 'imitate', 'spear_make', 'gaze_follow', 'nest_build'])
 
 /** 为指定 skill 资源加权抽一个 recipe ·
  *  drink recipe 在 source=time/gold 时降权至 DRINK_LOW_WEIGHT，其余 recipe 恒权 1 ·

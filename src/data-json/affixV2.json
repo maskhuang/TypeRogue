@@ -14,7 +14,7 @@
     { "id": "masticate", "name_zh": "细嚼", "name_en": "masticate", "section": "maintenance", "phase": "P2", "notes": "慢速大额" },
     { "id": "swallow", "name_zh": "吞咽", "name_en": "swallow", "section": "maintenance", "phase": "P2", "notes": "单次完成" },
     { "id": "regurgitate", "name_zh": "反刍", "name_en": "regurgitate", "section": "maintenance", "phase": "P1", "notes": "资源转化(消耗)·消耗某资源产出另一种(均排除原资源)" },
-    { "id": "nest_build", "name_zh": "筑巢", "name_en": "nest-build", "section": "maintenance", "phase": "P2", "notes": "防御/aura" },
+    { "id": "nest_build", "name_zh": "筑巢", "name_en": "nest-build", "section": "maintenance", "phase": "P1", "notes": "RECIPE_NEST_BUILD 实装（nest_build·gain_temp_skill）· 关内随机 trigger 在 scope 空键位生成临时技能、战毕移除 · 与 supplant 协同(可弃口粮) · 列入 META_RECIPE_KINDS 防递归 · 静态 JSON id 为命名占位" },
     { "id": "wadge", "name_zh": "残渣团", "name_en": "wadge", "section": "maintenance", "phase": "P1", "notes": "累积型 · RECIPE_WADGE 实装（growth · 关内底分累加，每战重置；原 nut-crack 迁入）" },
 
     { "id": "brachiate", "name_zh": "臂荡", "name_en": "brachiate", "section": "locomotion", "phase": "P1", "notes": "邻位跨越" },

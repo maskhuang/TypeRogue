@@ -452,6 +452,16 @@ export function formatEffectDescription(effect: EffectSpec, skillResource?: stri
         ? `${sourceStr} ${count} 个${filterStr}技能（${lvStr}）`
         : `${sourceStr} ${count} ${filterStr} skill${count > 1 ? 's' : ''} (${lvStr})`
     }
+    case 'gain_temp_skill': {
+      // 临时技能：在 placement 内空键位生成一个满足 filter 的技能（本场可用），战斗结束移除
+      const count = effect.count ?? 1
+      const lvStr = formatLevelMode(effect.levelMode)
+      const filterStr = formatSkillFilter(effect.filter, defSection)
+      const where = formatSelector(effect.placement, host)
+      return zh
+        ? `在${where}空位生成 ${count} 个${filterStr}临时技能（${lvStr}）· 战斗结束移除`
+        : `spawn ${count} temp ${filterStr} skill${count > 1 ? 's' : ''} on a free key in ${where} (${lvStr}) · removed at battle end`
+    }
     case 'upgrade_skill':
       return zh
         ? `${formatSelector(effect.selector, host)}升 ${effect.amount} 级`

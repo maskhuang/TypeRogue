@@ -437,6 +437,28 @@ export type EffectSpec =
     }
 
   /**
+   * 生成一个满足 filter 的「临时技能」并即时绑定到 placement 作用域内的空键位（本场可用），
+   * **战斗结束时移除**（解绑 + 从 affixSkills/player.skills 删除）。与 gain_skill 的对照体：
+   * gain_skill 走 on_battle_end → 永久入 inbox；gain_temp_skill 关内随机 trigger → 临时占位。
+   *
+   * - filter / source / levelMode / fallback / count 同 gain_skill（spawn 逻辑复用）；
+   * - placement：临时技能要落到的作用域（host 键位相关）· 解析为 scope 内的**空键位**，命中 0 则放弃该次；
+   * - 设计意图：与 supplant（取代）协同——生成可弃临时技能作 supplant 的口粮。
+   */
+  | {
+      kind: 'gain_temp_skill'
+      filter: SkillFilter
+      source?: 'recipe_pool' | 'shop_pool' | 'altar_pool' | 'player_skill_pool'
+      count?: number
+      levelMode?:
+        | 'inherit_host'
+        | { type: 'fixed'; level: number }
+        | { type: 'host_minus'; delta: number }
+      fallback?: 'widen' | 'refund' | 'skip'
+      placement: TargetSelector
+    }
+
+  /**
    * 升级 selector 范围内 skill 的等级（meta-progression · 制造/锻造型）
    * 每次命中 → 目标 skill.level += amount（capped 至 baseValues 长度）· run 内永久
    */

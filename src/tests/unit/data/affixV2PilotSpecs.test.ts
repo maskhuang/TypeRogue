@@ -807,14 +807,15 @@ describe('Recipe · teach (recipe_pool · 生成时锁 hasTag)', () => {
         ...def.effect,
         filter: { hasTag: 'maintenance' as const, resource: 'score' as const, notOwned: false },
       }
-      // maintenance recipe 池：feed/drink 带 resourcePool（受 resource 约束）· wadge 是 growth（资源无关，
-      // 缺 resourcePool → matchSkillFilter 视为通过、spawn 给默认资源）。仅对受约束的成员断言 score。
+      // maintenance recipe 池：feed/drink 带 resourcePool（受 resource 约束）· wadge(growth) / nest-build(gain_temp_skill)
+      // 资源无关，缺 resourcePool → matchSkillFilter 视为通过、spawn 给默认资源。仅对受约束的成员断言 score。
+      const RESOURCE_AGNOSTIC = new Set(['wadge', 'nest-build'])
       for (let i = 0; i < 10; i++) {
         const r = resolveEffect(forcedEffect, { ...ctx, hostSkillLevel: 1 })
         expect(r.skillsGranted.length).toBe(1)
         const granted = r.skillsGranted[0].skill
         const grantedDef = getAffixV2Definition(granted.v2Ids![0])!
-        if (grantedDef.name_en !== 'wadge') {
+        if (!RESOURCE_AGNOSTIC.has(grantedDef.name_en)) {
           expect(granted.resource).toBe('score')
         }
       }

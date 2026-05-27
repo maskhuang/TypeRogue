@@ -16,8 +16,8 @@ import { random } from '../core/seededRandom'
 
 /** V2 暴击产出倍率 */
 export const V2_CRIT_MULTIPLIER = 2
-import { hasRelation, scopePosAnchor } from '../data/keyboardTopology'
-import { RESOURCE_COLORS, INBOX_MAX } from '../core/constants'
+import { hasRelation, scopePosAnchor, getKeysWithRelation } from '../data/keyboardTopology'
+import { RESOURCE_COLORS, INBOX_MAX, KEYS, PUNCTUATION_KEYS } from '../core/constants'
 import { showFeedback, updateHUD } from './battle'
 import { getFloatScale } from '../effects/juice'
 import {
@@ -42,9 +42,10 @@ import {
 } from './affixV2Equipped'
 import { listActiveAuras, peekInstanceState, getSkillCumBase, getSkillCumFactor, getFireTargetWaitMs, tryFireTargetQuota, consumeHasteOne, getHaste, markSkillConsumed, isSkillConsumed, getFocus, isFocused, setFocus, getAllies, isAllied, allianceOutputBonusFor, addAlly, clearAllies } from './affixV2State'
 import { BASE_VALUES, createSkillRuntimeState } from '../data/affixes'
+import type { AffixSkillInstance } from '../data/affixes'
 import { getAscendBaseScale } from '../data/affixTrigger'
 import { triggerSkill, recordSkillTrigger } from './skills'
-import { getBindingState, getSkillKeys } from './bindingManager'
+import { getBindingState, getSkillKeys, bindShapeToKeys, unbindSkill } from './bindingManager'
 import { getWordEffectCritRate } from './letters/LetterFrequencySystem'
 import { getHasteRelicOutputBonus, applyCritOverflow } from './relics/StackingRelicBehaviors'
 import {
@@ -192,6 +193,10 @@ export function processV2Results(results: readonly SourcedResult[], outputMult =
       state.affixSkillStates.set(sg.skill.id, createSkillRuntimeState(sg.skill.id))
       state.player.inbox.push(sg.skill.id)
       _lastBattleGrantedSkillIds.push(sg.skill.id)
+    }
+    // gain_temp_skill（nest-build）：临时技能落到 placement 内空键位 · 本场可用 · 关末移除
+    for (const tg of sr.result.tempSkillsGranted) {
+      placeTempSkill(tg.skill, tg.placement, sr.sourceSkillId, sr.sourceKey)
     }
     // upgrade_skill: 目标 skill +level（capped baseValues 长度 · 同步 player.skills）
     for (const up of sr.result.skillUpgrades) {
@@ -629,6 +634,7 @@ export function wireV2BattleIntegration(): void {
   //               + 触发 on_battle_start 词条（旧 innate 等价物，hookOnBattleStart 返回结果）
   // 重同步覆盖存档加载场景（bindings 直接还原，未走 bindShapeToKeys 路径）
   eventBus.on('battle:start', () => {
+    removeTransientSkills()                // 先清上一战残留的临时技能（防异常未走 battle:end 时泄漏入 resync）
     resyncV2EquipmentFromState()
     _lastBattleGrantedSkillIds = []        // 每战清零；本战 gain_skill 命中再 push
     const results = hookOnBattleStart(defaultResourceLv1Base, defaultGetPlayerResource, Date.now())
@@ -640,6 +646,7 @@ export function wireV2BattleIntegration(): void {
   // 监听 battle.ts 中 victory() / gameOver() 显式 emit；caller 不需再调 triggerV2BattleEnd
   eventBus.on('battle:end', ({ result }) => {
     triggerV2BattleEnd(result === 'lose' ? 'lose' : 'win')
+    removeTransientSkills()                // on_battle_end 词条结算后，移除本场临时技能（nest-build）
   })
 
   // word:complete → 触发 on_word_end 类 V2 affix + 处理结果
@@ -699,6 +706,68 @@ let _lastBattleGrantedSkillIds: string[] = []
 
 export function getLastBattleGrantedSkillIds(): readonly string[] {
   return _lastBattleGrantedSkillIds
+}
+
+// ============================================
+// gain_temp_skill（nest-build）· 本场临时技能落位 + 关末移除
+// ============================================
+// 临时技能即时绑定到 placement 作用域内的空键位（本场可用），标 transient；
+// 战斗 start/end 各扫一遍 affixSkills，移除所有 transient（解绑 + 删除）。
+// transient 标记在 skill 实例上 → 即便 in-memory 状态丢失，重进战斗 start 也会清理。
+
+/** placement 作用域 → host 键位相关的**空键位**列表（neighbors / all_skills 外的作用域无明确空位语义 → 空）*/
+function findEmptyKeysInScope(placement: TargetSelector, hostSkillId: string, hostKey: string): string[] {
+  const bindings = state.player.bindings
+  const isPlaceable = (k: string) => !bindings.has(k) && !PUNCTUATION_KEYS.includes(k)
+  switch (placement.type) {
+    case 'neighbors': {
+      // 与 resolveSelectorToSkillIds 同口径：用 host 技能的 scope 锚（非 selector.posRel）
+      const rel = scopePosAnchor(hostSkillId)
+      return getKeysWithRelation(hostKey, rel).filter(isPlaceable)
+    }
+    case 'all_skills':
+      return KEYS.filter(isPlaceable)
+    default:
+      return []
+  }
+}
+
+/** 把一个临时技能绑定到 placement 内的随机空键位 · 标 transient · 注册 runtimeState（否则零产出）。
+ *  无空位 → 放弃该次（尊重「在 scope 内生成」约束）。 */
+function placeTempSkill(skill: AffixSkillInstance, placement: TargetSelector, hostSkillId: string, hostKey: string): void {
+  const empties = findEmptyKeysInScope(placement, hostSkillId, hostKey)
+  if (empties.length === 0) return
+  const key = empties[Math.floor(random() * empties.length)]
+  // 强制单格 · 保证落位可靠（spawn 出来的技能可能带多格形状，单键空位放不下）
+  skill.shapeId = 'monomino'
+  skill.rotation = 0
+  skill.transient = true
+  state.affixSkills.set(skill.id, skill)
+  state.player.skills.set(skill.id, { level: skill.level })
+  state.affixSkillStates.set(skill.id, createSkillRuntimeState(skill.id))
+  const res = bindShapeToKeys(getBindingState(state), skill.id, key)
+  if (!res.success) {
+    // 绑定失败（极少：key 非法）→ 回滚注册，避免孤儿
+    state.affixSkills.delete(skill.id)
+    state.player.skills.delete(skill.id)
+    state.affixSkillStates.delete(skill.id)
+  }
+}
+
+/** 移除全部本场临时技能（解绑所有键位 + unequip v2 + 删除注册）· battle start/end 各调一次（幂等）*/
+export function removeTransientSkills(): void {
+  const ids: string[] = []
+  for (const [id, sk] of state.affixSkills) {
+    if (sk.transient) ids.push(id)
+  }
+  if (ids.length === 0) return
+  const bs = getBindingState(state)
+  for (const id of ids) {
+    unbindSkill(bs, id)                 // 解绑所有占用键位 + unequipAllOnSkill（清 v2）
+    state.affixSkills.delete(id)
+    state.player.skills.delete(id)
+    state.affixSkillStates.delete(id)
+  }
 }
 
 // ============================================

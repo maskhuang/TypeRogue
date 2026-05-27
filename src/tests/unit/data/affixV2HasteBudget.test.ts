@@ -30,8 +30,10 @@ describe('haste supply/demand budget invariant', () => {
 
     // 核心不变式：供给严格高于需求，且留出采样噪声余量（期望 gap ≈ S×0.15 ≈ 1.2pp）
     expect(S).toBeGreaterThan(D + 0.003)
-    // 健全性：两者落在合理区间，防标定/分类彻底失效
-    expect(S).toBeGreaterThan(0.04)
+    // 健全性：两者落在合理区间，防标定/分类彻底失效。
+    // 下限随 recipe 池规模缩放：leap 是唯一 grant_haste recipe，等权下 S≈1/|recipes|；
+    // 池增至 25 条（含 nest_build）后期望 S≈4%，留采样噪声余量 → floor 0.035（catch S→0 的彻底失效）。
+    expect(S).toBeGreaterThan(0.035)
     expect(S).toBeLessThan(0.15)
     expect(D).toBeGreaterThan(0.01)
     expect(D).toBeLessThan(S)

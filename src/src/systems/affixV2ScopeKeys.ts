@@ -30,6 +30,7 @@ export function extractSelectorFromEffect(effect: EffectSpec): TargetSelector | 
       return effect.filter.neighborPosRel !== undefined
         ? { type: 'neighbors', posRel: effect.filter.neighborPosRel }
         : undefined
+    case 'gain_temp_skill': return effect.placement              // nest-build · 临时技能落位范围
     case 'composite': {
       for (const c of effect.effects) {
         const s = extractSelectorFromEffect(c)
