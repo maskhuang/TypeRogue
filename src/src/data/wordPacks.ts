@@ -292,41 +292,43 @@ const WORD_EFFECT_POOL: { type: WordEffectType; epicVal: number; legendVal: numb
   { type: 'gold',       epicVal: 1, legendVal: 2 },
 ];
 
+/** 6 类词效在各稀有度均匀分布（每类 ~1/6）；数值随稀有度递增（rar+1 = 1..4）。
+ *  - base_score      底分 +(rar+1)
+ *  - base_multiplier 单字母底分 ×(1.5 + 0.5·rar)
+ *  - crit            +暴击率 (rar+1)%（绑定词内字母的技能）
+ *  - init_time       +(词长×(rar+1)×0.1)s 初始时间（一次性）
+ *  - init_gold       +(词长×(rar+1)×2) 金币（一次性）
+ *  - grant_skill     获得 1 个随机技能，稀有度 = 本词稀有度（见 shop.grantRandomSkill）
+ *  需词长/字母的效果在词缺失时回退 base_score。*/
+const WORD_EFFECT_KINDS: WordEffectType[] = ['base_score', 'base_multiplier', 'crit', 'init_time', 'init_gold', 'grant_skill'];
+
 function rollWordEffect(rarity: 0 | 1 | 2 | 3, word?: string): WordEffect {
-  // 普通：固定 base_score
-  if (rarity === 0) {
-    return { type: 'base_score', value: 1 };
-  }
-  // 稀有/史诗：roll 一种词效（否则回退 base_score）：
-  //   crit        — 作用于词内所有字母 → 绑定这些键的技能 +暴击率（0.01=1%，多词叠加）
-  //   init_time   — 收录瞬间永久 +(词长×0.1)s 初始时间（累加 player.timeBonus）
-  //   init_gold   — 收录瞬间按词长入账 (词长×2) 金币（一次性）
-  //   grant_skill — 收录瞬间获得 1 个随机技能（派入收件槽）· 史诗专属（较强）
-  if (rarity < 3) {
-    const r = random();
-    const len = word ? word.length : 0;
-    if (r < 0.3) {
-      return { type: 'crit', value: rarity === 2 ? 0.02 : 0.01 };
-    }
-    if (r < 0.5 && len > 0) {
-      return { type: 'init_time', value: len / 10 };
-    }
-    if (r < 0.7 && len > 0) {
-      return { type: 'init_gold', value: len * 2 };
-    }
-    if (r < 0.85 && rarity === 2) {
-      return { type: 'grant_skill', value: 1 };
-    }
-    return { type: 'base_score', value: rarity === 2 ? 2 : 1 };
-  }
-  // 传说：随机 1 个字母，效果是该字母底分 ×2（也作用于其他词包的底分加成）
+  const rar = rarity;
+  const len = word ? word.length : 0;
   const uniqueLetters = word
     ? [...new Set(word.toLowerCase().split('').filter(c => c >= 'a' && c <= 'z'))]
     : [];
-  const targetLetter = uniqueLetters.length > 0
-    ? uniqueLetters[Math.floor(random() * uniqueLetters.length)]
-    : undefined;
-  return { type: 'base_multiplier', value: 2, targetLetter };
+
+  let kind = WORD_EFFECT_KINDS[Math.floor(random() * WORD_EFFECT_KINDS.length)];
+  if ((kind === 'init_time' || kind === 'init_gold') && len === 0) kind = 'base_score';
+  if (kind === 'base_multiplier' && uniqueLetters.length === 0) kind = 'base_score';
+
+  switch (kind) {
+    case 'crit':
+      return { type: 'crit', value: (rar + 1) * 0.01 };
+    case 'init_time':
+      return { type: 'init_time', value: (len * (rar + 1)) / 10 };
+    case 'init_gold':
+      return { type: 'init_gold', value: len * (rar + 1) * 2 };
+    case 'grant_skill':
+      return { type: 'grant_skill', value: 1 };
+    case 'base_multiplier': {
+      const targetLetter = uniqueLetters[Math.floor(random() * uniqueLetters.length)];
+      return { type: 'base_multiplier', value: 1.5 + rar * 0.5, targetLetter };
+    }
+    default:
+      return { type: 'base_score', value: rar + 1 };
+  }
 }
 
 // === Fisher-Yates shuffle ===

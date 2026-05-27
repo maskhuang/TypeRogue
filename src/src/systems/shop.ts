@@ -2288,14 +2288,15 @@ function showWordPicker(words: string[], onPick: (word: string) => void, wordEff
   modal.classList.remove('word-picker-hidden');
 }
 
-/** 一次性元效果：获得 1 个「满足条件」的随机技能，派入收件槽（玩家在随后的商店工作台绑定）。
- *  复用 teach 的 gain_skill 管线：recipe_pool 候选 → SkillFilter（稀有度限当前 Act 区间）→ widen 兜底 → spawnSkillFromSeed。
+/** 一次性元效果：获得 1 个随机技能，派入收件槽（玩家在随后的商店工作台绑定）。
+ *  复用 teach 的 gain_skill 管线：recipe_pool 候选 → SkillFilter → widen 兜底 → spawnSkillFromSeed。
+ *  skillRarity = 触发该效果的词的稀有度（技能稀有度与词稀有度一致）。
  *  state 写入与 affixV2BattleIntegration 的 gain_skill 同款（含 affixSkillStates，否则 rarity0 技能零产出）。收件槽满则放弃。 */
-function grantRandomSkill(): void {
+function grantRandomSkill(skillRarity: number): void {
   if (state.player.inbox.length >= INBOX_MAX) return;
   const pool = getCandidatePool('recipe_pool');
   if (pool.length === 0) return;
-  const filter: SkillFilter = { rarity: { min: 0, max: getActMaxRarity() } };
+  const filter: SkillFilter = { rarity: Math.max(0, Math.min(3, skillRarity)) };
   const widen = widenSkillFilter(filter, pool);
   if (widen.matches.length === 0) return;
   const seed = widen.matches[Math.floor(random() * widen.matches.length)];
@@ -2483,7 +2484,7 @@ export function showWordPackReward(onComplete: () => void): void {
       // 一次性元效果（收录瞬间结算）：
       if (chosen.effect.type === 'init_time') state.player.timeBonus += chosen.effect.value;  // 永久 +初始时间（startTimer 读 timeMax + timeBonus）
       if (chosen.effect.type === 'init_gold') state.gold = (state.gold ?? 0) + chosen.effect.value;  // 按词长入账金币
-      if (chosen.effect.type === 'grant_skill') grantRandomSkill();  // 派入收件槽（随后商店绑定）
+      if (chosen.effect.type === 'grant_skill') grantRandomSkill(chosen.rarity);  // 技能稀有度 = 词稀有度
     }
 
     stampEl.classList.add('show');
