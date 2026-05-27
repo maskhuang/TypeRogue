@@ -292,17 +292,20 @@ const WORD_EFFECT_POOL: { type: WordEffectType; epicVal: number; legendVal: numb
   { type: 'gold',       epicVal: 1, legendVal: 2 },
 ];
 
-/** 8 类词效在各稀有度均匀分布（每类 ~1/8）；数值随稀有度递增（rar+1 = 1..4）。
+/** 10 类词效在各稀有度均匀分布（每类 ~1/10）；数值随稀有度递增（rar+1 = 1..4）。
  *  - base_score      底分 +(rar+1)
  *  - base_multiplier 单字母底分 ×(1.5 + 0.5·rar)
  *  - crit            +暴击率 (rar+1)%（绑定词内字母的技能）
  *  - init_time       +(词长×(rar+1)×0.1)s 初始时间（永久）
  *  - init_gold       +(词长×(rar+1)×2) 金币（一次性）
  *  - grant_skill     获得 1 个随机技能，稀有度 = 本词稀有度（见 shop.grantRandomSkill）
- *  - init_mult       初始倍率 +(rar+1)×0.1（永久 · 累加 player.baseMultiplier）
- *  - target_reduce   目标分数 -(rar+1)×2%（永久 · 各关结算时按词库累加，封顶 60%）
+ *  「下一关」一次性 buff（nextLevelBuff · 仅作用紧接的下一关）：
+ *  - init_mult       初始倍率 +(rar+1)×0.5
+ *  - target_reduce   目标分数 -(rar+1)×10%（封顶 60%）
+ *  - skill_output    技能产出 ×(1+(rar+1)×0.1)
+ *  - init_shield     开局 +(rar+1)×4 护盾
  *  需词长/字母的效果在词缺失时回退 base_score。*/
-const WORD_EFFECT_KINDS: WordEffectType[] = ['base_score', 'base_multiplier', 'crit', 'init_time', 'init_gold', 'grant_skill', 'init_mult', 'target_reduce'];
+const WORD_EFFECT_KINDS: WordEffectType[] = ['base_score', 'base_multiplier', 'crit', 'init_time', 'init_gold', 'grant_skill', 'init_mult', 'target_reduce', 'skill_output', 'init_shield'];
 
 function rollWordEffect(rarity: 0 | 1 | 2 | 3, word?: string): WordEffect {
   const rar = rarity;
@@ -325,9 +328,13 @@ function rollWordEffect(rarity: 0 | 1 | 2 | 3, word?: string): WordEffect {
     case 'grant_skill':
       return { type: 'grant_skill', value: 1 };
     case 'init_mult':
-      return { type: 'init_mult', value: (rar + 1) * 0.1 };
+      return { type: 'init_mult', value: (rar + 1) * 0.5 };
     case 'target_reduce':
-      return { type: 'target_reduce', value: (rar + 1) * 0.02 };
+      return { type: 'target_reduce', value: (rar + 1) * 0.1 };
+    case 'skill_output':
+      return { type: 'skill_output', value: (rar + 1) * 0.1 };
+    case 'init_shield':
+      return { type: 'init_shield', value: (rar + 1) * 4 };
     case 'base_multiplier': {
       const targetLetter = uniqueLetters[Math.floor(random() * uniqueLetters.length)];
       return { type: 'base_multiplier', value: 1.5 + rar * 0.5, targetLetter };

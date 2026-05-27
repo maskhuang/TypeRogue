@@ -504,7 +504,7 @@ describe('generateWordPacks — 词语效果', () => {
     }
   });
 
-  it('8 类词效在各稀有度均匀分布，数值随稀有度递增', () => {
+  it('10 类词效在各稀有度均匀分布，数值随稀有度递增', () => {
     // 每个 "rarity:type" 观测点；并就地校验数值公式
     const seen = new Set<string>();
     for (let i = 0; i < 800; i++) {
@@ -522,8 +522,10 @@ describe('generateWordPacks — 词语效果', () => {
           case 'init_time': expect(e.value).toBeCloseTo((len * (rar + 1)) / 10, 5); break;
           case 'init_gold': expect(e.value).toBe(len * (rar + 1) * 2); break;
           case 'grant_skill': expect(e.value).toBe(1); break;
-          case 'init_mult': expect(e.value).toBeCloseTo((rar + 1) * 0.1, 5); break;
-          case 'target_reduce': expect(e.value).toBeCloseTo((rar + 1) * 0.02, 5); break;
+          case 'init_mult': expect(e.value).toBeCloseTo((rar + 1) * 0.5, 5); break;
+          case 'target_reduce': expect(e.value).toBeCloseTo((rar + 1) * 0.1, 5); break;
+          case 'skill_output': expect(e.value).toBeCloseTo((rar + 1) * 0.1, 5); break;
+          case 'init_shield': expect(e.value).toBe((rar + 1) * 4); break;
           default: throw new Error(`unexpected effect: ${e.type}`);
         }
       }
@@ -534,6 +536,8 @@ describe('generateWordPacks — 词语效果', () => {
     expect(seen.has('0:grant_skill')).toBe(true);
     expect(seen.has('0:init_mult')).toBe(true);
     expect(seen.has('0:target_reduce')).toBe(true);
+    expect(seen.has('0:skill_output')).toBe(true);
+    expect(seen.has('0:init_shield')).toBe(true);
     expect(seen.has('2:base_multiplier')).toBe(true);
   });
 });

@@ -2210,14 +2210,18 @@ const WORD_EFFECT_ICONS: Record<string, string> = {
   grant_skill: '🎁',
   init_mult: '✴',
   target_reduce: '🎯',
+  skill_output: '⚡',
+  init_shield: '🛡',
 };
 
 export function formatWordEffectLabel(effect: WordEffect): string {
   const icon = WORD_EFFECT_ICONS[effect.type] || '';
   const letterHint = effect.targetLetter ? ` [${effect.targetLetter.toUpperCase()}]` : '';
-  // crit / target_reduce 的 value 是小数比例（0.01）→ 显示为百分比整数；其余直接显示
-  const isPct = effect.type === 'crit' || effect.type === 'target_reduce';
-  const value = isPct ? Math.round(effect.value * 100) : effect.value;
+  // crit/target_reduce 的 value 是小数比例 → 百分比整数；skill_output 显示为乘数 ×(1+value)；其余直接显示
+  let value: number;
+  if (effect.type === 'crit' || effect.type === 'target_reduce') value = Math.round(effect.value * 100);
+  else if (effect.type === 'skill_output') value = 1 + effect.value;
+  else value = effect.value;
   return `${icon} ${t('wordeffect.' + effect.type, { value })}${letterHint}`;
 }
 
@@ -2488,8 +2492,12 @@ export function showWordPackReward(onComplete: () => void): void {
       if (chosen.effect.type === 'init_time') state.player.timeBonus += chosen.effect.value;  // 永久 +初始时间（startTimer 读 timeMax + timeBonus）
       if (chosen.effect.type === 'init_gold') state.gold = (state.gold ?? 0) + chosen.effect.value;  // 按词长入账金币
       if (chosen.effect.type === 'grant_skill') grantRandomSkill(chosen.rarity);  // 技能稀有度 = 词稀有度
-      if (chosen.effect.type === 'init_mult') state.player.baseMultiplier += chosen.effect.value;  // 永久 +初始倍率（每关起始 multiplier = baseMultiplier）
-      // target_reduce 无需收录时结算：每关目标分数按词库 getWordEffectTargetReduction 实时减免
+      // 一次性「下一关」buff：累加到 nextLevelBuff，仅作用紧接的下一关（battle.startLevel 应用 + endLevel 清空）
+      const nlb = (state.player.nextLevelBuff ??= { initMult: 0, targetReduce: 0, skillOutput: 0, shield: 0 });
+      if (chosen.effect.type === 'init_mult') nlb.initMult += chosen.effect.value;       // +初始倍率
+      if (chosen.effect.type === 'target_reduce') nlb.targetReduce += chosen.effect.value; // 目标分数 -X%
+      if (chosen.effect.type === 'skill_output') nlb.skillOutput += chosen.effect.value;   // 技能产出 +X
+      if (chosen.effect.type === 'init_shield') nlb.shield += chosen.effect.value;          // 开局 +护盾
     }
 
     stampEl.classList.add('show');

@@ -24,7 +24,7 @@ import { openShop, showWordPackReward } from './shop';
 import { shouldShowRitual, openRitualEnchantment } from './ritualEnchantment';
 import { hasUnownedRelics, showRelicPicker, RELIC_WEIGHT_PRESETS } from './relicPicker';
 import { openRestStage } from './restStage';
-import { getWordEffectModifiers, getWordEffectTargetReduction } from './letters/LetterFrequencySystem';
+import { getWordEffectModifiers } from './letters/LetterFrequencySystem';
 import { ModifierRegistry } from './modifiers/ModifierRegistry';
 import { EffectPipeline } from './modifiers/EffectPipeline';
 import { keyTooltip } from '../ui/keyboard/KeyTooltip';
@@ -2070,6 +2070,8 @@ function endLevel(): void {
   cleanupModifier();
   setRelicGarbleActive(false);
   hideSettlement();
+  // 一次性「下一关」buff 消费：本关已用完即清空（随后的奖励链 word picker 再为下一关写入）
+  state.player.nextLevelBuff = { initMult: 0, targetReduce: 0, skillOutput: 0, shield: 0 };
 
 
 
@@ -2447,10 +2449,10 @@ export async function startLevel(): Promise<void> {
     if (buff.type === 'targetScore') state.targetScore = Math.floor(state.targetScore * buff.value);
   }
 
-  // 词语效果·目标分数减免（target_reduce 词效按词库累加，封顶 60%）
-  const wpTargetReduce = getWordEffectTargetReduction(state.wordEffects);
-  if (wpTargetReduce > 0 && state.targetScore > 0) {
-    state.targetScore = Math.max(1, Math.round(state.targetScore * (1 - Math.min(0.6, wpTargetReduce))));
+  // 一次性「下一关」buff · 目标分数减免（target_reduce 词效，封顶 60%）
+  const _nlbTarget = state.player.nextLevelBuff?.targetReduce ?? 0;
+  if (_nlbTarget > 0 && state.targetScore > 0) {
+    state.targetScore = Math.max(1, Math.round(state.targetScore * (1 - Math.min(0.6, _nlbTarget))));
   }
 
   // Story 36.10: 续航电池 — 每关基础时间 +10s（tempBuff 之后、startTimer 之前）
@@ -2545,6 +2547,11 @@ export async function startLevel(): Promise<void> {
   if (startRelicResult.effects.multiply > 0) {
     state.multiplier += startRelicResult.effects.multiply;
   }
+  // 一次性「下一关」buff · 初始倍率 + 开局护盾（仅本关）
+  const _nlbMult = state.player.nextLevelBuff?.initMult ?? 0;
+  if (_nlbMult > 0) state.multiplier += _nlbMult;
+  const _nlbShield = state.player.nextLevelBuff?.shield ?? 0;
+  if (_nlbShield > 0) state.shield += _nlbShield;
   // cornucopia 等：战斗开始时金币加成
   if (startRelicResult.effects.gold > 0) {
     state.gold += startRelicResult.effects.gold;

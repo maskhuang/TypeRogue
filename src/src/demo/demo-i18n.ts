@@ -1514,6 +1514,8 @@ const ZH: Record<string, string> = {
   'wordeffect.grant_skill': '获得随机技能',
   'wordeffect.init_mult': '初始倍率+{value}',
   'wordeffect.target_reduce': '目标分数-{value}%',
+  'wordeffect.skill_output': '技能产出×{value}',
+  'wordeffect.init_shield': '开局护盾+{value}',
   'wordeffect.desc': '含有字母击键时额外产出',
 
   // --- 排行榜 ---
@@ -3023,6 +3025,8 @@ const EN: Record<string, string> = {
   'wordeffect.grant_skill': 'Random skill',
   'wordeffect.init_mult': 'Init mult +{value}',
   'wordeffect.target_reduce': 'Target -{value}%',
+  'wordeffect.skill_output': 'Skill output ×{value}',
+  'wordeffect.init_shield': 'Shield +{value}',
   'wordeffect.desc': 'Keystroke bonus for contained letters',
 
   // --- Leaderboard ---

@@ -750,8 +750,10 @@ export function onSkillFireV2(
       state.player.gold = (state.player.gold ?? 0) + critGold
     }
   }
-  // 产出倍率：暴击 (2 + fate_coin 加成) × crit_storm 本词加成（crit_storm 不限暴击 fire）
-  const outputMult = (rolledCrit ? V2_CRIT_MULTIPLIER + critMultBonus : 1) * (1 + getCritStormBonus())
+  // 产出倍率：暴击 (2 + fate_coin 加成) × crit_storm 本词加成 × 一次性技能产出加成（skill_output 词效，仅本关）
+  const outputMult = (rolledCrit ? V2_CRIT_MULTIPLIER + critMultBonus : 1)
+    * (1 + getCritStormBonus())
+    * (1 + (state.player.nextLevelBuff?.skillOutput ?? 0))
 
   const event: FireEvent = {
     sourceAffixId,

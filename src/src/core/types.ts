@@ -264,6 +264,9 @@ export interface PlayerState {
   evolvedSkills: Map<string, string>;  // skillId → branchId (legacy, kept for save compat)
   collectedWords: Set<string>;  // 词汇收藏：本 Run 已完成单词（36.7）
   inbox: string[];  // IN-tray: 终端购入待装配的 skillId 列表（上限 INBOX_MAX）
+  // 一次性「下一关」buff（词包 init_mult/target_reduce/skill_output 词效收录时累加，
+  // 仅作用紧接的下一关：startLevel 应用 init_mult/target_reduce + 关内 skill_output，endLevel 清空）
+  nextLevelBuff: { initMult: number; targetReduce: number; skillOutput: number; shield: number };
 }
 
 export interface ShopItem {
@@ -295,7 +298,7 @@ export interface SkillInstance {
 }
 
 // === 词语效果系统 ===
-export type WordEffectType = 'base_score' | 'base_multiplier' | 'multiplier' | 'time' | 'gold' | 'crit' | 'init_time' | 'init_gold' | 'grant_skill' | 'init_mult' | 'target_reduce';
+export type WordEffectType = 'base_score' | 'base_multiplier' | 'multiplier' | 'time' | 'gold' | 'crit' | 'init_time' | 'init_gold' | 'grant_skill' | 'init_mult' | 'target_reduce' | 'skill_output' | 'init_shield';
 export interface WordEffect { type: WordEffectType; value: number; targetLetter?: string; }
 
 // === 词库系统 ===

@@ -90,6 +90,7 @@ export function createInitialState(): GameState {
       evolvedSkills: new Map(),
       collectedWords: new Set(),
       inbox: [],
+      nextLevelBuff: { initMult: 0, targetReduce: 0, skillOutput: 0, shield: 0 },
     },
     shop: {
       items: [],
