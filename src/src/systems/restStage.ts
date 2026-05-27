@@ -35,7 +35,7 @@ export function consumePendingEnchantSkillIds(): string[] {
 
 /** 附魔加权 roll · supplant 稀缺（权重远低于其余）· resource/rr 再 roll 具体资源（玩家预览随机结果）·
  *  rr 的 from = 宿主 skill 资源（自我消耗闭环），to = 其余资源随机 */
-function rollEnchant(skillResource: string): EnchantSpec {
+function rollEnchant(skillResource: string, hasToolTag: boolean): EnchantSpec {
   const pool: Array<{ w: number; make: () => EnchantSpec }> = [
     { w: 10, make: () => ({ id: 'haste' }) },
     { w: 10, make: () => ({ id: 'crit' }) },
@@ -46,6 +46,8 @@ function rollEnchant(skillResource: string): EnchantSpec {
     { w: 10, make: () => rollRrEnchant(skillResource) },
     { w: 2,  make: () => ({ id: 'supplant' }) },   // 稀缺
   ];
+  // 永恒：移除使用次数限制 · 仅在含 tool tag 词条的技能上出现（非 tool 技能无 maxUses，挂上无意义）
+  if (hasToolTag) pool.push({ w: 6, make: () => ({ id: 'eternal' }) });
   const total = pool.reduce((s, x) => s + x.w, 0);
   let r = random() * total;
   for (const x of pool) { if ((r -= x.w) < 0) return x.make(); }
@@ -81,7 +83,9 @@ function showV2EnchantPicker(skillId: string, onComplete: () => void): void {
   const zh = getLocale() === 'zh';
   const skill = state.affixSkills.get(skillId);
   const skillResource = skill?.resource ?? 'score';
-  const enchant = rollEnchant(skillResource);
+  // 永恒附魔仅在该 skill 含 tool 段词条时出现（roll 门控）
+  const hasToolTag = equipped.some(e => getAffixV2Definition(e.defId)?.section === 'tool');
+  const enchant = rollEnchant(skillResource, hasToolTag);
   const info = enchantDisplayInfo(enchant);
 
   const RARITY_CLASS = ['common', 'rare', 'epic', 'legendary'];

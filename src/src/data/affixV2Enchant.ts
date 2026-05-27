@@ -56,6 +56,10 @@ export type EnchantSpec =
    *  阈值递增 3 → 6 → 12 → 24...（× 2），跨战永久。
    *  effect 本身不变（doubleIfMatch / parallel 均 noop），实际副作用在 hook 层 */
   | { id: 'apprentice' }
+  /** 永恒：移除宿主词条的使用次数限制（maxUses）—— 此（tool 段消耗型）词条不再用尽消失 ·
+   *  仅在含 tool tag 词条的技能上 roll（见 restStage.rollEnchant）· chargeToolAffixUses 跳过带 eternal 的词条 ·
+   *  无数值层、无 effect 修饰（doubleIfMatch / parallel 均 noop）· 副作用在 chargeToolAffixUses（同 apprentice 模式）。*/
+  | { id: 'eternal' }
 
 export type EnchantId = EnchantSpec['id']
 export type EnchantDisplay = { name: string; desc: string }
@@ -235,6 +239,16 @@ const ENCHANT_HANDLERS: Record<EnchantId, EnchantHandler> = {
     display: (_spec, locale) => locale === 'zh'
       ? { name: '学徒', desc: '本词条每触发 N 次，宿主技能等级 +1；N = 3 × 2^(Lv-1)（3, 6, 12, 24...），无上限' }
       : { name: 'Apprentice', desc: 'Every N trigger fires, host skill level +1; N = 3 × 2^(Lv-1) (3, 6, 12, 24...), uncapped' },
+  },
+
+  // 永恒：移除使用次数限制 · effect 完全不变（doubleIfMatch / parallel 均 noop）·
+  // 副作用在 chargeToolAffixUses（跳过带 eternal 的词条 → tool 消耗型词条不再用尽消失）。
+  eternal: {
+    doubleIfMatch: () => null,
+    parallel: () => ({ kind: 'noop' }),
+    display: (_spec, locale) => locale === 'zh'
+      ? { name: '永恒', desc: '移除使用次数限制：此词条不会用尽消失' }
+      : { name: 'Eternal', desc: 'Removes the use-count limit: this affix never expires from use' },
   },
 }
 

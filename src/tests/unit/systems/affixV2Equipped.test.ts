@@ -432,6 +432,17 @@ describe('tool/认知词条「用完消失」· chargeToolAffixUses', () => {
     chargeToolAffixUses([id, id, id])
     expect(skill.v2Uses?.['test_tool']).toBe(1)
   })
+
+  it('永恒(eternal) 词条移除使用次数限制 · 多次 charge 不计数不消失', () => {
+    const skill = toolSkill('skill_e', 'test_tool')
+    gameState.affixSkills.set('skill_e', skill)
+    const id = equipAffixV2('skill_e', 'K', 'test_tool')
+    setEnchant(id, { id: 'eternal' })
+
+    for (let i = 0; i < TOOL_USES + 5; i++) chargeToolAffixUses([id])
+    expect(skill.v2Uses?.['test_tool']).toBeUndefined()    // 未计数（被 eternal 跳过）
+    expect(getEquippedOnSkill('skill_e').length).toBe(1)   // 仍在，未消失
+  })
 })
 
 describe('defaultResourceLv1Base · Lv5+ 按 ascendBaseScale 延伸', () => {

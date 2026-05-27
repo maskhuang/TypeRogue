@@ -348,6 +348,8 @@ export function chargeToolAffixUses(instanceIds: Iterable<string>): { skillId: s
     if (!entry) continue
     const def = getAffixV2Definition(entry.defId)
     if (!def) continue
+    // 永恒(eternal)：移除使用次数限制 —— 此词条不计 use、不消失
+    if (_enchants.get(id)?.id === 'eternal') continue
     const limit = getAffixV2UseLimit(def)
     if (limit == null) continue
     const skill = gameState.affixSkills.get(entry.skillId)

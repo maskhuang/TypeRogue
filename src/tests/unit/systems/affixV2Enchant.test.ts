@@ -16,6 +16,7 @@ import type { EffectSpec, TargetSelector } from '../../../src/data/affixV2Trigge
 
 const MARK: EnchantSpec = { id: 'mark' }
 const ALLY: EnchantSpec = { id: 'ally' }
+const ETERNAL: EnchantSpec = { id: 'eternal' }
 const SCOPE: TargetSelector = { type: 'matched_resource', resource: 'score' }
 
 /** resolveEffect 用 ctx · resolveSelector：self → [host]，其它 → [host, other] */
@@ -49,6 +50,21 @@ describe('mark / ally 已注册', () => {
     expect(getEnchantDisplay(MARK, 'en').name).toBe('Focal')
     expect(getEnchantDisplay(ALLY, 'zh').name).toBe('聚众')
     expect(getEnchantDisplay(ALLY, 'en').name).toBe('Rallying')
+  })
+})
+
+describe('eternal 附魔 · 移除使用次数限制（effect 不变）', () => {
+  it('listEnchantIds 含 eternal · display 中英文名', () => {
+    expect(listEnchantIds()).toContain('eternal')
+    expect(getEnchantDisplay(ETERNAL, 'zh').name).toBe('永恒')
+    expect(getEnchantDisplay(ETERNAL, 'en').name).toBe('Eternal')
+  })
+
+  it('applyEnchantToEffect 不改宿主产出（doubleIfMatch/parallel 均 noop）', () => {
+    const host: EffectSpec = { kind: 'gain_resource', resource: 'score', ratio: 1 }
+    const enchanted = resolveEffect(applyEnchantToEffect(host, ETERNAL), makeCtx())
+    const plain = resolveEffect(host, makeCtx())
+    expect(enchanted.resourceProduced).toEqual(plain.resourceProduced)   // 产出一致 = effect 未被修饰
   })
 })
 
