@@ -2196,7 +2196,7 @@ function hideAffixComparisonPanel(): void {
 
 // === 牌包辅助函数 ===
 
-import type { WordEffect } from '../core/types';
+import type { WordEffect, WordEffectType } from '../core/types';
 
 const WORD_EFFECT_ICONS: Record<string, string> = {
   base_score: '⬆',
@@ -2214,6 +2214,10 @@ const WORD_EFFECT_ICONS: Record<string, string> = {
   init_shield: '🛡',
 };
 
+// 仅作用紧接下一关、关末清空的一次性 buff（nextLevelBuff）· 必须显式标注「仅下一关」，
+// 否则与永久/逐词词效（init_time 永久 / grant_skill 永久 / base_score 逐词等）混淆。
+const NEXT_LEVEL_ONLY_EFFECTS = new Set<WordEffectType>(['init_mult', 'target_reduce', 'skill_output', 'init_shield']);
+
 export function formatWordEffectLabel(effect: WordEffect): string {
   const icon = WORD_EFFECT_ICONS[effect.type] || '';
   const letterHint = effect.targetLetter ? ` [${effect.targetLetter.toUpperCase()}]` : '';
@@ -2222,7 +2226,10 @@ export function formatWordEffectLabel(effect: WordEffect): string {
   if (effect.type === 'crit' || effect.type === 'target_reduce') value = Math.round(effect.value * 100);
   else if (effect.type === 'skill_output') value = 1 + effect.value;
   else value = effect.value;
-  return `${icon} ${t('wordeffect.' + effect.type, { value })}${letterHint}`;
+  // 时效后缀（纯文本 · 部分消费端用 textContent，不能塞 HTML）：仅下一关的 buff 显式标注
+  // 括号包在 i18n 串里（zh 全角 / en 半角），此处只接空格
+  const durTag = NEXT_LEVEL_ONLY_EFFECTS.has(effect.type) ? ` ${t('wordeffect.nextlv')}` : '';
+  return `${icon} ${t('wordeffect.' + effect.type, { value })}${letterHint}${durTag}`;
 }
 
 function getPackIcon(condType: PackConditionType): string {
@@ -2390,20 +2397,22 @@ export function showWordPackReward(onComplete: () => void): void {
       </div>
       <div class="form-id">FORM-RC1<br>SEC 4</div>
     </div>
-    <div class="req-form-fields">
-      <div class="desk-paper-field">
-        <div class="label">${zh ? '申领人' : 'APPLICANT'}</div>
-        <div class="value printed">${workerId}</div>
+    <div class="wp-meta">
+      <div class="req-form-fields">
+        <div class="desk-paper-field">
+          <div class="label">${zh ? '申领人' : 'APPLICANT'}</div>
+          <div class="value printed">${workerId}</div>
+        </div>
+        <div class="desk-paper-field">
+          <div class="label">${zh ? '词库存量' : 'ON FILE'}</div>
+          <div class="value printed">${state.player.wordDeck.length}</div>
+        </div>
       </div>
-      <div class="desk-paper-field">
-        <div class="label">${zh ? '词库存量' : 'ON FILE'}</div>
-        <div class="value printed">${state.player.wordDeck.length}</div>
-      </div>
+      ${keycovHtml}
     </div>
-    ${keycovHtml}
     <div class="req-instruction">${zh
-      ? '勾选补录词语 · CHECK ONE WORD · 备注栏键入字母提交'
-      : 'CHECK ONE WORD · type letter in note to submit'}</div>
+      ? '勾选一个词语补录 · CHECK ONE WORD'
+      : 'CHECK ONE WORD'}</div>
     <div class="req-list"></div>
     <div class="desk-input-line">
       <div class="label">${zh ? '▸ 备注栏' : '▸ NOTE'}</div>
@@ -2439,10 +2448,16 @@ export function showWordPackReward(onComplete: () => void): void {
     const letter = letters[idx] ?? String(idx + 1);
     const rarityClass = RARITY_KEYS[rarity] ?? 'common';
     const freqHint = getFreqHints(word);
+    let effLabel = effect ? formatWordEffectLabel(effect) : '';
+    // 「仅下一关」时效标注标红 —— 本表单经 innerHTML 渲染可上色；formatWordEffectLabel 本体保持纯文本供 textContent 消费端
+    if (effLabel) {
+      const durStr = t('wordeffect.nextlv');
+      if (effLabel.includes(durStr)) effLabel = effLabel.replace(durStr, `<span class="wp-dur">${durStr}</span>`);
+    }
     const descParts = [
       zh ? `${word.length} 字母` : `${word.length} letters`,
       freqHint,
-      effect ? formatWordEffectLabel(effect) : '',
+      effLabel,
     ].filter(Boolean);
 
     const row = document.createElement('div');
@@ -2454,10 +2469,9 @@ export function showWordPackReward(onComplete: () => void): void {
       <div class="key-letter">${letter}</div>
       <div>
         <div class="name">${renderWordName(word)}</div>
-        <div class="code">WORD-${rarityClass.slice(0, 3).toUpperCase()}-${String(idx + 1).padStart(3, '0')}</div>
         <div class="desc">${descParts.join(' · ')}</div>
       </div>
-      <div class="clr">${zh ? '词语' : 'WORD'} · ${rarityLabel(rarity)}</div>
+      <div class="clr">${rarityLabel(rarity)}</div>
     `;
     row.addEventListener('click', () => {
       if (inputEl.disabled) return;

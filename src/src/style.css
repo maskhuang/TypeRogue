@@ -10077,26 +10077,62 @@ html[lang^="en"] .desk-paper.duty-roster .roster-row .role .section-en {
   background: rgba(240, 208, 64, 0.22);
 }
 
-/* 词语补录 · 字母覆盖条（未解锁=红色虚线格）+ 候选词内未解锁字母标红 */
+/* 词语补录 · 字母覆盖条（未解锁字母标红+下划线，与词内未解锁字母同视觉）+ 候选词内未解锁字母标红 */
 .wordpack-desk-overlay .wp-keycov {
-  display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap;
-  margin: 2px 0 6px; border-top: 1px dashed var(--desk-ink-dim); padding-top: 8px;
+  display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; margin: 0;
 }
 .wordpack-desk-overlay .wp-keycov-label {
-  font-size: 11px; letter-spacing: 0.14em; color: var(--desk-ink-dim);
+  font-size: 11px; letter-spacing: 0.14em; color: var(--desk-ink); font-weight: 700;
   text-transform: uppercase; white-space: nowrap;
 }
 .wordpack-desk-overlay .wp-keycov-strip { display: flex; flex-wrap: wrap; gap: 3px; }
 .wordpack-desk-overlay .wp-kc {
-  font-family: var(--desk-font-body); font-size: 12px; font-weight: 700;
-  color: var(--desk-ink); width: 16px; text-align: center; line-height: 1.5;
+  font-family: var(--desk-font-body); font-size: 12px; font-weight: 400;
+  color: var(--desk-ink-faded); width: 14px; text-align: center; line-height: 1.4;
 }
 .wordpack-desk-overlay .wp-kc.lk {
-  color: var(--desk-stamp-red); font-weight: 400;
-  border: 1px dashed var(--desk-stamp-red); border-radius: 2px;
+  color: var(--desk-stamp-red); font-weight: 700;
+  border: 0; border-bottom: 2px solid var(--desk-stamp-red); border-radius: 0;
 }
 .wordpack-desk-overlay .wp-newkey {
   color: var(--desk-stamp-red); border-bottom: 2px solid var(--desk-stamp-red);
+}
+
+/* === 词语补录界面打磨（仅作用 .wordpack-desk-overlay · 不影响遗物/封装表单） === */
+/* 顶部元信息带：申领人/词库存量 + 字母覆盖条合一，单一虚线分隔进入列表 */
+.wordpack-desk-overlay .desk-paper.requisition .wp-meta {
+  display: flex; flex-direction: column; gap: 7px;
+  margin: 6px 0 0; padding: 9px 0 10px;
+  border-top: 1px dashed var(--desk-ink-dim);
+  border-bottom: 1px dashed var(--desk-ink-dim);
+}
+.wordpack-desk-overlay .desk-paper.requisition .req-form-fields { margin: 0; }
+.wordpack-desk-overlay .desk-paper.requisition .req-instruction {
+  border-top: 0; padding-top: 0; margin: 9px 0 4px;
+}
+/* 行：可见的稀有度左色条作为主稀有度信号 */
+.wordpack-desk-overlay .desk-paper.requisition .req-row {
+  padding: 9px 6px 9px 12px; position: relative; border-left: 3px solid transparent;
+}
+.wordpack-desk-overlay .desk-paper.requisition .req-row.rarity-common    { border-left-color: #b8a884; }
+.wordpack-desk-overlay .desk-paper.requisition .req-row.rarity-rare      { border-left-color: #5b97c4; }
+.wordpack-desk-overlay .desk-paper.requisition .req-row.rarity-epic      { border-left-color: #9a6dc4; }
+.wordpack-desk-overlay .desk-paper.requisition .req-row.rarity-legendary { border-left-color: #d8a93a; }
+/* 行已带左色条 → 去掉旧 checkbox 稀有度小条 */
+.wordpack-desk-overlay .desk-paper.requisition .req-row.rarity-common    .checkbox,
+.wordpack-desk-overlay .desk-paper.requisition .req-row.rarity-rare      .checkbox,
+.wordpack-desk-overlay .desk-paper.requisition .req-row.rarity-epic      .checkbox,
+.wordpack-desk-overlay .desk-paper.requisition .req-row.rarity-legendary .checkbox { box-shadow: none; }
+.wordpack-desk-overlay .desk-paper.requisition .req-row .name { font-size: 15px; font-weight: 700; }
+/* 右侧稀有度标签：去掉重复"词语"前缀后按稀有度上色 */
+.wordpack-desk-overlay .desk-paper.requisition .req-row .clr { font-weight: 700; letter-spacing: 0.12em; }
+.wordpack-desk-overlay .desk-paper.requisition .req-row.rarity-common    .clr { color: var(--desk-ink-dim); }
+.wordpack-desk-overlay .desk-paper.requisition .req-row.rarity-rare      .clr { color: #3f7aa8; }
+.wordpack-desk-overlay .desk-paper.requisition .req-row.rarity-epic      .clr { color: #7d4eae; }
+.wordpack-desk-overlay .desk-paper.requisition .req-row.rarity-legendary .clr { color: #a87c1a; }
+/* 时效标注：仅下一关的一次性 buff 标红，区别于永久/逐词词效 */
+.wordpack-desk-overlay .desk-paper.requisition .req-row .desc .wp-dur {
+  color: var(--desk-stamp-red); font-weight: 700;
 }
 .desk-paper.requisition .req-row .checkbox {
   width: 18px; height: 18px;
