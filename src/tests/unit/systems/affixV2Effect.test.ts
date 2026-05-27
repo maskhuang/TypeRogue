@@ -75,6 +75,26 @@ describe('resolveEffect · 基础 5 kind', () => {
   })
 })
 
+describe('resolveEffect · gain_proportional 存量翻倍（cache · source===target）', () => {
+  it('source===target, ratio=1 → 产出 = 当前存量（存量×2）', () => {
+    // amount = ratio × Lv1[score] × (player[score]/Lv1[score]) = 1 × 11 × (250/11) = 250 → 与存量相等 = 翻倍
+    const ctx = { ...baseCtx, getPlayerResource: (r: string) => (r === 'score' ? 250 : 0) }
+    const out = resolveEffect({ kind: 'gain_proportional', source: 'score', target: 'score', ratio: 1 }, ctx)
+    expect(out.resourceProduced).toEqual([{ resource: 'score', amount: 250 }])
+  })
+
+  it('不同宿主资源各按自身存量翻倍（gold）', () => {
+    const ctx = { ...baseCtx, getPlayerResource: (r: string) => (r === 'gold' ? 40 : 0) }
+    const out = resolveEffect({ kind: 'gain_proportional', source: 'gold', target: 'gold', ratio: 1 }, ctx)
+    expect(out.resourceProduced).toEqual([{ resource: 'gold', amount: 40 }])  // 1 × 3 × (40/3) = 40
+  })
+
+  it('存量为 0 → 不产出（player[source]<=0 守卫）', () => {
+    const out = resolveEffect({ kind: 'gain_proportional', source: 'score', target: 'score', ratio: 1 }, baseCtx)
+    expect(out.resourceProduced.length).toBe(0)  // baseCtx.getPlayerResource 恒返 0
+  })
+})
+
 describe('resolveEffect · 扩展 5 kind', () => {
   it('conditional · when 命中走 then', () => {
     const r = resolveEffect({
