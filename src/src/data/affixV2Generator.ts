@@ -180,9 +180,16 @@ function pickScaleSource(section: SectionTag, skillResource?: ResourceType, kind
   return { by: 'empty', posRel: pickRandom(POSREL_VALUES) }
 }
 
-/** 给定 source 选 scope：empty 用自身 posRel、hasted/allied/critChance 全局/宿主自锚、targetScore 读关目标（均 top-level scope 留空）；其余从 SCALE_SCOPE_POOL 抽。 */
+/** 给定 source 选 scope：empty 用自身 posRel、hasted/allied/critChance 全局/宿主自锚、targetScore 读关目标（均 top-level scope 留空）；其余从 SCALE_SCOPE_POOL 抽。
+ *  同维剔除：by:'resource' 排除 matched_resource scope、by:'rarity' 排除 matched_rarity scope ——
+ *  否则「数 R 资源技能」配上「matched_resource(R'≠R) 范围」交集恒空 → 计数永远 0（scale 结构性失效，
+ *  multi_fire per_n 表现为恒 +0）；同值则冗余。跨维 matched_*（如资源源 × matched_rarity 范围）保留，是合法子集。 */
 function pickScaleScope(source: ScaleCountSource): TargetSelector | undefined {
-  return (source.by === 'empty' || source.by === 'hasted' || source.by === 'allied' || source.by === 'targetScore' || source.by === 'critChance') ? undefined : pickWeightedScope(SCALE_SCOPE_POOL).selector
+  if (source.by === 'empty' || source.by === 'hasted' || source.by === 'allied' || source.by === 'targetScore' || source.by === 'critChance') return undefined
+  let pool = SCALE_SCOPE_POOL
+  if (source.by === 'resource') pool = SCALE_SCOPE_POOL.filter(e => e.selector.type !== 'matched_resource')
+  else if (source.by === 'rarity') pool = SCALE_SCOPE_POOL.filter(e => e.selector.type !== 'matched_rarity')
+  return pickWeightedScope(pool).selector
 }
 
 /**

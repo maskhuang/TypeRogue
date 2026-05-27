@@ -90,6 +90,31 @@ describe('chant generator · scale roll', () => {
     for (const by of ['tag', 'resource', 'rarity', 'empty', 'allied', 'targetScore', 'affixName']) expect(bys.has(by)).toBe(true)
   })
 
+  it('resource/rarity source 不配同维 matched_* scope（否则交集恒空 → 计数结构性恒 0）', () => {
+    setSeededMode(123)
+    let resourceScaleCount = 0
+    let rarityScaleCount = 0
+    // BIPEDAL_SWAGGER(multi_fire·per_n) + PILOERECTION(crit·count) 都会 roll resource/rarity 源
+    for (let i = 0; i < 800; i++) {
+      for (const recipe of [RECIPE_BIPEDAL_SWAGGER, RECIPE_PILOERECTION]) {
+        const def = getAffixV2Definition(generateAffixV2(recipe))
+        if (def?.effect.kind !== 'apply_aura') continue
+        const scale = (def.effect as { scale?: { source: { by: string }; scope?: { type: string } } }).scale
+        if (!scale) continue
+        if (scale.source.by === 'resource') {
+          resourceScaleCount++
+          expect(scale.scope?.type).not.toBe('matched_resource')  // 同维剔除：数 R 技能不能再限定到 matched_resource(R'≠R)
+        } else if (scale.source.by === 'rarity') {
+          rarityScaleCount++
+          expect(scale.scope?.type).not.toBe('matched_rarity')
+        }
+      }
+    }
+    // 确保确实抽到过这两类 source（否则断言空跑）
+    expect(resourceScaleCount).toBeGreaterThan(0)
+    expect(rarityScaleCount).toBeGreaterThan(0)
+  })
+
   it('tool 段 recipe 生成时 roll maxUses（[MIN, MAX] 闭区间整数）', () => {
     setSeededMode(5)
     const seen = new Set<number>()
