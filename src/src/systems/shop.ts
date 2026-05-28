@@ -3113,6 +3113,9 @@ export function sellSkill(skillId: string): void {
   const sellPrice = Math.floor((data.purchasePrice || 15) * getRecycleSellMultiplier());
   state.gold += sellPrice;
 
+  // 双阶段：派发 on_sold（建造期独占触发）· 必须在解绑/删除前发——之后该 skill 词条已不在装配表
+  eventBus.emit('skill:sold', { skillId });
+
   // 移除绑定（多格形状全解）
   unbindSkill(getBindingState(state), skillId);
 

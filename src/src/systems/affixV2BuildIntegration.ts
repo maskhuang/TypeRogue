@@ -16,7 +16,7 @@
 import { state } from '../core/state'
 import { eventBus } from '../core/events/EventBus'
 import { getBindingState, unbindSkill } from './bindingManager'
-import { hookOnResourceConsumed, hookOnRemoved, hookOnSkillConsumed, type SourcedResult } from './affixV2Equipped'
+import { hookOnResourceConsumed, hookOnRemoved, hookOnSkillConsumed, hookOnSold, type SourcedResult } from './affixV2Equipped'
 import {
   defaultResourceLv1Base,
   defaultGetPlayerResource,
@@ -139,6 +139,15 @@ export function runBuildResourceConsumed(goldAmount: number): boolean {
   return processV2BuildResults(results)
 }
 
+/** 建造期出售技能 → 派发被售 skill 上的 on_sold 词条（一次性·永久结算）· 返回是否有改动 ·
+ *  调用时机：sellSkill 在解绑/删除**前**发 skill:sold，此刻该 skill 仍绑键、resync 能收进 _equipped ·
+ *  导出以便单测直接调。 */
+export function runBuildSkillSold(skillId: string): boolean {
+  resyncV2EquipmentFromState()
+  const results = hookOnSold(skillId, defaultResourceLv1Base, defaultGetPlayerResource, Date.now(), 'run')
+  return processV2BuildResults(results)
+}
+
 // ============================================
 // 订阅装配
 // ============================================
@@ -154,5 +163,12 @@ export function wireV2BuildIntegration(): void {
   // price 来自事件（classic / terminal / ShopScene 三套商店均带）· 免费（smuggle，price=0）不触发
   eventBus.on('shop:purchase', ({ price }) => {
     if (runBuildResourceConsumed(price)) refreshBuildUI()
+  })
+
+  // skill:sold → 卖技能 → 派发被售 skill 的 on_sold 词条（persistScope='run'）
+  // 不在此刷 UI：sellSkill 在 emit 之后会解绑/删除被售技能并 renderUnifiedShop/renderBuildManager/updateGoldDisplay，
+  // 那次 render 已涵盖本处的 gold/移除改动；此处提前刷会渲染到"尚未删除被售技能"的中间态。
+  eventBus.on('skill:sold', ({ skillId }) => {
+    runBuildSkillSold(skillId)
   })
 }

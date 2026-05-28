@@ -127,6 +127,10 @@ export function evaluateTrigger(spec: TriggerSpec, ctx: TriggerContext): boolean
       // hook 层（hookOnRemoved）已保证只在被移除 skill 上迭代其 on_removed 词条；恒命中
       return true
 
+    case 'on_sold':
+      // hook 层（hookOnSold）已保证只在被售 skill 上迭代其 on_sold 词条；恒命中
+      return true
+
     case 'on_skill_consumed':
       // 全局观察者：任一技能被取代/吞噬即触发（无 scope）· 需有被消耗 skillId
       return ctx.consumedSkillId !== undefined

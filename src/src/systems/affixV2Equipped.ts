@@ -1139,6 +1139,65 @@ export function hookOnRemoved(
   return results
 }
 
+/**
+ * skill 被「出售」（建造期玩家主动处置）时调 · 双阶段触发模型的 on_sold（II 族建造期独占）。
+ * 仅遍历被售 skill 上的 V2 instance，命中 on_sold trigger 的 resolve（与 hookOnRemoved 同结构）·
+ * persistScope='run'（永久结算）· skillResource 用被售 skill 自身资源（gain_resource 按其 Lv 缩放）。
+ * 由 build 集成在 skill:sold 事件（sellSkill 解绑/删除前发）时调，此刻该 skill 仍在 _equipped。
+ */
+export function hookOnSold(
+  soldSkillId: string,
+  resourceLv1Base: (r: string, level?: number) => number,
+  getPlayerResource: (r: string) => number,
+  nowMs: number,
+  persistScope: 'fight' | 'run' = 'run',
+): SourcedResult[] {
+  const results: SourcedResult[] = []
+  const ids = _bySkill.get(soldSkillId) ?? []
+  const skillResource = gameState.affixSkills.get(soldSkillId)?.resource ?? 'score'
+  const lvBase = lvNBaseFor(soldSkillId, resourceLv1Base)
+  for (const id of ids) {
+    const entry = _equipped.get(id)
+    if (!entry) continue
+    const def = getAffixV2Definition(entry.defId)
+    if (!def || def.trigger.type !== 'on_sold') continue
+
+    const triggerCtx: TriggerContext = { selfAffixId: entry.defId, selfKey: entry.key }
+    if (!evaluateTrigger(def.trigger, triggerCtx)) continue
+
+    const ctx: ResolveContext = {
+      instanceId: entry.instanceId,
+      skillId: entry.skillId,
+      key: entry.key,
+      skillResource,
+      skillResourceLv1Base: lvBase(skillResource),
+      resourceLv1Base: lvBase,
+      nowMs,
+      isCrit: false,
+      currentWordLength: 0,
+      hostSkillLevel: gameState.affixSkills.get(entry.skillId)?.level ?? 1,
+      selfSection: def.section,
+      selfDefId: def.id,
+      getPlayerResource,
+      persistScope,
+      resolveSelector: _selectorResolver,
+      queryEquipped: buildQueryEquipped(entry),
+    }
+    const result = resolveEffect(applyEnchantToEffect(def.effect, getEnchant(entry.instanceId)), ctx)
+    results.push({ sourceInstanceId: entry.instanceId, sourceSkillId: entry.skillId, sourceKey: entry.key, result })
+
+    _ghostLog.push({
+      timestamp: nowMs,
+      instanceId: entry.instanceId,
+      defId: entry.defId,
+      trigger: def.trigger.type,
+      result,
+    })
+    recordApprenticeTriggerHit(entry)
+  }
+  return results
+}
+
 // ============================================
 // Battle lifecycle hooks
 // ============================================

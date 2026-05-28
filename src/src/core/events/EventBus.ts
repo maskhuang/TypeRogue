@@ -32,6 +32,7 @@ export interface GameEvents {
   'ally:joined': { skillId: string; sourceInstanceId: string }
   // V2 取代/吞噬事件（consume_skill 本场移除目标 skill 时发射；字母徽章刷新用）
   'skill:consumed': { skillId: string }
+  'skill:sold': { skillId: string }
 
   // 效果队列事件
   'effect:queued': { effect: unknown; queueSize: number }

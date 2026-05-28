@@ -85,6 +85,11 @@ export type Phase1TriggerSpec =
    *  本场移除时派发；hook 层只迭代被移除 skill 上的 on_removed 词条。
    *  无移除源（场上无 consume_skill）时永不触发（build-around · 与 on_resource_consumed 同纪律）*/
   | { type: 'on_removed' }
+  /** 本技能「被出售」时触发（建造期独占 · 玩家主动处置）· 仅在玩家于商店卖掉宿主 skill 时派发一次（一次性）·
+   *  hook 层只迭代被售 skill 上的 on_sold 词条 · persistScope='run' 永久结算 ·
+   *  与「移除/阵亡」(on_removed) 区分：卖出是无条件的玩家决策，移除是机制触发（详双阶段触发模型）·
+   *  生成时仅挂在效果在战斗外有意义（dual-capable）的 affix 上，magnitude 按一次性整支预算标定（参考 nut_crack T）*/
+  | { type: 'on_sold' }
   /** 「有技能被取代/吞噬」时触发（观察者 · 反应型）· 全局监听 consume_skill 移除事件，**任一**技能被移除即触发 ·
    *  与 on_removed 的区别：on_removed 是「本技能」死亡回响（仅被移除者自身），本触发是「场上有技能被移除」的旁观者
    *  （宿主自身在不在场无关，谁被吞都响）· 与 on_resource_consumed 同纪律：无 consume_skill 源时永不触发（build-around）*/

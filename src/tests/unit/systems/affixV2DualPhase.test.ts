@@ -11,9 +11,10 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import { resolveEffect, type ResolveContext } from '../../../src/systems/affixV2Effect'
 import { resetAllAffixV2State, peekInstanceState } from '../../../src/systems/affixV2State'
 import { clearAllEquipped } from '../../../src/systems/affixV2Equipped'
-import { runBuildResourceConsumed } from '../../../src/systems/affixV2BuildIntegration'
+import { runBuildResourceConsumed, runBuildSkillSold, wireV2BuildIntegration } from '../../../src/systems/affixV2BuildIntegration'
 import { wireV2BattleIntegration, defaultResourceLv1Base } from '../../../src/systems/affixV2BattleIntegration'
 import { registerDynamicAffixV2, unregisterDynamicAffixV2 } from '../../../src/data/affixV2'
+import { eventBus } from '../../../src/core/events/EventBus'
 import { state as gameState } from '../../../src/core/state'
 import type { AffixSkillInstance } from '../../../src/data/affixes'
 
@@ -147,6 +148,8 @@ describe('建造期 on_resource_consumed 端到端（runBuildResourceConsumed）
     unregisterDynamicAffixV2('dp_supp')
     unregisterDynamicAffixV2('dp_rattle')
     unregisterDynamicAffixV2('dp_observer')
+    unregisterDynamicAffixV2('dp_sold_drip')
+    unregisterDynamicAffixV2('dp_sold_supp')
   })
 
   it('coprophagy：买 100 gold → 永久返现 fraction×100', () => {
@@ -210,5 +213,48 @@ describe('建造期 on_resource_consumed 端到端（runBuildResourceConsumed）
     expect(gameState.affixSkills.has('observer_skill')).toBe(true)    // 旁观者自身不被吞（score）
     // payout 10×base（supplant）+ 观察者 3×base（dp_observer 产 gold）= 13×base
     expect(gameState.gold).toBeCloseTo(1000 + 13 * goldBase, 4)
+  })
+
+  it('on_sold（一次性）：卖技能 → 被售 skill 上的 on_sold 词条产 gold（persistScope=run）', () => {
+    // 一次性大额（T 参考 nut_crack ≈ 18）
+    registerDynamicAffixV2({
+      id: 'dp_sold_drip', name_zh: '清仓', name_en: 'sold-drip', section: 'maintenance', tags: ['maintenance'], phase: 'P1',
+      trigger: { type: 'on_sold' }, effect: { kind: 'gain_resource', resource: 'gold', ratio: 18 },
+    })
+    gameState.affixSkills.set('wares', mkSkill('wares', 'gold', ['dp_sold_drip']))
+    gameState.player.bindings = new Map([['A', 'wares']])
+
+    const changed = runBuildSkillSold('wares')
+    expect(changed).toBe(true)
+    expect(gameState.gold).toBeCloseTo(1000 + 18 * goldBase, 4)
+  })
+
+  it('on_sold + supplant：卖技能 → 吞一个 gold 邻居换 payout（不吞自己）', () => {
+    registerDynamicAffixV2({
+      id: 'dp_sold_supp', name_zh: '清仓取代', name_en: 'sold-supplant', section: 'agonistic', tags: ['agonistic'], phase: 'P1',
+      trigger: { type: 'on_sold' }, effect: { kind: 'consume_skill', selector: { type: 'all_skills' }, ratio: 10 },
+    })
+    gameState.affixSkills.set('seller', mkSkill('seller', 'gold', ['dp_sold_supp']))
+    gameState.affixSkills.set('gold_neighbor', mkSkill('gold_neighbor', 'gold', []))
+    gameState.player.bindings = new Map([['A', 'seller'], ['B', 'gold_neighbor']])
+
+    const changed = runBuildSkillSold('seller')
+    expect(changed).toBe(true)
+    expect(gameState.affixSkills.has('gold_neighbor')).toBe(false)   // 吞掉邻居
+    expect(gameState.affixSkills.has('seller')).toBe(true)           // 不吞自己（consume_skill 默认排除 self）
+    expect(gameState.gold).toBeCloseTo(1000 + 10 * goldBase, 4)
+  })
+
+  it('事件链：emit skill:sold → 建造集成派发 on_sold', () => {
+    wireV2BuildIntegration()   // 订阅 skill:sold（idempotent）
+    registerDynamicAffixV2({
+      id: 'dp_sold_drip', name_zh: '清仓', name_en: 'sold-drip', section: 'maintenance', tags: ['maintenance'], phase: 'P1',
+      trigger: { type: 'on_sold' }, effect: { kind: 'gain_resource', resource: 'gold', ratio: 5 },
+    })
+    gameState.affixSkills.set('wares', mkSkill('wares', 'gold', ['dp_sold_drip']))
+    gameState.player.bindings = new Map([['A', 'wares']])
+
+    eventBus.emit('skill:sold', { skillId: 'wares' })
+    expect(gameState.gold).toBeCloseTo(1000 + 5 * goldBase, 4)
   })
 })
