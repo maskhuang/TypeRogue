@@ -88,6 +88,15 @@ export interface ResolveContext {
   readonly consumedResource?: string
   /** 本次被消耗的绝对数量（reclaim_consumed 用 · 仅 on_resource_consumed 上下文有值）*/
   readonly consumedAmount?: number
+  /**
+   * 触发发生的阶段 · 决定 effect 的永久性（双阶段触发模型）。
+   *   'fight'（缺省）= 战斗内触发 → 本场临时（cum 关末清 / aura fight-only / consume 本场移除）
+   *   'run'          = 战斗外（建造期）触发 → 永久（consume 永久移除 + 持久产出）
+   * persistScope='run' 时：纯战斗运行时态 effect（add/multiply/aura/mark/ally/haste/stack/
+   *   convert/proportional/fire_target）直接静默 no-op（无战斗外意义）；
+   *   仅 gain_resource / reclaim_consumed / consume_skill 等"持久产出/结构改动"放行（详 resolveInto 顶部 guard）。
+   */
+  readonly persistScope?: 'fight' | 'run'
 
   // === scope-aware loadout 查询（运行时集成层注入）===
   /** 单点 scope 查询：返回 scope 内已装备的 affix 视图列表 ·
@@ -297,7 +306,23 @@ function spawnFilteredSkills(
   return out
 }
 
+/** 战斗外（persistScope='run'）触发时直接静默 no-op 的 effect kind ·
+ *  这些是纯战斗运行时态（关内累加 / fight-only aura / 焦点·结盟·极速·stack 寄存器 /
+ *  需战斗 fire 的转化与重触发 / 本场临时技能），无战斗外意义 → 建造期触发整条 inert。
+ *  放行的：noop / gain_resource / reclaim_consumed / consume_skill（持久产出或结构改动，
+ *  其中 gain_resource·reclaim 的非持久资源由建造集成层过滤，consume_skill 的非 gold 目标由下方过滤）。*/
+const RUN_SILENT_KINDS: ReadonlySet<EffectSpec['kind']> = new Set([
+  'add', 'multiply', 'apply_aura', 'apply_status', 'apply_mark', 'apply_ally',
+  'grant_haste', 'stack_inc', 'stack_release', 'convert_resource', 'gain_proportional',
+  'fire_target', 'gain_temp_skill',
+])
+
+/** 战斗外有意义（可活过战斗）的资源 · 单场资源（score/base/multiplier/time/shield）建造期产出即蒸发 */
+export const PERSISTENT_RESOURCES: ReadonlySet<string> = new Set(['gold'])
+
 function resolveInto(spec: EffectSpec, ctx: ResolveContext, result: ResolveResult): void {
+  // 双阶段：战斗外触发时，纯战斗运行时态 effect 直接静默（无意义的直接 inert）
+  if (ctx.persistScope === 'run' && RUN_SILENT_KINDS.has(spec.kind)) return
   switch (spec.kind) {
     case 'noop':
       return
@@ -562,9 +587,14 @@ function resolveInto(spec: EffectSpec, ctx: ResolveContext, result: ResolveResul
       const uniq = spec.allowSelf
         ? [...new Set(candidates)]
         : [...new Set(candidates)].filter(id => id !== ctx.skillId)
-      const matches = spec.filter
+      let matches = spec.filter
         ? uniq.filter(id => matchLiveSkill(id, spec.filter!))
         : uniq
+      // 双阶段：战斗外（'run'）永久移除——只吞产持久资源(gold)的技能，否则产出当场蒸发=无意义 →
+      // 收紧到 gold 技能；无 gold 候选 → 整条静默 no-op（"实际只在吞 gold 技能时才动"）。
+      if (ctx.persistScope === 'run') {
+        matches = matches.filter(id => PERSISTENT_RESOURCES.has(gameState.affixSkills.get(id)?.resource ?? ''))
+      }
       if (matches.length === 0) return
       // 命中多个随机取 1 · 实际移除 + 产出 + on_removed 派发由集成层执行
       const targetSkillId = matches[Math.floor(random() * matches.length)]

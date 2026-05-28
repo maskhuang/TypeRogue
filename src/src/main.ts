@@ -42,6 +42,7 @@ import { initFullTutorial } from './systems/tutorial/tutorialInit';
 import { A8_WORD_COMPRESS_RATIO } from './core/constants';
 import { initShopPreview } from './ui/shopPreview';
 import { wireV2BattleIntegration } from './systems/affixV2BattleIntegration';
+import { wireV2BuildIntegration } from './systems/affixV2BuildIntegration';
 import { warmupHasteBudget } from './data/affixV2Generator';
 import { renderHandbook } from './ui/handbook/handbookOverlay';
 
@@ -79,6 +80,9 @@ async function init(): Promise<void> {
 
   // V2 affix 战斗集成 · 订阅 battle:start / word:complete · 装配登记表为空时 no-op
   wireV2BattleIntegration();
+
+  // V2 affix 建造期集成 · 订阅 shop:purchase → on_resource_consumed(persistScope='run') · 双阶段触发
+  wireV2BuildIntegration();
 
   // 加载期预热极速供需预算标定（确定性、幂等）· 避免首次生成词条时同步掉帧
   warmupHasteBudget();

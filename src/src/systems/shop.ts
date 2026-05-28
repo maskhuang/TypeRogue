@@ -1464,7 +1464,7 @@ export function dispatchShopMode(won: boolean, _isTutorial: boolean): 'classic' 
 }
 
 // === 金币显示 ===
-function updateGoldDisplay(): void {
+export function updateGoldDisplay(): void {
   const el = getElements();
   el.shopGold.textContent = String(state.gold);
 }
@@ -2729,7 +2729,7 @@ function showAutoEnchantmentPanel(
 
 // === 核心购买逻辑（仅技能） ===
 // 返回购买的 skillId 或 null（非技能/失败），供调用者做后续绑定/进化
-function executePurchase(index: number): { skillId: string; isNew: boolean } | null {
+function executePurchase(index: number): { skillId: string; isNew: boolean; cost: number } | null {
   const item = state.shop.items[index];
   if (!item || item.type !== 'skill') return null;
 
@@ -2822,7 +2822,7 @@ function executePurchase(index: number): { skillId: string; isNew: boolean } | n
     isUpgrade: !isNew,
   });
 
-  return { skillId, isNew };
+  return { skillId, isNew, cost };
 }
 
 /**
@@ -2858,7 +2858,7 @@ function purchaseShopItem(index: number): void {
   renderBuildManager();
 
   // 发送购买事件（引导系统 L1/L2 监听），放在所有后处理完成后
-  eventBus.emit('shop:purchase', { type: 'skill', itemId: result.skillId });
+  eventBus.emit('shop:purchase', { type: 'skill', itemId: result.skillId, price: result.cost });
 }
 
 // === 购买遗物商品 ===
@@ -4374,7 +4374,7 @@ function handleDropOnKey(targetKey: string, payload: DragPayload): void {
     renderBuildManager();
 
     // 发送购买事件（引导系统 L1/L2 监听）
-    eventBus.emit('shop:purchase', { type: 'skill', itemId: skillId });
+    eventBus.emit('shop:purchase', { type: 'skill', itemId: skillId, price: result.cost });
   } else if (payload.type === 'skill-inventory' || payload.type === 'skill-key') {
     // 拖拽已有技能到键位 → 绑定/交换
     const skillId = payload.skillId;

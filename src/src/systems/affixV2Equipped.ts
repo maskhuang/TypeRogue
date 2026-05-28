@@ -971,6 +971,7 @@ export function hookOnResourceConsumed(
   resourceLv1Base: (r: string, level?: number) => number,
   getPlayerResource: (r: string) => number,
   nowMs: number,
+  persistScope: 'fight' | 'run' = 'fight',
 ): SourcedResult[] {
   const results: SourcedResult[] = []
   for (const entry of _equipped.values()) {
@@ -1001,6 +1002,7 @@ export function hookOnResourceConsumed(
       getPlayerResource,
       consumedResource,
       consumedAmount,
+      persistScope,
       resolveSelector: _selectorResolver,
       queryEquipped: buildQueryEquipped(entry),
     }
