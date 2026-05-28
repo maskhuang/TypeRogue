@@ -317,7 +317,9 @@ html[lang^="en"] .menu-style-cover .menu-title {
     position: absolute; top: 0; left: 0; width: 100%; height: 100%;
     background: rgba(0, 0, 0, 0.45);
     display: flex; align-items: center; justify-content: center;
-    z-index: 9500;
+    /* 10001：抬到局内"表面层"(终端/工作台/纸面 z=9999) 与 CFG 入口(z=10000) 之上 ——
+       否则在终端/工作台屏点 CFG，设置面板会被 z=9999 的屏遮住。 */
+    z-index: 10001;
 }
 .settings-panel {
     display: flex; flex-direction: column; gap: 16px;
@@ -453,29 +455,70 @@ html[lang^="en"] .menu-style-cover .menu-title {
     border-color: #f4d590;
 }
 
-/* In-game settings toggle stamp — top-right corner during battle/terminal/workbench */
+/* 局内设置入口 · 右上角 CFG 金属铭牌 —— 风格随整体：金色拉丝面板 + 深色刻字 + 像素字体，
+   与 CRT 外框顶栏(.battle-bezel-top)、终端金色控件(TAB 工作台/F 键提示) 同材质，自洽于任意局内屏背景。
+   absolute 锚定在 900×600 #game-container 内；z 10000 抬到 9999 "表面层"(终端/工作台/纸面，抬出扫描线)之上。 */
 .settings-toggle-icon {
-    position: fixed;
-    top: 14px;
-    right: 18px;
-    z-index: 200;
-    background: rgba(0,0,0,0.85);
-    border: 1px solid var(--color-seal-gold);
-    color: var(--color-seal-gold);
-    font-family: var(--font-dossier);
-    font-size: 13px;
-    letter-spacing: 3px;
-    padding: 5px 12px;
+    position: absolute;
+    top: 9px;
+    right: 14px;
+    z-index: 10000;
+    width: 24px;
+    height: 22px;
+    display: grid;
+    place-items: center;
+    font-size: 14px;
+    line-height: 1;
+    color: #2a1f10;
+    background: linear-gradient(180deg, #d8c6a0 0%, #b8a06e 100%);
+    border: 1px solid rgba(0,0,0,0.45);
+    border-radius: 3px;
+    padding: 0;
     cursor: pointer;
-    opacity: 0.7;
     user-select: none;
-    box-shadow: 0 0 0 2px rgba(0,0,0,0.45);
+    opacity: 0.9;
+    box-shadow:
+        inset 0 1px 0 rgba(255,255,255,0.5),
+        inset 0 -1px 0 rgba(0,0,0,0.28),
+        0 1px 2px rgba(0,0,0,0.45);
     transition: opacity 0.15s ease, background 0.15s ease;
 }
 .settings-toggle-icon:hover {
     opacity: 1;
-    background: rgba(255,220,160,0.15);
+    background: linear-gradient(180deg, #e6d4ac 0%, #c8ac74 100%);
 }
+/* terminal 屏：绿磷光控件，融入 DPCA-VT220 phosphor green CRT（金牌在近黑屏上突兀） */
+.settings-toggle-icon.on-terminal {
+    background: linear-gradient(180deg, #123a22 0%, #0c2417 100%);
+    border-color: rgba(108,255,138,0.55);
+    color: #8effa8;
+    text-shadow: 0 0 4px rgba(108,255,138,0.6);
+    box-shadow:
+        inset 0 1px 0 rgba(140,255,170,0.18),
+        inset 0 -1px 0 rgba(0,0,0,0.4),
+        0 0 6px rgba(108,255,138,0.25);
+}
+.settings-toggle-icon.on-terminal:hover {
+    background: linear-gradient(180deg, #1a5030 0%, #0f301f 100%);
+}
+/* workbench 屏：暖琥珀控件，融入暗木桌面(#1c150c)与金章/牛皮配色 */
+.settings-toggle-icon.on-workbench {
+    background: linear-gradient(180deg, #3a2c14 0%, #241a0c 100%);
+    border-color: rgba(232,200,121,0.55);
+    color: #f0d49a;
+    text-shadow: 0 0 4px rgba(232,200,121,0.4);
+    box-shadow:
+        inset 0 1px 0 rgba(255,233,168,0.18),
+        inset 0 -1px 0 rgba(0,0,0,0.4),
+        0 0 5px rgba(232,200,121,0.2);
+}
+.settings-toggle-icon.on-workbench:hover {
+    background: linear-gradient(180deg, #4a3a1c 0%, #2e2210 100%);
+}
+
+/* 文牍设置单（复用菜单申请表 #menu-ov-request）在局内复用 · 提到「表面层 9999」之上才能盖住终端/工作台屏 */
+#menu-ov-shroud { z-index: 10010; }
+#menu-ov-request, #menu-ov-handbook { z-index: 10011; }
 
 /* ============================================ */
 /* BATTLE SCREEN - CRT MONITOR (DPCA-VT220)     */

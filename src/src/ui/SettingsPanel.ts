@@ -161,24 +161,29 @@ export function closeSettingsPanel(): void {
   overlay = null
   if (escHandler) { window.removeEventListener('keydown', escHandler); escHandler = null }
   if (battlePausedByIcon) {
-    eventBus.emit('battle:resume')
+    eventBus.emit('battle:resume', {})
     battlePausedByIcon = false
   }
 }
 
 // === In-game CFG 图标 ===
 
-const ICON_VISIBLE_SCREENS = ['battle-screen', 'terminal-shop-screen', 'workbench-screen-preview']
-
-/** 根据当前可见屏幕决定 CFG 图标显示与否 —— 仅 battle / terminal / workbench 三屏 */
+/** 根据当前可见屏幕决定 CFG 图标显隐 + 色调 —— battle(金·默认) / terminal(绿磷光) / workbench(暖琥珀)，
+ *  使齿轮与各屏主色调统一（金牌在暗色 CRT/桌面上突兀）。 */
 export function updateSettingsToggleIcon(): void {
   const icon = document.getElementById('settings-toggle-icon') as HTMLButtonElement | null
   if (!icon) return
-  const anyVisible = ICON_VISIBLE_SCREENS.some(id => {
+  const isVisible = (id: string): boolean => {
     const el = document.getElementById(id)
-    return el && el.style.display !== 'none' && el.style.display !== ''
-  })
-  icon.style.display = anyVisible ? 'inline-block' : 'none'
+    return !!el && el.style.display !== 'none' && el.style.display !== ''
+  }
+  const battle = isVisible('battle-screen')
+  const terminal = isVisible('terminal-shop-screen')
+  const workbench = isVisible('workbench-screen-preview')
+  icon.style.display = (battle || terminal || workbench) ? 'inline-block' : 'none'
+  // battle 优先取默认金色；terminal/workbench 各自换色（互斥，正常同时只显一屏）
+  icon.classList.toggle('on-terminal', terminal && !battle)
+  icon.classList.toggle('on-workbench', workbench && !battle && !terminal)
 }
 
 /** 应用启动时调用一次：绑定点击 + 初始可见性 */
@@ -188,13 +193,17 @@ export function wireSettingsToggleIcon(): void {
   ;(icon as HTMLElement).dataset.bound = '1'
   icon.addEventListener('click', () => {
     playSound('click')
-    if (overlay) { closeSettingsPanel(); return } // 已开 → 切关
     const battleVisible = document.getElementById('battle-screen')?.style.display === 'flex'
     if (battleVisible) {
-      eventBus.emit('battle:pause')
+      eventBus.emit('battle:pause', {})
       battlePausedByIcon = true
     }
-    openSettingsPanel()
+    // 打开「文牍」设置单 = 复用菜单工位调整申请表（main.ts 接管显示/关闭）· 设置只此一套
+    eventBus.emit('settings:open', {})
+  })
+  // 设置单关闭（遮罩点击 / ESC / 提交）→ 配对 battle:resume
+  eventBus.on('settings:closed', () => {
+    if (battlePausedByIcon) { eventBus.emit('battle:resume', {}); battlePausedByIcon = false }
   })
   updateSettingsToggleIcon()
 }

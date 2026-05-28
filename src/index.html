@@ -30,6 +30,8 @@
     </svg>
 
     <div id="game-container">
+        <!-- 局内设置入口 · 右上角齿轮图标（battle/terminal/workbench 屏可见 · 由 SettingsPanel.updateSettingsToggleIcon 控制显隐；点击经 eventBus 打开文牍设置单）-->
+        <button id="settings-toggle-icon" class="settings-toggle-icon" type="button" aria-label="settings" title="设置 / SETTINGS" style="display:none">⚙</button>
         <!-- === MAIN MENU (desk stage · translucent over shader · Stage 2 · 2026-05) === -->
         <div id="main-menu-screen" class="screen menu-style-cover desk-stage translucent" style="display:none">
             <!-- Bottom-left: legacy menu-info (version + grade), kept for compatibility -->

@@ -43,6 +43,10 @@ export interface GameEvents {
   'battle:pause': Record<string, never>
   'battle:resume': Record<string, never>
 
+  // 局内设置入口 · CFG 图标请求打开/关闭「文牍设置面板」(复用菜单申请表 #menu-ov-request)
+  'settings:open': Record<string, never>
+  'settings:closed': Record<string, never>
+
   // 分数事件
   'score:update': { score: number; multiplier: number; combo: number }
 

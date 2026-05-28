@@ -375,6 +375,8 @@ function extractSuffix(storedFullId: string | null): string {
   return m ? m[1] : DEFAULT_SUFFIX;
 }
 
+let _inGameSettingsWired = false;   // 'settings:open' 监听只接一次（setupDeskMenu 有两处调用点）
+
 function setupDeskMenu(): void {
   // 时钟（真实时间，每秒更新；不像 mock 那样加速）
   const clockEl = document.getElementById('menu-clock-display');
@@ -550,6 +552,7 @@ function setupDeskMenu(): void {
     shroud?.classList.remove('show');
     ovHandbook?.classList.remove('show');
     ovRequest?.classList.remove('show');
+    eventBus.emit('settings:closed', {});   // 通知局内 CFG 入口：配对 battle:resume
     // 关闭后焦点回到打卡输入
     punchInput?.focus();
   };
@@ -557,6 +560,15 @@ function setupDeskMenu(): void {
   handbookObj?.addEventListener('click', () => openOverlay('handbook'));
   requestObj?.addEventListener('click', () => openOverlay('request'));
   shroud?.addEventListener('click', closeOverlay);
+
+  // 局内复用：把守则/申请表 overlay + 遮罩提到 #game-container 顶层（脱离 menu 屏 → 任意局内屏可显）。
+  // CFG 图标经 eventBus('settings:open') 打开同一张「工位调整申请」设置单，设置只此一套。
+  const gc = document.getElementById('game-container');
+  if (gc) { if (shroud) gc.appendChild(shroud); if (ovHandbook) gc.appendChild(ovHandbook); if (ovRequest) gc.appendChild(ovRequest); }
+  if (!_inGameSettingsWired) {
+    _inGameSettingsWired = true;   // setupDeskMenu 可能重入 → 只接一次监听（闭包绑定稳定 DOM，重入无碍）
+    eventBus.on('settings:open', () => openOverlay('request'));
+  }
 
   // ESC 关闭覆盖层
   document.addEventListener('keydown', (e) => {
