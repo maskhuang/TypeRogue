@@ -957,12 +957,16 @@ function emitV2SkillBaseOutput(skillId: string, sourceKey: string, resource: str
   cumBase += getSkillCumBase(skillId)
   cumFactor += getSkillCumFactor(skillId)
 
+  // 双阶段永久层：战斗外（persistScope='run'）触发的 add/multiply 累积到实例字段，跨关存续（不随关末清）
+  const permBase = skill.permBaseAdd ?? 0
+  const permFactor = skill.permFactorAdd ?? 0
+
   // Lv.N 基础产出：随技能等级缩放（之前恒取 Lv1，技能升级不生效）
   const lvN = skill.level ?? 1
   const lv1Base = defaultResourceLv1Base(resource, lvN)
   // 极速系遗物产出加成（stack_momentum 逐次递进 + stack_dividend 累计里程碑）
   const relicBonus = getHasteRelicOutputBonus(skillId)
-  let baseOutput = (lv1Base + cumBase) * (1 + cumFactor) * (1 + relicBonus) * outputMult
+  let baseOutput = (lv1Base + cumBase + permBase) * (1 + cumFactor + permFactor) * (1 + relicBonus) * outputMult
 
   // rainbow aura：基础产出改为随机资源，按目标资源 Lv.N base 重缩放（每次 fire 重抽）
   let outResource = resource

@@ -325,6 +325,9 @@ export interface AffixSkillInstance {
   rotation?: number                      // 形状旋转态（0~3，默认 0）
   v2Ids?: string[]                       // V2 affix def id 列表（非空时旧 affixes 通道短路）
   v2Uses?: Record<string, number>        // tool/认知词条已用次数（defId → count）· 用完消失计数
+  transient?: boolean                    // 本场临时技能（gain_temp_skill/nest-build）· 战斗结束时移除
+  permBaseAdd?: number                   // V2 双阶段：战斗外触发的 add 累积到此（run 永久底分，不随关末清）· 随实例存续
+  permFactorAdd?: number                 // V2 双阶段：战斗外触发的 multiply 累积到此（run 永久倍率 delta，不随关末清）
 }
 
 // ===== 技能运行时状态（战斗中） =====

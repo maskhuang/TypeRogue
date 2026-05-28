@@ -52,6 +52,24 @@ describe('V2 skill 基础产出 emit', () => {
     expect(r.score - 11.913).toBeCloseTo(12.826, 2)
   })
 
+  it('永久层 permBaseAdd / permFactorAdd 计入基础产出（双阶段·战斗外累积）', () => {
+    registerDynamicAffixV2({
+      id: 'dp_noop', name_zh: '空', name_en: 'noop', section: 'maintenance', tags: ['maintenance'], phase: 'P1',
+      trigger: { type: 'passive' }, effect: { kind: 'noop' },
+    })
+    const sk = state.affixSkills.get(SKILL_ID)!
+    sk.v2Ids = ['dp_noop']
+    sk.permBaseAdd = 5
+    sk.permFactorAdd = 0.5
+    equipAffixV2(SKILL_ID, KEY, 'dp_noop')
+
+    const r = state.resources as unknown as Record<string, number>
+    onSkillFireV2(SKILL_ID, SKILL_ID, KEY, 'score', false, 0)
+    // (lv1Base 11 + permBase 5) × (1 + permFactor 0.5) = 16 × 1.5 = 24
+    expect(r.score).toBeCloseTo(24, 2)
+    unregisterDynamicAffixV2('dp_noop')
+  })
+
   it('单 bite 累加：1st fire 11 × 1.117 = 12.287，2nd × 1.234 = 13.574', () => {
     state.affixSkills.get(SKILL_ID)!.v2Ids = ['bite']
     equipAffixV2(SKILL_ID, KEY, 'bite')

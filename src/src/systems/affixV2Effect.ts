@@ -312,7 +312,8 @@ function spawnFilteredSkills(
  *  放行的：noop / gain_resource / reclaim_consumed / consume_skill（持久产出或结构改动，
  *  其中 gain_resource·reclaim 的非持久资源由建造集成层过滤，consume_skill 的非 gold 目标由下方过滤）。*/
 const RUN_SILENT_KINDS: ReadonlySet<EffectSpec['kind']> = new Set([
-  'add', 'multiply', 'apply_aura', 'apply_status', 'apply_mark', 'apply_ally',
+  // add/multiply 不在此列：战斗外触发时改写永久层（permBaseAdd/permFactorAdd），见各自 case 的 'run' 分支
+  'apply_aura', 'apply_status', 'apply_mark', 'apply_ally',
   'grant_haste', 'stack_inc', 'stack_release', 'convert_resource', 'gain_proportional',
   'fire_target', 'gain_temp_skill',
 ])
@@ -330,6 +331,15 @@ function resolveInto(spec: EffectSpec, ctx: ResolveContext, result: ResolveResul
     case 'add': {
       const factor = applyScale(spec.scale, ctx)
       const delta = spec.ratio * ctx.skillResourceLv1Base * factor
+      if (ctx.persistScope === 'run') {
+        // 双阶段·战斗外：累积到目标 skill 实例的永久底分（跨关存续，不随关末清）
+        const targets = spec.selector ? (ctx.resolveSelector?.(spec.selector, ctx.skillId, ctx.key) ?? [ctx.skillId]) : [ctx.skillId]
+        for (const tid of targets) {
+          const sk = gameState.affixSkills.get(tid)
+          if (sk) sk.permBaseAdd = (sk.permBaseAdd ?? 0) + delta
+        }
+        return
+      }
       if (spec.selector) {
         // scope-broadcast：写到每个 target skill 的 aggregate
         const targets = ctx.resolveSelector?.(spec.selector, ctx.skillId, ctx.key) ?? [ctx.skillId]
@@ -344,6 +354,15 @@ function resolveInto(spec: EffectSpec, ctx: ResolveContext, result: ResolveResul
     case 'multiply': {
       const factor = applyScale(spec.scale, ctx)
       const delta = spec.amount * factor
+      if (ctx.persistScope === 'run') {
+        // 双阶段·战斗外：累积到目标 skill 实例的永久倍率 delta（跨关存续，不随关末清）
+        const targets = spec.selector ? (ctx.resolveSelector?.(spec.selector, ctx.skillId, ctx.key) ?? [ctx.skillId]) : [ctx.skillId]
+        for (const tid of targets) {
+          const sk = gameState.affixSkills.get(tid)
+          if (sk) sk.permFactorAdd = (sk.permFactorAdd ?? 0) + delta
+        }
+        return
+      }
       if (spec.selector) {
         const targets = ctx.resolveSelector?.(spec.selector, ctx.skillId, ctx.key) ?? [ctx.skillId]
         for (const tid of targets) addSkillCumFactor(tid, delta)

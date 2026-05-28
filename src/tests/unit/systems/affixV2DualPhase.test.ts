@@ -96,13 +96,23 @@ describe('reclaim_consumed · persistScope=run', () => {
 // ============================================
 
 describe('RUN_SILENT_KINDS · persistScope=run 静默', () => {
-  it("add 'run' → 不累加（instance cum 保持空）", () => {
+  it("add 'run' → 写永久底分 permBaseAdd（不碰 fight cum）", () => {
+    gameState.affixSkills.set('host', mkSkill('host', 'score'))
     const ctx = mkCtx({ persistScope: 'run' })
     resolveEffect({ kind: 'add', ratio: 1 }, ctx)
-    expect(peekInstanceState('inst_host')?.cumulativeBaseAdd ?? 0).toBe(0)
+    expect(gameState.affixSkills.get('host')?.permBaseAdd).toBeCloseTo(lv1('score'), 5)
+    expect(peekInstanceState('inst_host')?.cumulativeBaseAdd ?? 0).toBe(0)   // fight cum 不动
   })
 
-  it("add 'fight'（缺省）→ 正常累加（回归）", () => {
+  it("multiply 'run' → 写永久倍率 permFactorAdd", () => {
+    gameState.affixSkills.set('host', mkSkill('host', 'score'))
+    const ctx = mkCtx({ persistScope: 'run' })
+    resolveEffect({ kind: 'multiply', amount: 0.2 }, ctx)
+    expect(gameState.affixSkills.get('host')?.permFactorAdd).toBeCloseTo(0.2, 5)
+    expect(peekInstanceState('inst_host')?.cumulativeFactorAdd ?? 0).toBe(0)
+  })
+
+  it("add 'fight'（缺省）→ 正常累加 fight cum（回归）", () => {
     const ctx = mkCtx()
     resolveEffect({ kind: 'add', ratio: 1 }, ctx)
     expect(peekInstanceState('inst_host')?.cumulativeBaseAdd).toBeCloseTo(lv1('score'), 5)
@@ -151,6 +161,7 @@ describe('建造期 on_resource_consumed 端到端（runBuildResourceConsumed）
     unregisterDynamicAffixV2('dp_observer')
     unregisterDynamicAffixV2('dp_sold_drip')
     unregisterDynamicAffixV2('dp_sold_supp')
+    unregisterDynamicAffixV2('dp_climb')
   })
 
   it('coprophagy：买 100 gold → 永久返现 fraction×100', () => {
@@ -257,6 +268,21 @@ describe('建造期 on_resource_consumed 端到端（runBuildResourceConsumed）
 
     eventBus.emit('skill:sold', { skillId: 'wares' })
     expect(gameState.gold).toBeCloseTo(1000 + 5 * goldBase, 4)
+  })
+
+  it('climb（add）抽到 on_resource_consumed：建造期买东西 → 永久底分 permBaseAdd', () => {
+    const scoreBase = defaultResourceLv1Base('score', 1)
+    registerDynamicAffixV2({
+      id: 'dp_climb', name_zh: '攀爬', name_en: 'climb', section: 'locomotion', tags: ['locomotion'], phase: 'P1',
+      trigger: { type: 'on_resource_consumed' }, effect: { kind: 'add', ratio: 1 },
+    })
+    gameState.affixSkills.set('grower', mkSkill('grower', 'score', ['dp_climb']))
+    gameState.player.bindings = new Map([['A', 'grower']])
+
+    const changed = runBuildResourceConsumed(50)
+    expect(changed).toBe(false)   // add 不进 resourceProduced/skillsRemoved → processV2BuildResults 无"可见改动"
+    // 但永久底分已写到实例（跨关存续，下场 fire 时计入 base output）
+    expect(gameState.affixSkills.get('grower')?.permBaseAdd).toBeCloseTo(scoreBase, 4)
   })
 })
 
