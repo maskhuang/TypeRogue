@@ -974,21 +974,15 @@ export function rollAffixV2Spec(
       triggerSpec = retry.spec
       curFreq = retry.freq
     }
-    // filter：hasTag 锁 1 段（决定临时技能的行为族）+ 40% resource（与 teach 同纪律）· recipe_pool 全新生成 · widen 兜底
-    const recipeSections = [...new Set(ALL_RECIPES.map(r => r.section))]
-    let nestFilter: SkillFilter = { hasTag: pickRandom(recipeSections), notOwned: false }
-    if (random() < 0.4) {
-      nestFilter = { ...nestFilter, resource: pickRandom(MATCHED_RESOURCE_POOL) }
-    }
-    // placement：临时技能落位作用域（neighbors 偏多 → 就近落位，供 supplant 取食；all_skills 稀有 → 任意空位）
+    // 筑巢 = 生成「本技能」的临时复制（self_copy）· 剥离自身词条防递归（见 affixV2Effect gain_temp_skill）·
+    // 不需 filter/候选池（复制宿主自身）；placement 决定落位作用域（neighbors 就近供 supplant 取食 / all_skills 任意空位）
     const placement = pickGatedScope(NEST_PLACEMENT_POOL, recipe.kind)
     effect = {
       kind: 'gain_temp_skill',
-      filter: nestFilter,
-      source: 'recipe_pool',
+      filter: {},                 // self_copy 不使用 filter（复制宿主本身）
+      source: 'self_copy',
       count: 1,
       levelMode: 'inherit_host',
-      fallback: 'widen',
       placement,
     }
   } else {

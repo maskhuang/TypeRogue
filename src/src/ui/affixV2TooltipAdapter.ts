@@ -455,11 +455,17 @@ export function formatEffectDescription(effect: EffectSpec, skillResource?: stri
         : `${sourceStr} ${count} ${filterStr} skill${count > 1 ? 's' : ''} (${lvStr})`
     }
     case 'gain_temp_skill': {
-      // 临时技能：在 placement 内空键位生成一个满足 filter 的技能（本场可用），战斗结束移除
+      // 临时技能：在 placement 内空键位生成（本场可用），战斗结束移除
       const count = effect.count ?? 1
+      const where = formatSelector(effect.placement, host)
+      // self_copy（筑巢）：生成本技能自身的临时复制
+      if (effect.source === 'self_copy') {
+        return zh
+          ? `在${where}空位生成 ${count} 个本技能的临时复制 · 战斗结束移除`
+          : `spawn ${count} temp copy of this skill on a free key in ${where} · removed at battle end`
+      }
       const lvStr = formatLevelMode(effect.levelMode)
       const filterStr = formatSkillFilter(effect.filter, defSection)
-      const where = formatSelector(effect.placement, host)
       return zh
         ? `在${where}空位生成 ${count} 个${filterStr}临时技能（${lvStr}）· 战斗结束移除`
         : `spawn ${count} temp ${filterStr} skill${count > 1 ? 's' : ''} on a free key in ${where} (${lvStr}) · removed at battle end`

@@ -37,7 +37,7 @@ import {
   getAllianceSize,
 } from './affixV2State'
 import { random } from '../core/seededRandom'
-import { getCandidatePool, widenSkillFilter, spawnSkillFromSeed, filterByNeighborPosRel } from './affixV2SkillFilter'
+import { getCandidatePool, widenSkillFilter, spawnSkillFromSeed, filterByNeighborPosRel, type SkillSeed } from './affixV2SkillFilter'
 
 // ============================================
 // EquippedView · 已装备 affix 的查询视图（避免 affixV2Effect → affixV2Equipped 循环依赖）
@@ -243,7 +243,7 @@ export function resolveEffect(spec: EffectSpec, ctx: ResolveContext): ResolveRes
 function spawnFilteredSkills(
   spec: {
     filter: SkillFilter
-    source?: 'recipe_pool' | 'shop_pool' | 'altar_pool' | 'player_skill_pool'
+    source?: 'recipe_pool' | 'shop_pool' | 'altar_pool' | 'player_skill_pool' | 'self_copy'
     count?: number
     levelMode?: 'inherit_host' | { type: 'fixed'; level: number } | { type: 'host_minus'; delta: number }
     fallback?: 'widen' | 'refund' | 'skip'
@@ -261,8 +261,8 @@ function spawnFilteredSkills(
     targetLv = Math.max(1, ctx.hostSkillLevel - mode.delta)
   }
 
-  // 解析候选池 + filter widen 兜底
-  const source = spec.source ?? 'recipe_pool'
+  // 解析候选池 + filter widen 兜底（self_copy 不走池，由 gain_temp_skill case 直接处理 → 此处兜回 recipe_pool）
+  const source = (spec.source && spec.source !== 'self_copy') ? spec.source : 'recipe_pool'
   // player_skill_pool 需排除宿主自身（防自我无限克隆）· 其他 source 不需 hostId
   let pool = getCandidatePool(source, source === 'player_skill_pool' ? ctx.skillId : undefined)
   // neighborPosRel · 仅 player_skill_pool 有键位信息可计算邻位 · 收紧候选到宿主键位邻位
@@ -484,7 +484,31 @@ function resolveInto(spec: EffectSpec, ctx: ResolveContext, result: ResolveResul
     }
 
     case 'gain_temp_skill': {
-      // 与 gain_skill 同款 spawn，但写到 tempSkillsGranted（集成层绑定到 placement 空键位 + 关末移除）
+      // self_copy（筑巢）：生成宿主技能本身的临时复制 —— 深 clone 宿主实例、剥离自身 nest_build 词条防递归雪球
+      if (spec.source === 'self_copy') {
+        const host = gameState.affixSkills.get(ctx.skillId)
+        if (!host) return
+        const seed: SkillSeed = {
+          source: 'shop_pool',                       // 任意有效来源；templateSkill 在场即走深 clone 路径
+          templateSkill: host,
+          section: ctx.selfSection ?? 'maintenance',
+          resourcePool: [host.resource],
+        }
+        const count = Math.max(1, spec.count ?? 1)
+        for (let i = 0; i < count; i++) {
+          const skill = spawnSkillFromSeed(seed, ctx.hostSkillLevel)
+          // 剥离自身(nest_build)词条 → 复制体不再筑巢（防本场雪球；宿主其余非 meta 词条照常随复制体生效）
+          if (ctx.selfDefId && skill.v2Ids) skill.v2Ids = skill.v2Ids.filter(id => id !== ctx.selfDefId)
+          result.tempSkillsGranted.push({
+            sourceInstanceId: ctx.instanceId,
+            skill,
+            placement: spec.placement,
+            widened: false,
+          })
+        }
+        return
+      }
+      // 其余 source：与 gain_skill 同款池 spawn，写到 tempSkillsGranted（集成层绑定到 placement 空键位 + 关末移除）
       for (const sp of spawnFilteredSkills(spec, ctx)) {
         result.tempSkillsGranted.push({
           sourceInstanceId: ctx.instanceId,

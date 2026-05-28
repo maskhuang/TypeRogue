@@ -452,7 +452,8 @@ export type EffectSpec =
   | {
       kind: 'gain_temp_skill'
       filter: SkillFilter
-      source?: 'recipe_pool' | 'shop_pool' | 'altar_pool' | 'player_skill_pool'
+      /** self_copy：忽略 filter/池，生成宿主技能本身的临时复制（剥离自身 nest_build 词条防递归） */
+      source?: 'recipe_pool' | 'shop_pool' | 'altar_pool' | 'player_skill_pool' | 'self_copy'
       count?: number
       levelMode?:
         | 'inherit_host'
