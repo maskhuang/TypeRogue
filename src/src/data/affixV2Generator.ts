@@ -687,6 +687,14 @@ function pickGatedScope(pool: readonly ScopeEntry[], kind: string): TargetSelect
   return sel
 }
 
+// ===== on_sold（建造期独占触发）roll 参数 =====
+// 双阶段触发模型 II 族：on_sold 仅挂在「效果战斗外有意义（dual-capable）」的 rolled-trigger recipe 上
+// （= drip / devour）· 改派概率 · 一次性 magnitude 用整支预算 T（参考 nut_crack，卖出一次给满）。
+const ON_SOLD_PROB = 0.15
+// 建造期持久资源（能活过战斗）· 与 systems/affixV2Effect.PERSISTENT_RESOURCES 同义；
+// 此处本地定义避免 data→systems 跨层 import（gold 是唯一持久资源）。
+const BUILD_PERSISTENT_RESOURCES: readonly ResourceType[] = ['gold']
+
 /**
  * 纯 roll：从 recipe 抽出 trigger + effect spec，**不注册**到运行时索引。
  * generateAffixV2 与极速预算标定共用此函数（标定走它避免污染 def 注册表）。
@@ -705,8 +713,16 @@ export function rollAffixV2Spec(
 
   if (recipe.kind === 'drip') {
     // drip: 资源随机 · 50% 概率附加 count-scale（来源随机：词条/资源/稀有度/空位 · Bazaar Count synergy）
-    const ratio = scaleMagnitude(recipe.T, triggerEntry.freq)
-    const resource = pickRandom(recipe.resourcePool)
+    let ratio = scaleMagnitude(recipe.T, triggerEntry.freq)
+    let resource = pickRandom(recipe.resourcePool)
+    // on_sold 改派（dual-capable）：仅当 pool 含持久资源 → 锁 gold + 一次性整支预算 T（参考 nut_crack）·
+    // 非持久资源卖出即蒸发（无意义），故不持久则不改派（留原 trigger）。
+    const persistentPool = recipe.resourcePool.filter(r => BUILD_PERSISTENT_RESOURCES.includes(r))
+    if (persistentPool.length > 0 && random() < ON_SOLD_PROB) {
+      triggerSpec = { type: 'on_sold' }
+      resource = pickRandom(persistentPool)
+      ratio = RECIPE_NUT_CRACK.T
+    }
     const withScale = random() < 0.5
     if (withScale) {
       const source = pickScaleSource(recipe.section, resource, recipe.kind)
@@ -927,6 +943,8 @@ export function rollAffixV2Spec(
     // 生成时随机锁 1 个 filter 维度（resource 40% / rarity 30% / hasTag 30%）· ratio 不除 freq
     const nonSelfScope = FULL_SCOPE_POOL.filter(s => s.selector.type !== 'self')
     const sel = pickGatedScope(nonSelfScope, recipe.kind)
+    // on_sold 改派（dual-capable）：consume_skill 本就一次性（ratio 固定 · 吃 1 个），仅改派 trigger 即可
+    if (random() < ON_SOLD_PROB) triggerSpec = { type: 'on_sold' }
     effect = {
       kind: 'consume_skill',
       selector: sel,

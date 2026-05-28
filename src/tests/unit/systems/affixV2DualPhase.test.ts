@@ -14,6 +14,7 @@ import { clearAllEquipped } from '../../../src/systems/affixV2Equipped'
 import { runBuildResourceConsumed, runBuildSkillSold, wireV2BuildIntegration } from '../../../src/systems/affixV2BuildIntegration'
 import { wireV2BattleIntegration, defaultResourceLv1Base } from '../../../src/systems/affixV2BattleIntegration'
 import { registerDynamicAffixV2, unregisterDynamicAffixV2 } from '../../../src/data/affixV2'
+import { rollAffixV2Spec, RECIPE_FEED, RECIPE_SUPPLANT, RECIPE_CLIMB, RECIPE_NUT_CRACK } from '../../../src/data/affixV2Generator'
 import { eventBus } from '../../../src/core/events/EventBus'
 import { state as gameState } from '../../../src/core/state'
 import type { AffixSkillInstance } from '../../../src/data/affixes'
@@ -256,5 +257,45 @@ describe('建造期 on_resource_consumed 端到端（runBuildResourceConsumed）
 
     eventBus.emit('skill:sold', { skillId: 'wares' })
     expect(gameState.gold).toBeCloseTo(1000 + 5 * goldBase, 4)
+  })
+})
+
+// ============================================
+// 5. 生成器 · on_sold 仅落在 dual-capable recipe（drip/devour）· 一次性 T 参考 nut_crack
+// ============================================
+
+describe('生成器 · on_sold 改派规则', () => {
+  it('drip 抽到 on_sold → 锁 gold + ratio = nut_crack T（一次性整支）', () => {
+    let sawOnSold = false
+    for (let i = 0; i < 400; i++) {
+      const { trigger, effect } = rollAffixV2Spec(RECIPE_FEED)
+      if (trigger.type !== 'on_sold') continue
+      sawOnSold = true
+      expect(effect.kind).toBe('gain_resource')
+      if (effect.kind === 'gain_resource') {
+        expect(effect.resource).toBe('gold')          // 持久资源
+        expect(effect.ratio).toBe(RECIPE_NUT_CRACK.T)  // 一次性整支预算
+      }
+    }
+    expect(sawOnSold).toBe(true)   // 400 次 × 15% 几乎必现
+  })
+
+  it('devour 抽到 on_sold → 仍 consume_skill + 固定 ratio（一次性）', () => {
+    let sawOnSold = false
+    for (let i = 0; i < 400; i++) {
+      const { trigger, effect } = rollAffixV2Spec(RECIPE_SUPPLANT)
+      if (trigger.type !== 'on_sold') continue
+      sawOnSold = true
+      expect(effect.kind).toBe('consume_skill')
+      if (effect.kind === 'consume_skill') expect(effect.ratio).toBe(RECIPE_SUPPLANT.ratio)
+    }
+    expect(sawOnSold).toBe(true)
+  })
+
+  it('非 dual-capable recipe（growth/climb）→ 永不 on_sold', () => {
+    for (let i = 0; i < 400; i++) {
+      const { trigger } = rollAffixV2Spec(RECIPE_CLIMB)
+      expect(trigger.type).not.toBe('on_sold')
+    }
   })
 })
