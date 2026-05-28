@@ -2564,6 +2564,8 @@ export function serializeSkill(
     rotation: skill.rotation,
     v2Ids: skill.v2Ids ? [...skill.v2Ids] : undefined,
     v2Uses: skill.v2Uses ? { ...skill.v2Uses } : undefined,
+    permBaseAdd: skill.permBaseAdd,
+    permFactorAdd: skill.permFactorAdd,
     runtime: {
       ...runtimeState,
       mirrorCopiedAffix: runtimeState.mirrorCopiedAffix ? { ...runtimeState.mirrorCopiedAffix } : null,
@@ -2596,6 +2598,8 @@ export function deserializeSkill(
     rotation: normalizeRotation(data.shapeId ?? 'monomino', data.rotation ?? 0),
     v2Ids: data.v2Ids ? [...data.v2Ids] : undefined,
     v2Uses: data.v2Uses ? { ...data.v2Uses } : undefined,
+    permBaseAdd: data.permBaseAdd,
+    permFactorAdd: data.permFactorAdd,
   }
   const runtimeState: SkillRuntimeState = {
     skillId: data.id,

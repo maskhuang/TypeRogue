@@ -15,6 +15,8 @@ import { runBuildResourceConsumed, runBuildSkillSold, wireV2BuildIntegration } f
 import { wireV2BattleIntegration, defaultResourceLv1Base } from '../../../src/systems/affixV2BattleIntegration'
 import { registerDynamicAffixV2, unregisterDynamicAffixV2 } from '../../../src/data/affixV2'
 import { rollAffixV2Spec, RECIPE_FEED, RECIPE_SUPPLANT, RECIPE_CLIMB, RECIPE_NUT_CRACK } from '../../../src/data/affixV2Generator'
+import { serializeSkill, deserializeSkill } from '../../../src/data/affixTrigger'
+import { createSkillRuntimeState } from '../../../src/data/affixes'
 import { eventBus } from '../../../src/core/events/EventBus'
 import { state as gameState } from '../../../src/core/state'
 import type { AffixSkillInstance } from '../../../src/data/affixes'
@@ -323,5 +325,37 @@ describe('生成器 · on_sold 改派规则', () => {
       const { trigger } = rollAffixV2Spec(RECIPE_CLIMB)
       expect(trigger.type).not.toBe('on_sold')
     }
+  })
+})
+
+// ============================================
+// 6. 存盘往返 · 永久层随技能序列化持久（run 永久跨 save/load）
+// ============================================
+
+describe('serializeSkill/deserializeSkill · 永久层持久', () => {
+  it('permBaseAdd / permFactorAdd 往返保留', () => {
+    const skill = {
+      id: 'persist', name: 'persist', icon: '', resource: 'score',
+      baseValues: [11, 24, 50, 95], level: 1, rarity: 1,
+      affixes: [], enchantmentIds: [],
+      permBaseAdd: 7, permFactorAdd: 0.3,
+    } as unknown as AffixSkillInstance
+
+    const saved = serializeSkill(skill, createSkillRuntimeState('persist'))
+    const { skill: restored } = deserializeSkill(saved)
+    expect(restored.permBaseAdd).toBe(7)
+    expect(restored.permFactorAdd).toBeCloseTo(0.3, 5)
+  })
+
+  it('无永久层的技能往返 → 字段为 undefined（不强加 0）', () => {
+    const skill = {
+      id: 'plain', name: 'plain', icon: '', resource: 'score',
+      baseValues: [11, 24, 50, 95], level: 1, rarity: 1,
+      affixes: [], enchantmentIds: [],
+    } as unknown as AffixSkillInstance
+
+    const { skill: restored } = deserializeSkill(serializeSkill(skill, createSkillRuntimeState('plain')))
+    expect(restored.permBaseAdd).toBeUndefined()
+    expect(restored.permFactorAdd).toBeUndefined()
   })
 })

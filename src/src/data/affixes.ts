@@ -374,6 +374,8 @@ export interface AffixSkillSaveData {
   rotation?: number                      // 形状旋转态（0~3，默认 0）
   v2Ids?: string[]                       // V2 affix def id 列表
   v2Uses?: Record<string, number>        // tool/认知词条已用次数（defId → count）
+  permBaseAdd?: number                   // V2 双阶段永久层底分（run 永久，需存盘）
+  permFactorAdd?: number                 // V2 双阶段永久层倍率 delta（run 永久，需存盘）
   runtime: SkillRuntimeState
 }
 
