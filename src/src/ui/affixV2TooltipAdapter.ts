@@ -375,10 +375,10 @@ export function formatEffectDescription(effect: EffectSpec, skillResource?: stri
         : `grant ${formatSelector(effect.selector, host)} +${n} haste`
     }
     case 'apply_mark':
-      // 标记：把 selector 选出的技能设为焦点 → 其它取对象效果优先汇聚（无数值）
+      // 标记：把 selector 选出的技能设为焦点（焦点机制详解见术语展开）
       return zh
-        ? `标记 ${formatSelector(effect.selector, host)} 为焦点（取对象效果优先指向它）`
-        : `mark ${formatSelector(effect.selector, host)} as focus (targeting effects prefer it)`
+        ? `标记 ${formatSelector(effect.selector, host)} 为焦点`
+        : `mark ${formatSelector(effect.selector, host)} as focus`
     case 'apply_ally': {
       // 结盟：把 selector 选出的技能拉入结盟集 → 每个盟员产出 +ALLIANCE_BONUS_PCT × 盟员数
       const pct = Math.round(ALLIANCE_BONUS_PCT * 1000) / 10
@@ -460,9 +460,10 @@ export function formatEffectDescription(effect: EffectSpec, skillResource?: stri
       const where = formatSelector(effect.placement, host)
       // self_copy（筑巢）：生成本技能自身的临时复制
       if (effect.source === 'self_copy') {
+        // 「临时复制」生命周期（战斗结束移除）详解见术语展开
         return zh
-          ? `在${where}空位生成 ${count} 个本技能的临时复制 · 战斗结束移除`
-          : `spawn ${count} temp copy of this skill on a free key in ${where} · removed at battle end`
+          ? `在${where}空位生成 ${count} 个本技能的临时复制`
+          : `spawn ${count} temp copy of this skill on a free key in ${where}`
       }
       const lvStr = formatLevelMode(effect.levelMode)
       const filterStr = formatSkillFilter(effect.filter, defSection)

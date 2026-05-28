@@ -175,11 +175,15 @@ const KW_STYLE = 'color:#fff;text-decoration:underline;text-decoration-color:rgb
 /** 术语 ID → 匹配模式（中英共享同一 ID） */
 const MECHANIC_KEYWORD_DEFS: Array<{ id: string; keywords: string[] }> = [
   { id: 'matched',        keywords: ['匹配技能', 'matched skills', '匹配', 'matched'] },
-  { id: 'stack',           keywords: ['叠层', 'stack'] },
   { id: 'range',           keywords: ['范围', 'range'] },
   { id: 'transform',      keywords: ['质变', 'transform'] },
   { id: 'crit',            keywords: ['暴击', 'crit'] },
   { id: 'haste',          keywords: ['极速', 'haste'] },
+  // V2 build-around 新机制（详解在 glossary.<id>.detail）
+  { id: 'mark',            keywords: ['焦点', 'focus'] },
+  { id: 'alliance',       keywords: ['结盟', 'alliance', 'allied'] },
+  { id: 'multifire',      keywords: ['多重释放', 'multi-fire', 'multifire'] },
+  { id: 'tempcopy',       keywords: ['临时复制', 'temp copy'] },
 ]
 
 /** 编译后的匹配列表（长词优先） */
