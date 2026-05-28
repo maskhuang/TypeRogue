@@ -7,18 +7,21 @@
 //   - 纯战斗运行时态 effect（add/multiply/apply_aura/convert_resource…）'run' 时直接静默 inert
 //   - 'fight'（缺省）行为不变（回归保护）
 
-import { describe, it, expect, beforeEach } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import { resolveEffect, type ResolveContext } from '../../../src/systems/affixV2Effect'
 import { resetAllAffixV2State, peekInstanceState } from '../../../src/systems/affixV2State'
 import { clearAllEquipped } from '../../../src/systems/affixV2Equipped'
+import { runBuildResourceConsumed } from '../../../src/systems/affixV2BuildIntegration'
+import { wireV2BattleIntegration, defaultResourceLv1Base } from '../../../src/systems/affixV2BattleIntegration'
+import { registerDynamicAffixV2, unregisterDynamicAffixV2 } from '../../../src/data/affixV2'
 import { state as gameState } from '../../../src/core/state'
 import type { AffixSkillInstance } from '../../../src/data/affixes'
 
 const NOW = 1000
 const lv1 = (r: string) => ({ score: 11, gold: 3, time: 0.2, shield: 5 } as Record<string, number>)[r] ?? 1
 
-function mkSkill(id: string, resource: string): AffixSkillInstance {
-  return { id, name: id, resource, level: 1, rarity: 1, v2Ids: [] } as unknown as AffixSkillInstance
+function mkSkill(id: string, resource: string, v2Ids: string[] = []): AffixSkillInstance {
+  return { id, name: id, resource, level: 1, rarity: 1, v2Ids } as unknown as AffixSkillInstance
 }
 
 function mkCtx(over: Partial<ResolveContext> = {}): ResolveContext {
@@ -117,5 +120,70 @@ describe('RUN_SILENT_KINDS · persistScope=run 静默', () => {
     const r = resolveEffect({ kind: 'convert_resource', from: 'score', to: 'gold', ratio: 1 }, ctx)
     expect(r.resourceProduced.length).toBe(0)
     expect(r.resourcesConsumed.length).toBe(0)
+  })
+})
+
+// ============================================
+// 4. 端到端 · 建造期买东西(消耗 gold) → on_resource_consumed 派发
+//    覆盖 coprophagy 返现 / supplant 永久吞 gold 技能 / on_removed 死亡回响链
+// ============================================
+
+describe('建造期 on_resource_consumed 端到端（runBuildResourceConsumed）', () => {
+  const goldBase = defaultResourceLv1Base('gold', 1)
+
+  beforeEach(() => {
+    wireV2BattleIntegration()   // 注入 selector resolver + resync（idempotent）
+    clearAllEquipped()
+    resetAllAffixV2State()
+    gameState.affixSkills.clear()
+    gameState.player.bindings = new Map()
+    gameState.gold = 1000
+    ;(gameState.resources as unknown as Record<string, number>).gold = 1000
+    ;(gameState.player as unknown as Record<string, number>).gold = 1000
+  })
+
+  afterEach(() => {
+    unregisterDynamicAffixV2('dp_cop')
+    unregisterDynamicAffixV2('dp_supp')
+    unregisterDynamicAffixV2('dp_rattle')
+  })
+
+  it('coprophagy：买 100 gold → 永久返现 fraction×100', () => {
+    registerDynamicAffixV2({
+      id: 'dp_cop', name_zh: '食粪', name_en: 'coprophagy', section: 'abnormal', tags: ['abnormal'], phase: 'P1',
+      trigger: { type: 'on_resource_consumed' }, effect: { kind: 'reclaim_consumed', fraction: 0.3 },
+    })
+    gameState.affixSkills.set('cop_host', mkSkill('cop_host', 'gold', ['dp_cop']))
+    gameState.player.bindings = new Map([['A', 'cop_host']])
+
+    const changed = runBuildResourceConsumed(100)
+    expect(changed).toBe(true)
+    expect(gameState.gold).toBe(1030)
+  })
+
+  it('supplant：永久吞 gold 技能 + payout + on_removed 死亡回响（persistScope=run）', () => {
+    // supplant：on_resource_consumed + consume_skill（无 filter，all_skills），'run' 自动收紧到 gold 技能
+    registerDynamicAffixV2({
+      id: 'dp_supp', name_zh: '取代', name_en: 'supplant', section: 'agonistic', tags: ['agonistic'], phase: 'P1',
+      trigger: { type: 'on_resource_consumed' }, effect: { kind: 'consume_skill', selector: { type: 'all_skills' }, ratio: 10 },
+    })
+    // 被吞的 gold 技能带 on_removed 死亡回响：被移除时产 gold 2×base
+    registerDynamicAffixV2({
+      id: 'dp_rattle', name_zh: '回响', name_en: 'rattle', section: 'agonistic', tags: ['agonistic'], phase: 'P1',
+      trigger: { type: 'on_removed' }, effect: { kind: 'gain_resource', resource: 'gold', ratio: 2 },
+    })
+    gameState.affixSkills.set('supp_host', mkSkill('supp_host', 'score', ['dp_supp']))
+    gameState.affixSkills.set('gold_victim', mkSkill('gold_victim', 'gold', ['dp_rattle']))
+    gameState.affixSkills.set('score_victim', mkSkill('score_victim', 'score', []))
+    gameState.player.bindings = new Map([['B', 'supp_host'], ['C', 'gold_victim'], ['D', 'score_victim']])
+
+    const changed = runBuildResourceConsumed(50)
+
+    expect(changed).toBe(true)
+    expect(gameState.affixSkills.has('gold_victim')).toBe(false)   // 永久移除
+    expect(gameState.affixSkills.has('score_victim')).toBe(true)   // 非 gold → 不吞（无意义静默）
+    expect(gameState.player.bindings.has('C')).toBe(false)         // 键位解绑
+    // payout 10×base + 死亡回响 2×base = 12×base
+    expect(gameState.gold).toBeCloseTo(1000 + 12 * goldBase, 4)
   })
 })

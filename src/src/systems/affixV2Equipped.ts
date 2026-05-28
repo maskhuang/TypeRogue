@@ -1089,6 +1089,7 @@ export function hookOnRemoved(
   resourceLv1Base: (r: string, level?: number) => number,
   getPlayerResource: (r: string) => number,
   nowMs: number,
+  persistScope: 'fight' | 'run' = 'fight',
 ): SourcedResult[] {
   const results: SourcedResult[] = []
   const ids = _bySkill.get(removedSkillId) ?? []
@@ -1117,6 +1118,7 @@ export function hookOnRemoved(
       selfSection: def.section,
       selfDefId: def.id,
       getPlayerResource,
+      persistScope,
       resolveSelector: _selectorResolver,
       queryEquipped: buildQueryEquipped(entry),
     }

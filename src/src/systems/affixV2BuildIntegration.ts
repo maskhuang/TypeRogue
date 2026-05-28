@@ -16,7 +16,7 @@
 import { state } from '../core/state'
 import { eventBus } from '../core/events/EventBus'
 import { getBindingState, unbindSkill } from './bindingManager'
-import { hookOnResourceConsumed, type SourcedResult } from './affixV2Equipped'
+import { hookOnResourceConsumed, hookOnRemoved, type SourcedResult } from './affixV2Equipped'
 import {
   defaultResourceLv1Base,
   defaultGetPlayerResource,
@@ -44,6 +44,23 @@ function removeSkillPermanently(skillId: string): void {
   state.player.skills.delete(skillId)
 }
 
+// on_removed 死亡回响 re-entrancy 防护（深度 1）· 镜像 affixV2BattleIntegration._inRemovalReaction：
+// 被移除 skill 的 on_removed 若自身又取代别的 skill，其取代照常移除+产出，但不再二次派发 on_removed
+// → 杜绝 consume→on_removed→consume→… 无限链。
+let _inBuildRemovalReaction = false
+
+/** 建造期死亡回响（深度 1 限流）· 永久移除前派发：被移除 skill 上的 on_removed 词条以 persistScope='run' 结算一次 */
+function dispatchBuildSkillRemoved(skillId: string): void {
+  if (_inBuildRemovalReaction) return
+  _inBuildRemovalReaction = true
+  try {
+    const reactions = hookOnRemoved(skillId, defaultResourceLv1Base, defaultGetPlayerResource, Date.now(), 'run')
+    processV2BuildResults(reactions)
+  } finally {
+    _inBuildRemovalReaction = false
+  }
+}
+
 // ============================================
 // 建造期结果处理 · 只落「持久产出 / 结构改动」，其余忽略（战斗运行时态在 resolver 已静默）
 // ============================================
@@ -63,6 +80,8 @@ function processV2BuildResults(results: readonly SourcedResult[]): boolean {
       if (!removed) continue
       // 产出 = ratio × 被移除技能 gold Lv.N base（与战斗 applySkillConsume 同公式 · 这里恒 gold）
       const payout = rm.ratio * defaultResourceLv1Base(removed.resource, removed.level ?? 1)
+      // 死亡回响：必须在解绑/删除前派发（之后该 skill 的词条已不在 _equipped）· persistScope='run' 永久结算
+      dispatchBuildSkillRemoved(rm.targetSkillId)
       removeSkillPermanently(rm.targetSkillId)
       if (PERSISTENT_RESOURCES.has(removed.resource) && payout !== 0) addPermanentGold(payout)
       changed = true
@@ -81,6 +100,26 @@ function refreshBuildUI(): void {
 }
 
 // ============================================
+// 建造期「消耗 gold」入口 · 派发 on_resource_consumed(persistScope='run')
+// ============================================
+
+/** 建造期消耗 goldAmount 点 gold → 派发 on_resource_consumed 反应（永久结算）· 返回是否有改动（供 UI 刷新）·
+ *  导出以便单测直接调（绕开 eventBus / UI 刷新）。 */
+export function runBuildResourceConsumed(goldAmount: number): boolean {
+  if (!goldAmount || goldAmount <= 0) return false
+  // _equipped 在 battle:start 才 resync；建造期布局随时变 → 每次按当前 bindings 重同步
+  resyncV2EquipmentFromState()
+  const results = hookOnResourceConsumed(
+    'gold', goldAmount,
+    defaultResourceLv1Base,
+    defaultGetPlayerResource,
+    Date.now(),
+    'run',
+  )
+  return processV2BuildResults(results)
+}
+
+// ============================================
 // 订阅装配
 // ============================================
 
@@ -94,16 +133,6 @@ export function wireV2BuildIntegration(): void {
   // shop:purchase → 买东西消耗 gold → 派发 on_resource_consumed（persistScope='run'）
   // price 来自事件（classic / terminal / ShopScene 三套商店均带）· 免费（smuggle，price=0）不触发
   eventBus.on('shop:purchase', ({ price }) => {
-    if (!price || price <= 0) return
-    // _equipped 在 battle:start 才 resync；建造期布局随时变 → 每次购买前按当前 bindings 重同步
-    resyncV2EquipmentFromState()
-    const results = hookOnResourceConsumed(
-      'gold', price,
-      defaultResourceLv1Base,
-      defaultGetPlayerResource,
-      Date.now(),
-      'run',
-    )
-    if (processV2BuildResults(results)) refreshBuildUI()
+    if (runBuildResourceConsumed(price)) refreshBuildUI()
   })
 }
