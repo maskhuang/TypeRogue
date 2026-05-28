@@ -329,7 +329,8 @@ function removeV2AffixFromSkill(skillId: string, defId: string): void {
   const skill = gameState.affixSkills.get(skillId)
   if (!skill?.v2Ids) return
   skill.v2Ids = skill.v2Ids.filter(id => id !== defId)
-  skill.rarity = Math.min(3, skill.v2Ids.length) as typeof skill.rarity
+  // 稀有度 = 词条数 - 1（0/1/2/3 ↔ 1/2/3/4 词条）· 词条耗尽则回落 rarity 0
+  skill.rarity = Math.max(0, Math.min(3, skill.v2Ids.length - 1)) as typeof skill.rarity
   if (skill.v2Uses) delete skill.v2Uses[defId]
 }
 

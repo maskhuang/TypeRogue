@@ -352,15 +352,16 @@ function applySkillUpgrade(skillId: string, amount: number): void {
   notePotentialLv3Enchant(skillId, prevLv, newLv)
 }
 
-/** 词条嫁接 · 把 defId 装到宿主 skill · 更新 v2Ids + rarity（cap 3）· 已满或重复则跳过 */
+/** 词条嫁接 · 把 defId 装到宿主 skill · 更新 v2Ids + rarity（cap 4 词条 = rarity 3）· 已满或重复则跳过 */
 function applyAffixGraft(targetSkillId: string, targetKey: string, defId: string): void {
   const skill = state.affixSkills.get(targetSkillId)
   if (!skill) return
   const v2Ids = skill.v2Ids ?? []
-  if (v2Ids.length >= 3) return            // rarity 上限 3 词条 · 满则跳过
+  if (v2Ids.length >= 4) return            // 词条上限 4（= rarity 3）· 满则跳过
   if (v2Ids.includes(defId)) return        // 已有同 def 不重复嫁接
   skill.v2Ids = [...v2Ids, defId]
-  skill.rarity = Math.min(3, (skill.rarity ?? v2Ids.length) + 1) as typeof skill.rarity
+  // rarity = 词条数 - 1（0/1/2/3 ↔ 1/2/3/4 词条）· 嫁接后 +1 词条 → rarity 升 1（cap 3）
+  skill.rarity = Math.max(0, Math.min(3, (skill.rarity ?? (v2Ids.length - 1)) + 1)) as typeof skill.rarity
   // 装到运行时登记表（与 resyncV2EquipmentFromState 一致 · 让本战后续 / 下战生效）
   equipAffixV2(targetSkillId, targetKey, defId)
 }

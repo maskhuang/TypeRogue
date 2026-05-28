@@ -77,7 +77,7 @@ let _auctionRemaining: number = -1;
 
 // === 词条制技能定价（Story 35.9） ===
 
-/** 词条制技能按稀有度基础定价（0/1/2/3 词条 → 25/50/75/100） */
+/** 词条制技能按稀有度基础定价（稀有度 0/1/2/3 → 25/50/75/100；对应 1/2/3/4 词条） */
 export const AFFIX_RARITY_BASE_PRICES: readonly [number, number, number, number] = [25, 50, 75, 100];
 
 /** 词条制技能定价上限 */

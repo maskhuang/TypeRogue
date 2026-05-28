@@ -444,9 +444,9 @@ export function generateSkill(options?: GenerateSkillOptions): AffixSkillInstanc
   if (resource === 'multiplier') excludeTypes.add(AffixType.Reecho)
   if (resource === 'base') excludeTypes.add(AffixType.Silkworm)
 
-  // ── V2 接管：rarity = V2 affix 数量（rarity 0 → 0 个，3 → 3 个）──
+  // ── V2 接管：词条数 = rarity + 1（稀有度 0/1/2/3 → 1/2/3/4 个词条）· hostRarity 仍传实际稀有度(0-3)──
   // 旧 AffixInstance 通道已禁用（orchestrator 入口短路）；保留 affixes=[] 供 UI 兼容
-  const v2Ids = sampleV2Ids(rarity, resource, options?.forcedRecipe, options?.excludeMeta, options?.inertMeta)
+  const v2Ids = sampleV2Ids(rarity + 1, resource, rarity, options?.forcedRecipe, options?.excludeMeta, options?.inertMeta)
   const affixes: AffixInstance[] = []
 
   // 自动命名：skill.name 只存资源 base，V2 词条名由 display 层（itemDescriptors / shopTerminal）
@@ -491,8 +491,9 @@ export function generateSkill(options?: GenerateSkillOptions): AffixSkillInstanc
 
 /** 用 affixV2Generator.generateAffixV2 为 skill 滚 count 个 V2 词条
  *  每个词条独立选 recipe + 随机 trigger + magnitude scaling
- *  rarity 0 → 0 个；返回生成出的 (动态注册的) def id 列表
+ *  count = rarity + 1（稀有度 0/1/2/3 → 1/2/3/4 个词条）；返回生成出的 (动态注册的) def id 列表
  *  @param skillResource  词条所在 skill 的资源（传给 convert recipe 用作 source 锚点）
+ *  @param hostRarity     宿主技能实际稀有度(0-3) · 用于 by:'rarity' scale 排除自身稀有度（≠ count）
  *  @param forcedRecipe   非空时第 1 个词条强制用此 recipe（gain_skill 按 tag 生成 ·
  *                        保证技能至少有一个该 section 的 affix）
  *  @param excludeMeta    随机槽位是否排除 meta 操纵家族（teach/imitate/spear_make/gaze_follow）·
@@ -500,7 +501,7 @@ export function generateSkill(options?: GenerateSkillOptions): AffixSkillInstanc
  *  @param inertMeta      forcedRecipe 若为 meta 家族 → 其 effect 置 noop（身份/段保留，不触发 on_battle_end）·
  *                        gain_skill spawn 传 true：meta 可被生成（tool 段可达）但不递归 spawn
  */
-function sampleV2Ids(count: number, skillResource: ResourceType, forcedRecipe?: AffixV2Recipe, excludeMeta = false, inertMeta = false): string[] {
+function sampleV2Ids(count: number, skillResource: ResourceType, hostRarity: number, forcedRecipe?: AffixV2Recipe, excludeMeta = false, inertMeta = false): string[] {
   if (count <= 0) return []
   if (ALL_RECIPES.length === 0) return []
   const out: string[] = []
@@ -510,7 +511,7 @@ function sampleV2Ids(count: number, skillResource: ResourceType, forcedRecipe?: 
       ? forcedRecipe
       : pickRecipeForSkill(skillResource, { excludeMeta })
     // inertMeta 仅对 meta recipe 生效（generateAffixV2 内部判定）· 随机槽位已 excludeMeta 故无 meta，透传无副作用
-    out.push(generateAffixV2(recipe, skillResource, { inertMeta, hostRarity: count }))
+    out.push(generateAffixV2(recipe, skillResource, { inertMeta, hostRarity }))
   }
   return out
 }

@@ -268,7 +268,7 @@ describe('shop_pool · state.shop.items 接入', () => {
       resourcePool: ['score'],
     }
     const spawned = spawnSkillFromSeed(seed, 1, { rarity: 3 })
-    expect(spawned.v2Ids?.length).toBe(3)
+    expect(spawned.v2Ids?.length).toBe(4)   // rarity 3 = 4 词条
     expect(getAffixV2Definition(spawned.v2Ids![0])?.section).toBe('maintenance')
   })
 

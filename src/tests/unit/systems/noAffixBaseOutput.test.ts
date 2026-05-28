@@ -40,6 +40,7 @@ describe('无词条技能基数产出（缺失 runtimeState 防御）', () => {
   it('无词条 base 技能即使缺 runtimeState 也能产出基数（triggerSkill 懒建）', () => {
     const skill = generateSkill({ rarity: 0, resource: 'base', level: 1 })
     skill.id = 'sk_no_rt'
+    skill.v2Ids = []   // 强制无词条：rarity 0 现已 = 1 词条，手动清空以测「无词条技能」基数产出路径
     expect(skill.v2Ids).toEqual([])
     // 模拟 gain_skill 授予：写 affixSkills 但故意不建 runtimeState
     state.affixSkills.set(skill.id, skill)

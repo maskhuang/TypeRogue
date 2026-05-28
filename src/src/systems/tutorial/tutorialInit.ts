@@ -156,7 +156,7 @@ export function initFullTutorial(): void {
     affixVarietyStep.trigger.condition = () => lastPurchaseSkillRarity >= 2
   }
 
-  // L2_rarity_explain: 购买的技能稀有度 >= 3（橙色，3 词条）
+  // L2_rarity_explain: 购买的技能稀有度 >= 3（橙色，4 词条）
   const rarityExplainStep = L2_STEPS.find(s => s.id === 'L2_rarity_explain')
   if (rarityExplainStep) {
     rarityExplainStep.trigger.condition = () => lastPurchaseSkillRarity >= 3

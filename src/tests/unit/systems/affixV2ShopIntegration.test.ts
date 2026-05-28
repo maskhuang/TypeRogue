@@ -16,21 +16,21 @@ beforeEach(() => {
 })
 
 describe('generateSkill · 产出带 v2Ids', () => {
-  it('rarity 0 → 0 个 v2Ids', () => {
+  it('rarity 0 → 1 个 v2Ids（词条数 = rarity+1）', () => {
     const s = generateSkill({ rarity: 0 as SkillRarity })
-    expect(s.v2Ids).toEqual([])
+    expect(s.v2Ids?.length).toBe(1)
   })
 
-  it('rarity 1 → 1 个 v2Ids（动态生成 · gen_ 前缀）', () => {
+  it('rarity 1 → 2 个 v2Ids（动态生成 · gen_ 前缀）', () => {
     const s = generateSkill({ rarity: 1 as SkillRarity })
-    expect(s.v2Ids?.length).toBe(1)
+    expect(s.v2Ids?.length).toBe(2)
     expect(s.v2Ids![0]).toMatch(/^gen_/)
   })
 
-  it('rarity 3 → 3 个不重复 v2Ids', () => {
+  it('rarity 3 → 4 个不重复 v2Ids', () => {
     const s = generateSkill({ rarity: 3 as SkillRarity })
-    expect(s.v2Ids?.length).toBe(3)
-    expect(new Set(s.v2Ids).size).toBe(3)
+    expect(s.v2Ids?.length).toBe(4)
+    expect(new Set(s.v2Ids).size).toBe(4)
   })
 
   it('legacy affixes 数组保持空（v2 接管）', () => {
@@ -51,7 +51,7 @@ describe('bindShapeToKeys · V2 联动', () => {
     expect(r.success).toBe(true)
 
     const equipped = getEquippedOnSkill(skill.id)
-    expect(equipped.length).toBe(3)
+    expect(equipped.length).toBe(4)   // rarity 3 = 4 词条
     const equippedDefIds = new Set(equipped.map(e => e.defId))
     expect(equippedDefIds).toEqual(new Set(skill.v2Ids))
   })
@@ -63,7 +63,7 @@ describe('bindShapeToKeys · V2 联动', () => {
       affixSkills: new Map([[skill.id, skill]]),
     }
     bindShapeToKeys(bs, skill.id, 'k')
-    expect(getEquippedOnSkill(skill.id).length).toBe(2)
+    expect(getEquippedOnSkill(skill.id).length).toBe(3)   // rarity 2 = 3 词条
 
     unbindSkill(bs, skill.id)
     expect(getEquippedOnSkill(skill.id).length).toBe(0)
@@ -77,13 +77,13 @@ describe('bindShapeToKeys · V2 联动', () => {
     }
     bindShapeToKeys(bs, skill.id, 'k')
     const firstEquipped = listAllEquipped().filter(e => e.skillId === skill.id)
-    expect(firstEquipped.length).toBe(1)
+    expect(firstEquipped.length).toBe(2)   // rarity 1 = 2 词条
     expect(firstEquipped[0].key).toBe('k')
 
     // 重新绑到 J（rebind）
     bindShapeToKeys(bs, skill.id, 'j')
     const secondEquipped = listAllEquipped().filter(e => e.skillId === skill.id)
-    expect(secondEquipped.length).toBe(1)
+    expect(secondEquipped.length).toBe(2)   // rarity 1 = 2 词条
     expect(secondEquipped[0].key).toBe('j')
     expect(secondEquipped[0].instanceId).not.toBe(firstEquipped[0].instanceId)
   })
@@ -96,11 +96,11 @@ describe('bindShapeToKeys · V2 联动', () => {
       affixSkills: new Map([[skillA.id, skillA], [skillB.id, skillB]]),
     }
     bindShapeToKeys(bs, skillA.id, 'k')
-    expect(getEquippedOnSkill(skillA.id).length).toBe(1)
+    expect(getEquippedOnSkill(skillA.id).length).toBe(2)   // rarity 1 = 2 词条
 
     // B 绑同一键 → A 被 displaced
     bindShapeToKeys(bs, skillB.id, 'k')
     expect(getEquippedOnSkill(skillA.id).length).toBe(0)
-    expect(getEquippedOnSkill(skillB.id).length).toBe(1)
+    expect(getEquippedOnSkill(skillB.id).length).toBe(2)
   })
 })
