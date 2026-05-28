@@ -307,6 +307,10 @@ export function generateAffixShopItem(
   };
 }
 
+/** 商店基础技能位数（不含 black_market 额外位）· 进店生成 / reroll / terminal reshuffle 统一用此，防漂移。
+ *  历史：曾是「3 技能 + 2 牌包」；牌包移到关末后补足为 5 技能位。 */
+export const SHOP_SKILL_SLOTS = 5;
+
 /** 生成多个词条制技能商品（保证品类多样性：至少 1 件 rarity≥1，除非 white_only 或 Act 限制；同批内互相去重） */
 export function generateAffixShopItems(count: number): ShopItem[] {
   if (count <= 0) return [];
@@ -1374,7 +1378,7 @@ export function openShop(_won: boolean): void {
   // 教程模式：若 TutorialMode 预设了 state.shop.items 则沿用；否则（未预设/为空）照常生成，
   // 避免教程商店空无一物导致 phase 5「购买」无从下手。
   if (!state.isTutorial || state.shop.items.length === 0) {
-    const shopSlots = 5 + getBlackMarketExtraSlots();
+    const shopSlots = SHOP_SKILL_SLOTS + getBlackMarketExtraSlots();
     const locked = state.shop.items.filter(item => item.locked);
     const newItems = generateShopItems(shopSlots - locked.length, getBlackMarketExtraSlots() > 0);
     state.shop.items = [...locked, ...newItems];
@@ -3091,7 +3095,7 @@ function refreshShop(): void {
   playSound('buy');
 
   // Story 36.9: 黑市门票 — +1 商品位
-  const shopSlots = 5 + getBlackMarketExtraSlots();
+  const shopSlots = SHOP_SKILL_SLOTS + getBlackMarketExtraSlots();
   // 保留锁定项，替换未锁定项
   const locked = state.shop.items.filter(item => item.locked);
   const newItems = generateShopItems(shopSlots - locked.length, getBlackMarketExtraSlots() > 0);

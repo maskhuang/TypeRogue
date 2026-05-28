@@ -17,6 +17,7 @@ import {
   buildAffixTooltipFields,
   applyMaxSkillLevelOnPurchase,
   calculateAffixSkillPrice,
+  SHOP_SKILL_SLOTS,
 } from '../../systems/shop';
 import { getRecycleSellMultiplier, getBlackMarketExtraSlots, canSmuggleFree, consumeSmuggleFree, isTimedAuction } from '../../systems/relics/ShopRelicBehaviors';
 import { shouldAnimateShop } from '../../core/UserSettings';
@@ -184,7 +185,7 @@ export function ensureSeed(): void {
   if (state.shop.items.length === 0) {
     try {
       // black_market（黑市）：额外技能位
-      const items = generateAffixShopItems(3 + getBlackMarketExtraSlots());
+      const items = generateAffixShopItems(SHOP_SKILL_SLOTS + getBlackMarketExtraSlots());
       const relic = generateShopRelicItem(1);
       if (relic) items.push(relic);
       state.shop.items = items;
@@ -1393,7 +1394,7 @@ export function cmdReshuffle(): void {
   let success = false;
   try {
     const items: ShopItem[] = [
-      ...generateAffixShopItems(3 + getBlackMarketExtraSlots()),  // black_market 额外技能位
+      ...generateAffixShopItems(SHOP_SKILL_SLOTS + getBlackMarketExtraSlots()),  // 与进店一致(SHOP_SKILL_SLOTS) · black_market 额外技能位
     ];
     const relic = generateShopRelicItem(1);
     if (relic) items.push(relic);

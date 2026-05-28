@@ -464,7 +464,7 @@ const ZH: Record<string, string> = {
   'shop.terminal.cmd.help.sel_window': '  时机            进店中随时可卖；PRO 提交后入库锁定',
   // 二级 RES detail
   'shop.terminal.cmd.help.res_header': 'RES 用法：',
-  'shop.terminal.cmd.help.res_arg': '  RES            重抽货架（3 技能 + 2 词包 + 至多 1 遗物）',
+  'shop.terminal.cmd.help.res_arg': '  RES            重抽货架（5 技能 + 至多 1 遗物）',
   'shop.terminal.cmd.help.res_cost': '  代价            18 💰（不足时拒绝）',
   'shop.terminal.cmd.help.res_anim': '  视觉            新货架走 30ms 逐行打印动画',
   'shop.terminal.cmd.help.res_fallback': '  失败回滚        生成器异常时全额退款（极少触发）',
@@ -1977,7 +1977,7 @@ const EN: Record<string, string> = {
   'shop.terminal.cmd.help.sel_refund': '  REFUND RATE    50% (75% W/ RECYCLE EXPERT, FLOOR)',
   'shop.terminal.cmd.help.sel_window': '  WINDOW         ANY TIME IN-SHOP · LOCKED AFTER PRO',
   'shop.terminal.cmd.help.res_header': 'RES FORMS:',
-  'shop.terminal.cmd.help.res_arg': '  RES            RESHUFFLE CATALOG (3 SKILLS + 2 PACKS + UP TO 1 RELIC)',
+  'shop.terminal.cmd.help.res_arg': '  RES            RESHUFFLE CATALOG (5 SKILLS + UP TO 1 RELIC)',
   'shop.terminal.cmd.help.res_cost': '  COST           18 💰 (REJECTED IF INSUFFICIENT)',
   'shop.terminal.cmd.help.res_anim': '  VISUAL         30ms PER-LINE STAGGER ON NEW CATALOG',
   'shop.terminal.cmd.help.res_fallback': '  ROLLBACK       FULL REFUND IF GENERATOR FAILS (RARE)',
