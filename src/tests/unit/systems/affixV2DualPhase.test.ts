@@ -146,6 +146,7 @@ describe('建造期 on_resource_consumed 端到端（runBuildResourceConsumed）
     unregisterDynamicAffixV2('dp_cop')
     unregisterDynamicAffixV2('dp_supp')
     unregisterDynamicAffixV2('dp_rattle')
+    unregisterDynamicAffixV2('dp_observer')
   })
 
   it('coprophagy：买 100 gold → 永久返现 fraction×100', () => {
@@ -185,5 +186,29 @@ describe('建造期 on_resource_consumed 端到端（runBuildResourceConsumed）
     expect(gameState.player.bindings.has('C')).toBe(false)         // 键位解绑
     // payout 10×base + 死亡回响 2×base = 12×base
     expect(gameState.gold).toBeCloseTo(1000 + 12 * goldBase, 4)
+  })
+
+  it('on_skill_consumed 全局观察者：别的技能在吞噬发生时各响一次（persistScope=run）', () => {
+    registerDynamicAffixV2({
+      id: 'dp_supp', name_zh: '取代', name_en: 'supplant', section: 'agonistic', tags: ['agonistic'], phase: 'P1',
+      trigger: { type: 'on_resource_consumed' }, effect: { kind: 'consume_skill', selector: { type: 'all_skills' }, ratio: 10 },
+    })
+    // 旁观者：挂在另一个技能上，任一技能被吞 → 产 gold 3×base
+    registerDynamicAffixV2({
+      id: 'dp_observer', name_zh: '旁观', name_en: 'observer', section: 'agonistic', tags: ['agonistic'], phase: 'P1',
+      trigger: { type: 'on_skill_consumed' }, effect: { kind: 'gain_resource', resource: 'gold', ratio: 3 },
+    })
+    gameState.affixSkills.set('supp_host', mkSkill('supp_host', 'score', ['dp_supp']))
+    gameState.affixSkills.set('gold_victim', mkSkill('gold_victim', 'gold', []))   // 无 on_removed → 隔离观察者
+    gameState.affixSkills.set('observer_skill', mkSkill('observer_skill', 'score', ['dp_observer']))
+    gameState.player.bindings = new Map([['B', 'supp_host'], ['C', 'gold_victim'], ['E', 'observer_skill']])
+
+    const changed = runBuildResourceConsumed(50)
+
+    expect(changed).toBe(true)
+    expect(gameState.affixSkills.has('gold_victim')).toBe(false)      // 被吞
+    expect(gameState.affixSkills.has('observer_skill')).toBe(true)    // 旁观者自身不被吞（score）
+    // payout 10×base（supplant）+ 观察者 3×base（dp_observer 产 gold）= 13×base
+    expect(gameState.gold).toBeCloseTo(1000 + 13 * goldBase, 4)
   })
 })

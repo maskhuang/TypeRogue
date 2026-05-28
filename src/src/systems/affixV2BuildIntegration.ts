@@ -16,7 +16,7 @@
 import { state } from '../core/state'
 import { eventBus } from '../core/events/EventBus'
 import { getBindingState, unbindSkill } from './bindingManager'
-import { hookOnResourceConsumed, hookOnRemoved, type SourcedResult } from './affixV2Equipped'
+import { hookOnResourceConsumed, hookOnRemoved, hookOnSkillConsumed, type SourcedResult } from './affixV2Equipped'
 import {
   defaultResourceLv1Base,
   defaultGetPlayerResource,
@@ -61,6 +61,24 @@ function dispatchBuildSkillRemoved(skillId: string): void {
   }
 }
 
+// on_skill_consumed 观察者 re-entrancy 防护（深度 1）· 镜像 affixV2BattleIntegration._inSkillConsumedReaction：
+// 旁观词条若自身又取代别的 skill，其取代照常结算但不再二次派发观察者 → 杜绝 consume→observe→consume→… 无限链
+// （独立于 on_removed 桶，与战斗集成一致）。
+let _inBuildSkillConsumedReaction = false
+
+/** 建造期「有技能被取代」全局观察者（深度 1 限流）· 永久移除后派发：全场 on_skill_consumed 词条以 persistScope='run' 各结算一次 ·
+ *  移除后派发 → 被移除 skill 已离场，自然不自观察、不被取对象效果重选（建造期为永久删除，无战斗的 consumed 集语义）。 */
+function dispatchBuildSkillConsumed(skillId: string): void {
+  if (_inBuildSkillConsumedReaction) return
+  _inBuildSkillConsumedReaction = true
+  try {
+    const reactions = hookOnSkillConsumed(skillId, defaultResourceLv1Base, defaultGetPlayerResource, Date.now(), 'run')
+    processV2BuildResults(reactions)
+  } finally {
+    _inBuildSkillConsumedReaction = false
+  }
+}
+
 // ============================================
 // 建造期结果处理 · 只落「持久产出 / 结构改动」，其余忽略（战斗运行时态在 resolver 已静默）
 // ============================================
@@ -84,6 +102,8 @@ function processV2BuildResults(results: readonly SourcedResult[]): boolean {
       dispatchBuildSkillRemoved(rm.targetSkillId)
       removeSkillPermanently(rm.targetSkillId)
       if (PERSISTENT_RESOURCES.has(removed.resource) && payout !== 0) addPermanentGold(payout)
+      // 全局观察者：移除后派发（被移除 skill 已离场，旁观词条在其他技能上各响一次）· persistScope='run'
+      dispatchBuildSkillConsumed(rm.targetSkillId)
       changed = true
     }
   }

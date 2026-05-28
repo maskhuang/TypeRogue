@@ -1032,6 +1032,7 @@ export function hookOnSkillConsumed(
   resourceLv1Base: (r: string, level?: number) => number,
   getPlayerResource: (r: string) => number,
   nowMs: number,
+  persistScope: 'fight' | 'run' = 'fight',
 ): SourcedResult[] {
   const results: SourcedResult[] = []
   for (const entry of _equipped.values()) {
@@ -1060,6 +1061,7 @@ export function hookOnSkillConsumed(
       selfSection: def.section,
       selfDefId: def.id,
       getPlayerResource,
+      persistScope,
       resolveSelector: _selectorResolver,
       queryEquipped: buildQueryEquipped(entry),
     }
