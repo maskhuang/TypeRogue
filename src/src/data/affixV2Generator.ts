@@ -48,23 +48,25 @@ function pickTrigger(section: SectionTag, kind: string): TriggerEntry {
   return random() < 0.5 ? pickOnFireTrigger(section) : pickNonFireTrigger(kind)
 }
 
-/** on_fire 家族（含 on_self_fire）· 7 子类等权 · 子类内随机参数 */
+/** on_fire 家族（含 on_self_fire）· on_self_fire（简单"本技能触发时"）偏重 40%，6 个带过滤维度的复杂变体共享余下 60%
+ *  （tag/resource/posRel 各 12% · rarity/marked/is_crit 各 8%）· 子类内随机参数。
+ *  偏重 on_self_fire 是为让生成结果以可读的"触发时"为主、降低复杂过滤 trigger 的密度。 */
 function pickOnFireTrigger(section: SectionTag): TriggerEntry {
   const r = random()
-  if (r < 1 / 7) {
-    // on_self_fire · 自身 fire
+  if (r < 0.40) {
+    // on_self_fire · 自身 fire（简单"本技能触发时"）
     return { spec: { type: 'on_self_fire' }, freq: 30 }
   }
-  if (r < 2 / 7) {
+  if (r < 0.52) {
     // on_fire(tag=本 section)
     return { spec: { type: 'on_fire', filter: { tag: section } }, freq: 45 }
   }
-  if (r < 3 / 7) {
+  if (r < 0.64) {
     // on_fire(resource) · 6 资源等权
     const resource = pickRandom(MATCHED_RESOURCE_POOL)
     return { spec: { type: 'on_fire', filter: { resource } }, freq: 45 }
   }
-  if (r < 4 / 7) {
+  if (r < 0.76) {
     // on_fire(posRel) · 6 关系等权
     const posRel = pickRandom(POSREL_VALUES)
     return {
@@ -72,12 +74,12 @@ function pickOnFireTrigger(section: SectionTag): TriggerEntry {
       freq: ONFIRE_POSREL_FREQ[String(posRel)] ?? 60,
     }
   }
-  if (r < 5 / 7) {
+  if (r < 0.84) {
     // on_fire(rarity) · 稀有度 0-3 等权 · freq 粗估（依赖场上稀有度分布）
     const rarity = Math.floor(random() * 4)
     return { spec: { type: 'on_fire', filter: { rarity } }, freq: 30 }
   }
-  if (r < 6 / 7) {
+  if (r < 0.92) {
     // on_fire(marked=true) · 焦点技能 fire 时 · freq 粗估（依赖场上是否有焦点 · 单焦点）
     // chain 里语义为"其他焦点技能 fire"（运行时 hookOnSkillFire 对 fire_target 排除自身）
     return { spec: { type: 'on_fire', filter: { marked: true } }, freq: 20 }
@@ -158,10 +160,12 @@ function selfSafeFireTrigger(
 // Chant scale roll · apply_aura 的 ScaleByTag 抽样
 // ============================================
 
-const CHANT_SCALE_PROBABILITY = 0.3
+const CHANT_SCALE_PROBABILITY = 0.15
 const CHANT_TAG_PER_N_MIN = 2
 const CHANT_TAG_PER_N_MAX = 4
 const CHANT_TAG_COUNT_FACTOR = 0.1
+/** drip recipe 附加 count-scale（scale-by-tag 及其变体）的概率 · 与 chant 同向调低，让 scale 成为点缀而非常态 */
+const DRIP_SCALE_PROBABILITY = 0.25
 
 /** 抽 scale 计数来源（变体）· 词条 34% / 资源 15% / 稀有度 12% / 极速 7% / 结盟数 7% / 目标分数 6% / 同名词条 6% / 暴击率 6% / 空位 7%。
  *  资源用宿主资源（"数同资源技能"，无则随机）；稀有度 0-3 随机；极速数/结盟数全局动态；目标分数读当前关目标档；
@@ -193,7 +197,7 @@ function pickScaleScope(source: ScaleCountSource): TargetSelector | undefined {
 }
 
 /**
- * 给 chant recipe 抽 scale 字段 · 30% 概率挂；rainbow modifier 不抽（无 amount）。
+ * 给 chant recipe 抽 scale 字段 · CHANT_SCALE_PROBABILITY 概率挂；rainbow modifier 不抽（无 amount）。
  * 曲线路由：multi_fire_add → per_n（整数步进）；其余 → count（连续 %-scaling）。
  * 计数来源由 pickScaleSource 随机（词条/资源/稀有度/空位）。
  */
@@ -481,12 +485,14 @@ const MATCHED_RESOURCE_POOL: readonly ResourceType[] = [
 /** 全 scope 池（aura/growth/escalate/chain 用，含 self）*/
 const FULL_SCOPE_POOL: readonly ScopeEntry[] = [
   { selector: { type: 'self' },                                                weight: 100 },
-  { selector: { type: 'neighbors', posRel: PositionRelation.Symmetric },        weight: 30 },
-  { selector: { type: 'neighbors', posRel: PositionRelation.SameColumn },       weight: 20 },
-  { selector: { type: 'neighbors', posRel: PositionRelation.SameFinger },       weight: 20 },
-  { selector: { type: 'neighbors', posRel: PositionRelation.Adjacent },         weight: 15 },
-  { selector: { type: 'neighbors', posRel: PositionRelation.SameRow },          weight: 5 },
-  { selector: { type: 'neighbors', posRel: PositionRelation.SameHand },         weight: 3 },
+  // neighbors 权重偏向直觉关系（相邻/同行/同列），把对称/同指/同手压成稀有"调味"——
+  // 降低键位拓扑作用域的阅读负荷（对称/同指目标集虽精确但需触键模型，最难读）。
+  { selector: { type: 'neighbors', posRel: PositionRelation.Adjacent },         weight: 30 },
+  { selector: { type: 'neighbors', posRel: PositionRelation.SameRow },          weight: 25 },
+  { selector: { type: 'neighbors', posRel: PositionRelation.SameColumn },       weight: 18 },
+  { selector: { type: 'neighbors', posRel: PositionRelation.Symmetric },        weight: 8 },
+  { selector: { type: 'neighbors', posRel: PositionRelation.SameHand },         weight: 5 },
+  { selector: { type: 'neighbors', posRel: PositionRelation.SameFinger },       weight: 5 },
   { selector: { type: 'all_skills' },                                          weight: 2 },
   // hasted：场上当前处于极速态（haste 层数 ≥ 1）的技能 · 运行时动态范围 · 与 all_skills 同档稀有
   { selector: { type: 'hasted' },                                              weight: 2 },
@@ -535,12 +541,12 @@ const INHERIT_TAGS_SOURCE_POOL: readonly ScopeEntry[] = [
  *  不含 self（运行时 = 仅本词条自身，计数退化）/ hasted（运行时动态）。*/
 const SCALE_SCOPE_POOL: readonly ScopeEntry[] = [
   { selector: { type: 'all_skills' },                                     weight: 40 },
-  { selector: { type: 'neighbors', posRel: PositionRelation.Symmetric },  weight: 6 },
+  { selector: { type: 'neighbors', posRel: PositionRelation.Adjacent },   weight: 9 },
+  { selector: { type: 'neighbors', posRel: PositionRelation.SameRow },    weight: 8 },
   { selector: { type: 'neighbors', posRel: PositionRelation.SameColumn }, weight: 5 },
-  { selector: { type: 'neighbors', posRel: PositionRelation.SameFinger }, weight: 5 },
-  { selector: { type: 'neighbors', posRel: PositionRelation.Adjacent },   weight: 5 },
-  { selector: { type: 'neighbors', posRel: PositionRelation.SameRow },    weight: 4 },
-  { selector: { type: 'neighbors', posRel: PositionRelation.SameHand },   weight: 3 },
+  { selector: { type: 'neighbors', posRel: PositionRelation.Symmetric },  weight: 2 },
+  { selector: { type: 'neighbors', posRel: PositionRelation.SameFinger }, weight: 2 },
+  { selector: { type: 'neighbors', posRel: PositionRelation.SameHand },   weight: 2 },
   ...MATCHED_RESOURCE_POOL.map(resource => ({
     selector: { type: 'matched_resource' as const, resource } as TargetSelector,
     weight: 4,
@@ -712,7 +718,7 @@ export function rollAffixV2Spec(
   let triggerSpec: TriggerSpec = triggerEntry.spec
 
   if (recipe.kind === 'drip') {
-    // drip: 资源随机 · 50% 概率附加 count-scale（来源随机：词条/资源/稀有度/空位 · Bazaar Count synergy）
+    // drip: 资源随机 · DRIP_SCALE_PROBABILITY 概率附加 count-scale（来源随机：词条/资源/稀有度/空位 · Bazaar Count synergy）
     let ratio = scaleMagnitude(recipe.T, triggerEntry.freq)
     let resource = pickRandom(recipe.resourcePool)
     // on_sold 改派（dual-capable）：仅当 pool 含持久资源 → 锁 gold + 一次性整支预算 T（参考 nut_crack）·
@@ -723,7 +729,7 @@ export function rollAffixV2Spec(
       resource = pickRandom(persistentPool)
       ratio = RECIPE_NUT_CRACK.T
     }
-    const withScale = random() < 0.5
+    const withScale = random() < DRIP_SCALE_PROBABILITY
     if (withScale) {
       const source = pickScaleSource(recipe.section, resource, recipe.kind)
       effect = { kind: 'gain_resource', resource, ratio, scale: { type: 'count', source, factor: 0.1, scope: pickScaleScope(source) } }
@@ -761,7 +767,7 @@ export function rollAffixV2Spec(
         case 'multi_fire_add':   modifier = { type: 'multi_fire_add', amount };         break
         case 'rainbow':          modifier = { type: 'rainbow' };                        break
       }
-      // 30% 概率挂 scale · rainbow 跳过（无 amount 字段，scale 无意义）
+      // CHANT_SCALE_PROBABILITY 概率挂 scale · rainbow 跳过（无 amount 字段，scale 无意义）
       // 曲线：multi_fire_add → per_n（整数步进）；% 类型 → count（连续）· 来源(词条/资源/稀有度/空位)随机
       const scale = pickChantScale(modifierType, recipe.section, recipe.kind)
       effect = scale

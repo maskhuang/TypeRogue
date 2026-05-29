@@ -261,8 +261,8 @@ describe('chant generator · scale roll', () => {
     expect(sawMeta).toBe(true)
   })
 
-  it('scale 概率 ≈ 30% (非 rainbow 中，宽松区间)', () => {
-    // 30% 名义 · 1000 试 · 抽样误差 ~3% → 区间 [22%, 38%]
+  it('scale 概率 ≈ 15% (非 rainbow 中，宽松区间)', () => {
+    // 15% 名义 · 1000 试 · 抽样误差 ~3% → 区间 [8%, 22%]
     setSeededMode(31337)
     let nonRainbow = 0
     let nonRainbowWithScale = 0
@@ -278,8 +278,8 @@ describe('chant generator · scale roll', () => {
     }
     expect(nonRainbow).toBeGreaterThan(100)
     const rate = nonRainbowWithScale / nonRainbow
-    expect(rate).toBeGreaterThan(0.22)
-    expect(rate).toBeLessThan(0.38)
+    expect(rate).toBeGreaterThan(0.08)
+    expect(rate).toBeLessThan(0.22)
   })
 })
 
