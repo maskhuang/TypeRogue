@@ -1,7 +1,7 @@
 // ============================================
 // 打字肉鸽 - 新 Affix 系统 · 统一 FireFilter 匹配
 // ============================================
-// 把 FireFilter 5 维（tag / posRel / resource / is_crit / stack_state）AND-聚合判定。
+// 把 FireFilter 7 维（tag / posRel / resource / is_crit / stack_state / rarity / marked）AND-聚合判定。
 //
 // 各维度复用现有代码：
 //   - tag         → tagQuery.hasTag（新代码，已实装）
@@ -9,6 +9,8 @@
 //   - resource    → 直接字符串比较（沿用 Resonance / ClassResourceFilter pattern）
 //   - is_crit     → 直接布尔比较（沿用 TriggerResult.isCrit pattern）
 //   - stack_state → 直接枚举比较（沿用 onStackEffectTriggered pattern）
+//   - rarity      → state.affixSkills 稀有度精确比较
+//   - marked      → affixV2State.isFocused（来源 skill 是否当前 MARK 焦点）
 
 import type { FireFilter } from '../data/affixV2Trigger'
 import { hasRelation, triggerPosAnchor } from '../data/keyboardTopology'
@@ -22,7 +24,7 @@ export type { FireFilter, FireEvent }
 export type { Tag } from '../data/affixTags'
 
 /**
- * 判断 FireEvent 是否匹配 FireFilter（5 维 AND 聚合）。
+ * 判断 FireEvent 是否匹配 FireFilter（7 维 AND 聚合）。
  *
  * 缺省字段 = 不限制该维度；存在字段 = 必须匹配。
  *

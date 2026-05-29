@@ -116,3 +116,37 @@ export function skillHasEffectiveTag(skillId: string, tag: Tag): boolean {
   if (getSkillOwnTags(skillId).has(tag)) return true
   return getSkillInheritedTags(skillId).has(tag)
 }
+
+// ============================================
+// 建造期预览（tooltip 用）· 不依赖战斗期 aura store
+// ============================================
+// passive aura 仅在 hookOnBattleStart 时被物化进 store；workbench / shop 里
+// listActiveAuras 为空 → getSkillInheritedTags 恒返空。tooltip 需在建造期就展示
+// 「装上 inherit_tags 词条后会继承到哪些 tag」，故直接扫描宿主已装配的
+// apply_aura(inherit_tags) effect 并就地解析来源 scope（与 battle-start 物化同口径）。
+
+/** 宿主若装有 inherit_tags 词条，预计会继承到的 tag 集（建造期可用，不读 aura store）。*/
+export function previewSkillInheritedTags(skillId: string): Set<Tag> {
+  const out = new Set<Tag>()
+  const sk = state.affixSkills.get(skillId)
+  if (!sk?.v2Ids) return out
+  let hostKey = ''
+  for (const [k, sid] of state.player.bindings) { if (sid === skillId) { hostKey = k; break } }
+  for (const defId of sk.v2Ids) {
+    const def = getAffixV2Definition(defId)
+    if (!def || def.effect.kind !== 'apply_aura' || def.effect.modifier.type !== 'inherit_tags') continue
+    for (const srcId of resolveSourceScopeSkillIds(def.effect.selector, skillId, hostKey)) {
+      if (srcId === skillId) continue
+      for (const t of getSkillOwnTags(srcId)) out.add(t)
+    }
+  }
+  return out
+}
+
+/** tooltip 用：宿主有效 tag 集，分离「本体 own」与「（去掉本体已有后的）新继承 inherited」。*/
+export function previewSkillEffectiveTags(skillId: string): { own: Set<Tag>; inherited: Set<Tag> } {
+  const own = getSkillOwnTags(skillId)
+  const inherited = previewSkillInheritedTags(skillId)
+  for (const t of own) inherited.delete(t)   // 已是本体的不重复标继承
+  return { own, inherited }
+}

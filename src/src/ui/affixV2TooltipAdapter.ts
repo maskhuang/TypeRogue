@@ -19,6 +19,7 @@ import { scopePosAnchor, triggerPosAnchor } from '../data/keyboardTopology'
 import { SECTION_TAG_NAMES_ZH, SECTION_TAG_NAMES_EN, type Tag, type SectionTag } from '../data/affixTags'
 import { getLocale } from '../demo/demo-i18n'
 import { listAllEquipped, getEnchant, previewCountScaleSource } from '../systems/affixV2Equipped'
+import { previewSkillEffectiveTags } from '../systems/affixV2InheritedTags'
 import { applyEnchantToEffect, getEnchantDisplay, type EnchantSpec } from '../data/affixV2Enchant'
 import { RARITY_NAMES, type SkillRarity } from '../data/affixes'
 
@@ -627,6 +628,35 @@ export function affixV2InstancesToTooltipInfo(
   return out
 }
 
+/** 蜷缩(inherit_tags) 在场时，附一行 skill 级「有效类别」摘要：本体 own ∪ 新继承 inherited。
+ *  继承在建造期 aura store 为空 → previewSkillEffectiveTags 按静态 def 推算（与 battle-start 物化同口径）。
+ *  无 inherit_tags 词条则返回 null（不在普通技能上增噪）。*/
+function buildEffectiveTagsInfo(
+  skillId: string,
+  entries: ReturnType<typeof listAllEquipped>,
+): AffixTooltipInfo | null {
+  const hasInherit = entries.some(e => {
+    const eff = getAffixV2Definition(e.defId)?.effect
+    return eff?.kind === 'apply_aura' && eff.modifier.type === 'inherit_tags'
+  })
+  if (!hasInherit) return null
+  const { own, inherited } = previewSkillEffectiveTags(skillId)
+  const zh = isZh()
+  const sep = zh ? '、' : ', '
+  const ownStr = [...own].map(locTag).join(sep) || (zh ? '无' : 'none')
+  const inhStr = [...inherited].map(locTag).join(sep)
+  const description = inherited.size > 0
+    ? (zh ? `本体 ${ownStr}　·　继承 ${inhStr}` : `own ${ownStr} · inherited ${inhStr}`)
+    : (zh ? `本体 ${ownStr}　·　继承 —（暂无新增）` : `own ${ownStr} · inherited — (none yet)`)
+  return {
+    typeName: zh ? '有效类别' : 'Effective tags',
+    typeKey: '_effective_tags',
+    paramSummary: '',
+    description,
+    // 不设 section：避免污染 header section-chip 聚合
+  }
+}
+
 /** 附魔感知的 skill-level tooltip 构造 ·
  *  已绑定 skill（有装备 entry）→ 用 entry.instanceId 查附魔 + 展示附魔后效果
  *  未绑定（如 shop preview）→ 回退到 skill.v2Ids 直接展示原 def
@@ -650,6 +680,8 @@ export function affixV2SkillToTooltipInfo(skill: {
       const info = affixV2DefinitionToTooltipInfo(def, skillResource, getEnchant(entry.instanceId), { skillId: entry.skillId, key: entry.key, defId: entry.defId })
       out.push(withUsesLeft(info, def, skill.v2Uses?.[entry.defId] ?? 0))
     }
+    const effTagsInfo = buildEffectiveTagsInfo(skill.id, entries)
+    if (effTagsInfo) out.push(effTagsInfo)
     return out
   }
   // fallback: 未绑定 skill（shop preview 等），用 v2Ids 展示原效果（无附魔）
