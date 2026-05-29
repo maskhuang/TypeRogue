@@ -1,126 +1,125 @@
 <!DOCTYPE html>
-<html>
+<html lang="zh">
 <head>
-<meta charset="UTF-8">
+<meta charset="utf-8">
+<title>DPCA — Cover 630×500</title>
 <style>
-* { margin: 0; padding: 0; box-sizing: border-box; }
-body {
-  width: 630px; height: 500px;
-  background: #0a0a0f;
-  font-family: 'Courier New', monospace;
-  display: flex; align-items: center; justify-content: center;
-  overflow: hidden; position: relative;
-}
-.bg-grid {
-  position: absolute; inset: 0; opacity: 0.06;
-  background-image:
-    linear-gradient(rgba(255,255,255,0.3) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255,255,255,0.3) 1px, transparent 1px);
-  background-size: 40px 40px;
-}
-.glow-top {
-  position: absolute; top: -80px; left: 50%; transform: translateX(-50%);
-  width: 400px; height: 200px; border-radius: 50%;
-  background: radial-gradient(ellipse, rgba(78,205,196,0.15), transparent 70%);
-}
-.glow-bottom {
-  position: absolute; bottom: -60px; left: 50%; transform: translateX(-50%);
-  width: 500px; height: 180px; border-radius: 50%;
-  background: radial-gradient(ellipse, rgba(255,107,107,0.1), transparent 70%);
-}
-.content {
-  position: relative; z-index: 1; text-align: center;
-}
-h1 {
-  font-size: 56px; font-weight: bold; letter-spacing: 2px;
-  background: linear-gradient(135deg, #ff6b6b, #ffe66d, #4ecdc4);
-  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-  background-clip: text; margin-bottom: 12px;
-}
-.tagline {
-  color: #888; font-size: 15px; margin-bottom: 36px; letter-spacing: 1px;
-}
-.keyboard {
-  display: flex; flex-direction: column; align-items: center; gap: 5px;
-}
-.row { display: flex; gap: 5px; }
-.key {
-  width: 42px; height: 42px; border-radius: 6px;
-  background: rgba(255,255,255,0.06);
-  border: 1px solid rgba(255,255,255,0.1);
-  display: flex; align-items: center; justify-content: center;
-  font-size: 14px; color: #555; position: relative;
-}
-.key.lit {
-  border-color: rgba(78,205,196,0.6);
-  background: rgba(78,205,196,0.12);
-  color: #4ecdc4;
-  box-shadow: 0 0 12px rgba(78,205,196,0.2);
-}
-.key.fire {
-  border-color: rgba(255,107,107,0.6);
-  background: rgba(255,107,107,0.12);
-  color: #ff6b6b;
-  box-shadow: 0 0 12px rgba(255,107,107,0.2);
-}
-.key.gold {
-  border-color: rgba(255,230,109,0.6);
-  background: rgba(255,230,109,0.12);
-  color: #ffe66d;
-  box-shadow: 0 0 12px rgba(255,230,109,0.2);
-}
-.key .skill {
-  position: absolute; bottom: 2px; right: 3px; font-size: 9px;
-}
-.badge {
-  display: inline-block; margin-top: 28px; padding: 4px 14px;
-  border: 1px solid rgba(255,255,255,0.15); border-radius: 4px;
-  color: #666; font-size: 11px; letter-spacing: 1px;
-}
+  :root{
+    --gold:#c9a45e; --gold-dim:#8a7140; --parch:#a89674;
+    --ink-cream:#f0e5c9; --ink:#e8dcc0;
+    --dossier:'Courier Prime','Courier New','PingFang SC','Microsoft YaHei','Noto Sans SC',monospace;
+    --cjk:'PingFang SC','Microsoft YaHei','Noto Sans SC',sans-serif;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  html,body{background:#000;}
+  /* 封面画布：itch.io 630×500 */
+  .cover{
+    position:relative; width:630px; height:500px; overflow:hidden;
+    font-family:var(--dossier); color:var(--ink);
+    background:
+      radial-gradient(125% 95% at 50% 30%, #221a0e 0%, #15100a 46%, #0a0705 100%);
+  }
+  /* 纸面颗粒 + 账本细线 */
+  .cover::before{
+    content:''; position:absolute; inset:0; pointer-events:none; opacity:.5;
+    background:
+      repeating-linear-gradient(0deg, rgba(201,164,94,.05) 0 1px, transparent 1px 26px),
+      repeating-linear-gradient(90deg, rgba(0,0,0,.10) 0 1px, transparent 1px 4px);
+    mix-blend-mode:overlay;
+  }
+  /* 暗角 + 顶光（桌面台灯感） */
+  .cover::after{
+    content:''; position:absolute; inset:0; pointer-events:none;
+    background:
+      radial-gradient(80% 60% at 50% 8%, rgba(255,238,200,.10), transparent 60%),
+      radial-gradient(120% 110% at 50% 50%, transparent 55%, rgba(0,0,0,.62) 100%);
+  }
+
+  /* 双线边框（公文卷宗框） */
+  .frame{position:absolute; inset:14px; border:1px solid rgba(201,164,94,.40); z-index:3;}
+  .frame::before{content:''; position:absolute; inset:4px; border:1px solid rgba(201,164,94,.18);}
+
+  /* 顶部分类条 */
+  .topbar{position:absolute; top:26px; left:34px; right:34px; z-index:5;
+    display:flex; justify-content:space-between; align-items:flex-start;
+    font-size:9px; letter-spacing:2px; color:var(--parch); opacity:.85;}
+  .topbar .l{line-height:1.6;}
+  .topbar .l b{color:var(--gold); font-weight:700;}
+
+  /* 受控印章（右上角，倾斜） */
+  .stamp{
+    position:absolute; top:40px; right:40px; z-index:6; transform:rotate(-8deg);
+    border:2px solid #9c4a3a; color:#c9624f; padding:5px 9px 4px;
+    font-size:13px; font-weight:700; letter-spacing:4px; text-align:center;
+    opacity:.78; border-radius:2px; line-height:1.05;
+    box-shadow:inset 0 0 0 1px rgba(156,74,58,.5);
+    text-shadow:0 0 2px rgba(0,0,0,.4);
+  }
+  .stamp small{display:block; font-size:7px; letter-spacing:2px; margin-top:2px; opacity:.9;}
+
+  /* 主体竖排 */
+  .stack{position:absolute; inset:0; z-index:5;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    gap:0; padding-top:16px;}
+
+  /* DPCA 徽记（猿+打字机），白线稿 → 暖金光晕 */
+  .seal{width:204px; height:204px; margin-bottom:8px;}
+  .seal img{width:100%; height:100%; object-fit:contain; opacity:.95;
+    filter:
+      drop-shadow(0 0 11px rgba(201,164,94,.42))
+      drop-shadow(0 0 2px rgba(201,164,94,.7))
+      sepia(.30) saturate(1.05) brightness(.97);}
+
+  .title-zh{font-size:50px; font-weight:700; letter-spacing:9px; color:var(--ink-cream);
+    font-family:var(--cjk); text-indent:9px;
+    text-shadow:0 0 16px rgba(0,0,0,.95), 0 0 5px rgba(0,0,0,.85), 0 2px 0 rgba(0,0,0,.6);}
+
+  .rule{width:300px; height:1px; margin:13px 0 11px;
+    background:linear-gradient(90deg, transparent, var(--gold) 50%, transparent); position:relative;}
+  .rule::after{content:'◆'; position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);
+    color:var(--gold); font-size:8px; background:#16110a; padding:0 7px;}
+
+  .title-en{font-size:12.5px; letter-spacing:5px; color:var(--gold); font-weight:700;
+    text-shadow:0 0 8px rgba(0,0,0,.9);}
+
+  /* 类型 / 标语 */
+  .genre{margin-top:18px; font-size:12px; letter-spacing:6px; color:var(--ink-cream);
+    font-family:var(--cjk); text-shadow:0 0 8px rgba(0,0,0,.9);}
+  .genre b{color:var(--gold);}
+  .tagline{margin-top:6px; font-size:10px; letter-spacing:3px; color:var(--parch); opacity:.9;}
+
+  /* 底部 meta */
+  .botbar{position:absolute; bottom:26px; left:34px; right:34px; z-index:5;
+    display:flex; justify-content:space-between; align-items:flex-end;
+    font-size:9px; letter-spacing:2px; color:var(--parch); opacity:.8;}
+  .botbar .id{color:var(--gold); font-weight:700; letter-spacing:3px;}
 </style>
 </head>
 <body>
-  <div class="bg-grid"></div>
-  <div class="glow-top"></div>
-  <div class="glow-bottom"></div>
-  <div class="content">
-    <h1>TypeRogue</h1>
-    <div class="tagline">Type words. Trigger skills. Break the score ceiling.</div>
-    <div class="keyboard">
-      <div class="row">
-        <div class="key">Q</div>
-        <div class="key">W</div>
-        <div class="key lit">E<span class="skill">⚔️</span></div>
-        <div class="key fire">R<span class="skill">🔥</span></div>
-        <div class="key lit">T<span class="skill">🪙</span></div>
-        <div class="key">Y</div>
-        <div class="key">U</div>
-        <div class="key">I</div>
-        <div class="key">O</div>
-        <div class="key">P</div>
-      </div>
-      <div class="row">
-        <div class="key gold">A<span class="skill">💰</span></div>
-        <div class="key">S</div>
-        <div class="key">D</div>
-        <div class="key fire">F<span class="skill">💱</span></div>
-        <div class="key">G</div>
-        <div class="key">H</div>
-        <div class="key">J</div>
-        <div class="key">K</div>
-        <div class="key">L</div>
-      </div>
-      <div class="row">
-        <div class="key">Z</div>
-        <div class="key">X</div>
-        <div class="key">C</div>
-        <div class="key">V</div>
-        <div class="key">B</div>
-        <div class="key">N</div>
-        <div class="key">M</div>
+  <div class="cover">
+    <div class="frame"></div>
+
+    <div class="topbar">
+      <div class="l">
+        <div><b>DPCA</b> · 文牍科 2-B</div>
+        <div>FORM-T0 · 受 理 卷 宗</div>
       </div>
     </div>
-    <div class="badge">ROGUELIKE TYPING DECKBUILDER</div>
+    <div class="stamp">受 控<small>RESTRICTED</small></div>
+
+    <div class="stack">
+      <div class="seal"><img src="seal-mark.png" alt="DPCA seal"></div>
+      <div class="title-zh">灵长类辅助文书部</div>
+      <div class="rule"></div>
+      <div class="title-en">DEPARTMENT OF PRIMATE CLERICAL AFFAIRS</div>
+      <div class="genre">打 字 肉 鸽 · <b>TYPING ROGUELIKE</b></div>
+      <div class="tagline">打 字 — 受 理 — 归 档</div>
+    </div>
+
+    <div class="botbar">
+      <div class="id">OP. PRIMATE-7842</div>
+      <div>DPCA-VT220 · DEPT 2-B</div>
+    </div>
   </div>
 </body>
 </html>

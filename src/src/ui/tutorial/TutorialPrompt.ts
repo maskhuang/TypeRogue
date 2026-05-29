@@ -14,6 +14,10 @@ export interface PromptOptions {
   typeSpeed?: number
   /** i18n 参数 */
   params?: Record<string, string | number>
+  /** 手动关闭：不绑按键/点击关闭、不显示「按任意键」提示，由调用方控制推进（如完成单词时） */
+  manualDismiss?: boolean
+  /** 置顶显示：默认贴底；商店/工作台底部有命令行 / SUBMIT / 键盘，需置顶避免遮挡 */
+  top?: boolean
 }
 
 let promptContainer: HTMLElement | null = null
@@ -48,7 +52,7 @@ export function showPrompt(textKey: string, options?: PromptOptions): Promise<vo
 
     // 提示框容器 · DPCA-VT220 INSTRUCTION channel
     promptContainer = document.createElement('div')
-    promptContainer.className = 'tutorial-prompt'
+    promptContainer.className = options?.top ? 'tutorial-prompt tutorial-prompt-top' : 'tutorial-prompt'
 
     // 头条：mini DPCA bar (LED + brand + spec + tag)
     const header = document.createElement('div')
@@ -90,6 +94,8 @@ export function showPrompt(textKey: string, options?: PromptOptions): Promise<vo
         clearInterval(typeTimer!)
         typeTimer = null
         textEl.classList.add('typing-done')
+        // 手动关闭模式：不显示「按任意键」、不绑关闭事件 —— 推进由调用方（完成单词时 dismiss/切下一段）控制
+        if (options?.manualDismiss) return
         continueEl.style.display = ''
         // 下一帧绑定（避免与最后一个打字 keydown 冲突）
         requestAnimationFrame(() => {
