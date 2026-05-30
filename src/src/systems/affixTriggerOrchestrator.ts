@@ -42,6 +42,8 @@ export type TriggerWorkType =
   | 'amplify_trigger'
   | 'stack_self'
   | 'overload'
+  | 'word_handoff'
+  | 'word_rewind'
 
 export interface TriggerWorkItem {
   /** 目标技能 ID */
@@ -195,6 +197,11 @@ export function orchestrateAffixTrigger(
       triggerKey: effectiveTriggerKey,
       occupiedKeys: chainedOccupiedKeys.length > 0 ? chainedOccupiedKeys : (effectiveTriggerKey ? [effectiveTriggerKey] : []),
       transmuteResource: skill.transmuteResource,
+      // 同词时序型词条（Handoff/Rewind/Endow）仅对玩家的初始按键生效
+      isInitialTrigger: item.type === 'initial',
+      // word_handoff / word_rewind 触发的额外触发：允许叠层监听，但禁用 Phase6 链式词条（conduit/relay/splash）
+      // 以实现"与叠层正常交互、与 Conduit 只是加算"的语义
+      ...(item.type === 'word_handoff' || item.type === 'word_rewind' ? { chainAffixesDisabled: true } : {}),
       // splash 触发禁用链式词条
       ...(item.type === 'splash' ? { chainAffixesDisabled: true } : {}),
       // 41-4: outcast_echo / crit_echo 禁用链式词条防止循环
@@ -226,6 +233,7 @@ export function orchestrateAffixTrigger(
     const drainResource = result.phase4?.targetResource ?? skill.resource
     effectiveOutput *= getOutputDrainMultiplier(drainResource)
 
+    result.triggerType = item.type
     results.push(result)
 
     totalOutput += effectiveOutput
@@ -599,6 +607,47 @@ function enqueuePhase6Action(
         depth: parentChildHistory.length,
         chainHistory: parentChildHistory,
       })
+      break
+    }
+    // word_handoff: 接力 — 让目标技能额外触发 N 次（在它轮到自己触发之后，追加 N 次）
+    case 'word_handoff': {
+      const targetSkillId = ctx.bindings.get(action.targetKey)
+      if (!targetSkillId) return
+      for (let i = 0; i < action.extraCount; i++) {
+        queue.push({
+          skillId: targetSkillId,
+          triggerKey: action.targetKey,
+          type: 'word_handoff',
+          depth: parentChildHistory.length,
+          chainHistory: parentChildHistory,
+        })
+      }
+      break
+    }
+    // word_rewind: 回溯 — 依次对 targetKeys 里每个键各额外触发 1 次（按传入顺序入队）
+    case 'word_rewind': {
+      for (const tk of action.targetKeys) {
+        const targetSkillId = ctx.bindings.get(tk)
+        if (!targetSkillId) continue
+        queue.push({
+          skillId: targetSkillId,
+          triggerKey: tk,
+          type: 'word_rewind',
+          depth: parentChildHistory.length,
+          chainHistory: parentChildHistory,
+        })
+      }
+      break
+    }
+    // word_endow: 遗产 — 把标准化后的底分写入目标技能 runtime 的 wordBaseBonus
+    case 'word_endow': {
+      for (const tk of action.targetKeys) {
+        const targetSkillId = ctx.bindings.get(tk)
+        if (!targetSkillId) continue
+        const rt = ctx.skillStates.get(targetSkillId)
+        if (!rt) continue
+        rt.wordBaseBonus = (rt.wordBaseBonus ?? 0) + action.amountPerTarget
+      }
       break
     }
   }

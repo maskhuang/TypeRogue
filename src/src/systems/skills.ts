@@ -11,7 +11,7 @@ import type { ResourceType, PseudoInfiniteState } from '../core/types';
 import { t } from '../demo/demo-i18n';
 import { getElements } from '../ui/elements';
 import { playSound, emitResourceSound } from '../effects/sound';
-import { showFeedback, setPseudoInfiniteVisual, resolveChainAnchor, performAutocomplete, getChargeAutoMultBonus } from './battle';
+import { showFeedback, setPseudoInfiniteVisual, resolveChainAnchor, performAutocomplete, getChargeAutoMultBonus, flashChainLine } from './battle';
 import { routeEnergyToPipeline, consumeCompletedWord, updatePipelineHUD } from './classes/AssemblyPipeline';
 import { GENERIC_RESOURCES } from './classes/ClassResourceFilter';
 import { getFloatScale } from '../effects/juice';
@@ -37,6 +37,21 @@ import type { PositionRelation } from '../data/keyboardTopology';
 import { rollAffixParams } from '../data/skillGeneration';
 import { inputHandler } from './typing/InputHandler';
 
+
+// === 词条链式触发闪光连线配色（按触发工作类型区分） ===
+const CHAIN_LINE_COLORS: Record<string, string> = {
+  splash: '#ff8844',          // 溅射 — 橙
+  conduit: '#44ccff',         // 导能 — 青
+  relay: '#88ff88',           // 中转 — 绿
+  resonance: '#ff88ff',       // 共鸣 — 粉
+  outcast_echo: '#ff4488',    // 首尾呼应 — 品红
+  crit_echo: '#ffaa00',       // 暴击回响 — 金
+  pulse_burst: '#ff4444',     // Outcast/Fiber 满层 — 红
+  amplify_trigger: '#aa88ff', // 增幅脉冲 — 紫
+  stack_self: '#ffffff',      // 叠层自触发 — 白
+  overload: '#ffdd00',        // 过载电路 — 黄
+  initial: '#aa88ff',         // 初始触发（来源为遗物/词库 UI 时才可见） — 紫
+};
 
 // === 战后统计：记录技能触发 ===
 const EMPTY_RESOURCES = { base: 0, score: 0, multiplier: 0, time: 0, shield: 0, gold: 0, energy: 0, mutagen: 0 };
@@ -295,6 +310,7 @@ function triggerAffixSkillWithFeedback(
     triggerKey,
     occupiedKeys,
     currentWord: state.player.word,
+    letterIndex: state.player.index,
     resources: { ...state.resources, gold: state.gold ?? 0 },
     playerGold: state.gold ?? 0,
     targetScore: state.targetScore ?? 0,
@@ -564,11 +580,40 @@ function triggerAffixSkillWithFeedback(
     return { fromElementId: 'active-library', resource, amount };
   }
 
+  // 链式触发闪光连线：为每个非 initial 的触发画一条从源到目标的连线
+  // 源 = 原始 triggerKey（若在词内→随机选一个匹配字母；否则→词库 UI）
+  // 目标 = tr.triggerKey（走 chainAnchorCache 同样逻辑）
+  // 两端都落在 active-library 时 flashChainLine 内部会跳过
+  {
+    const sourceAnchor = overrideAnchor?.fromElementId
+      ? { fromElementId: overrideAnchor.fromElementId }
+      : overrideAnchor?.letterIndex != null
+        ? { letterIndex: overrideAnchor.letterIndex }
+        : resolveChainAnchor(triggerKey);
+    // 关键：把 triggerKey 的锚点塞进缓存，避免循环里再调一次 resolveChainAnchor(triggerKey)
+    // 产生不同的 random() 结果——否则正常按键的 initial trigger 会在词内两个随机字母
+    // 之间画出一条"幽灵连线"
+    chainAnchorCache.set(triggerKey, sourceAnchor);
+    for (const tr of result.triggerResults) {
+      // 跳过 recurse（源=目标同一键，无意义）；初始触发在 overrideAnchor 存在时可见
+      //（如遗物→词库→字母）；正常按键走 drawFlashLine 的 fromEl===toEl 守卫被跳过
+      if (!tr.triggerType || tr.triggerType === 'recurse') continue;
+      if (tr.triggerType === 'initial' && !overrideAnchor) continue;
+      let targetAnchor = chainAnchorCache.get(tr.triggerKey);
+      if (!targetAnchor) {
+        targetAnchor = resolveChainAnchor(tr.triggerKey);
+        chainAnchorCache.set(tr.triggerKey, targetAnchor);
+      }
+      const color = CHAIN_LINE_COLORS[tr.triggerType] ?? '#aa88ff';
+      flashChainLine(sourceAnchor, targetAnchor, color);
+    }
+  }
+
   // 浮字反馈：基于每次触发的结果
   for (const tr of result.triggerResults) {
-    // 叠层类技能：显示叠层数（自身不产出的技能不走下方产出浮字）
+    // 叠层类技能：只在触发位置上方显示叠层数（无飞行小球）
     if (tr.currentStacks != null) {
-      const stackAnchor = buildAnchor(tr.triggerKey, skill.resource, 0);
+      const stackAnchor = { ...buildAnchor(tr.triggerKey, skill.resource, 0), labelOnly: true };
       showFeedback(`×${Math.floor(tr.currentStacks)}`, '#aaaaaa', 1.0, stackAnchor);
     }
     if (!tr.phase4) continue;

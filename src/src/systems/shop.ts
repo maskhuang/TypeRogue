@@ -598,6 +598,10 @@ export function buildAffixTooltipFields(skill: AffixSkillInstance, rt?: SkillRun
       if (a.myopiaBonus != null) desc = desc.replace('{myopiaBonus}', `${Math.round(a.myopiaBonus * 100)}`);
       if (a.myopiaCost != null) desc = desc.replace('{myopiaCost}', String(a.myopiaCost));
       if (a.silkwormK != null) desc = desc.replace('{silkwormK}', `${Math.round(a.silkwormK * 100)}`);
+      // 接力/回溯/遗产：替换 N
+      if (a.handoffCount != null) desc = desc.replace('{handoffCount}', String(a.handoffCount));
+      if (a.rewindCount != null) desc = desc.replace('{rewindCount}', String(a.rewindCount));
+      if (a.endowCount != null) desc = desc.replace('{endowCount}', String(a.endowCount));
       // 引力：替换概率占位符
       if (a.probMult != null) desc = desc.replace('{probMult}', a.probMult.toFixed(1));
       // 流放/禁忌：替换暴击率占位符
@@ -792,6 +796,9 @@ function buildAffixParamSummary(a: import('../data/affixes').AffixInstance, skil
     case 'reprint': return `+${Math.round((a.reprintK ?? 0) * 100)}%/${t('param.per_repeat')}`
     case 'matrix': return `+${Math.round((a.matrixK ?? 0) * 100)}%/${t('param.per_letter')}`
     case 'typeset': return `+${Math.round((a.typesetK ?? 0) * 100)}%/${t('param.per_letter')}`
+    case 'handoff': return `×${a.handoffCount ?? 0}`
+    case 'rewind': return `×${a.rewindCount ?? 0}`
+    case 'endow': return `→${a.endowCount ?? 0}`
     case 'gravity': return `+${a.probMult?.toFixed(1) ?? '?'}x`
     case 'repulsion': return `×${a.probMult?.toFixed(2) ?? '?'}`
     case 'exhaust': {
@@ -852,6 +859,8 @@ export function computeSmartEstimate(
   boundKeys?: string | string[],
 ): SmartEstimate | null {
   // 包含自身不产出的词条时，屏蔽产出预估（词条列表仍正常显示）
+  // 注：Endow 不在此列 —— 它虽不直接入账，但"本应产出量"是捐赠基数，
+  //     其他词条（Crit/Void/Union 等）对这一数值的放大是有意义的，应照常预估
   const SELF_ZERO_TYPES: string[] = ['conduit', 'amplify', 'splash', 'relay', 'war_drum', 'aura_fury', 'aura_morale']
   if (skill.affixes.some(a => SELF_ZERO_TYPES.includes(a.type))) return null
 
@@ -1057,9 +1066,20 @@ export function computeSmartEstimate(
         break
       }
       case 'silkworm': {
-        // 预估：按本词平均触发次数（无法精确预测，仅显示每点加成）
+        // 预估：基于绑定键在词库中的平均触发次数 N，取词内平均加成 = k × (N+1)/2
+        // （stacks 从 1 递增到 N，每次 bonus = stacks × k）
         const silkwormK = affix.silkwormK ?? 0
-        breakdown.push({ typeKey: 'silkworm', label: t('est.silkworm', { pct: Math.round(silkwormK * 100) }), detail: '' })
+        const keys = Array.isArray(boundKeys) ? boundKeys : boundKeys ? [boundKeys] : []
+        const avgTriggers = keys.length > 0 ? computeAvgTriggersPerWord(keys) : 1
+        // 至少按 1 次触发估算
+        const n = Math.max(1, avgTriggers)
+        const avgBonus = silkwormK * (n + 1) / 2
+        addPercent += avgBonus
+        breakdown.push({
+          typeKey: 'silkworm',
+          label: t('est.silkworm', { pct: Math.round(avgBonus * 100) }),
+          detail: `(${n.toFixed(1)}×${Math.round(silkwormK * 100)}%/词平均)`,
+        })
         break
       }
       case 'first_edition': {
@@ -1386,7 +1406,14 @@ export function openShop(_won: boolean): void {
   state.shop.refreshCount = 0;
 
   // Story 36.9: 限时拍卖 — 倒计时（必须在 renderUnifiedShop 之前启动，确保首次渲染能显示）
-  if (isTimedAuction()) {
+  // BUGFIX: 仅 classic UI 启动本计时器。terminal/workbench UI 由 enterTerminalShop→
+  // startAuctionIfNeeded 启动自己的计时器（归零走 proceedSubmit→executeSubmitTransition，
+  // 会复位 previewState.active）。若两套都跑，terminal 那套靠 clearAuctionTimer 顶掉 classic
+  // 这套——但仅在 fresh entry；active 卡 true 的二次进店会早退、不顶掉，于是 classic 计时器
+  // 归零调用 startBattleBtn.onclick（initShopEvents 设的 next-level 处理器，它 destroy
+  // dragManager + startLevel 却漏设 previewState.active=false）→ active 永久卡 true →
+  // 下次商店工作台拖拽全死。terminal 模式根本不该起 classic 计时器。
+  if (isTimedAuction() && (getSettings().shopUI ?? 'terminal') !== 'terminal') {
     startAuctionTimer(
       (remaining) => {
         _auctionRemaining = remaining;

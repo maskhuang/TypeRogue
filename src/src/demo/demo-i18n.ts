@@ -1180,6 +1180,9 @@ const ZH: Record<string, string> = {
   'affix_desc.reprint': '本词在本关每重复出现1次，本次产出+{reprintK}%',
   'affix_desc.matrix': '本词每含1个字母碎片队列中的字母，本次产出+{matrixK}%',
   'affix_desc.typeset': '本词每有1个字母，本次产出+{typesetK}%',
+  'affix_desc.handoff': '本词之后第一个待触发的技能额外触发{handoffCount}次',
+  'affix_desc.rewind': '依次让本词之前最近{rewindCount}个已触发技能各额外触发1次',
+  'affix_desc.endow': '本次不产出；将本应产出量（标准化后）加到本词之后{endowCount}个技能的基础产出',
 
   // --- position relations (6) ---
   'rel.adjacent': '相邻', 'rel.sameRow': '同行', 'rel.sameColumn': '同列',
@@ -2696,6 +2699,9 @@ const EN: Record<string, string> = {
   'affix_desc.reprint': 'Output +{reprintK}% per prior appearance of this word in the stage',
   'affix_desc.matrix': 'Output +{matrixK}% for each letter in this word that also appears in the fragment queue',
   'affix_desc.typeset': 'Output +{typesetK}% per letter in this word',
+  'affix_desc.handoff': 'The first upcoming skill in this word triggers {handoffCount} extra times',
+  'affix_desc.rewind': 'Re-triggers the most recent {rewindCount} already-fired skills in this word, once each',
+  'affix_desc.endow': 'No output this trigger; adds the would-be output (normalized) to the next {endowCount} skills\' base output',
 
   // --- position relations (6) ---
   'rel.adjacent': 'Adj', 'rel.sameRow': 'Row', 'rel.sameColumn': 'Col',

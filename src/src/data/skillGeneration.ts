@@ -326,6 +326,15 @@ export function rollAffixParams(
     case AffixType.Fiber:
       return { type, fiberInterval: 4 }  // 每4层触发尾字母技能
 
+    case AffixType.Handoff:
+      return { type, handoffCount: 2 + Math.floor(random() * 3) }  // N=2~4 额外触发
+
+    case AffixType.Rewind:
+      return { type, rewindCount: 2 + Math.floor(random() * 2) }  // N=2~3 回溯触发
+
+    case AffixType.Endow:
+      return { type, endowCount: 2 + Math.floor(random() * 3) }  // N=2~4 捐赠目标
+
     case AffixType.Silkworm:
       return { type, silkwormK: roundTo(0.30 + random() * 0.40, 2) }  // 每点损失底分+30%~70%产出
 

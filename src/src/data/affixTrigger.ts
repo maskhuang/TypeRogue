@@ -131,6 +131,10 @@ export interface TriggerContext {
   // ── Story 40.8: 多格技能占据键位 ──
   /** 触发技能占据的所有键位（单格 = [triggerKey]） */
   occupiedKeys: string[]
+  /** 当前字母在 currentWord 中的索引（Handoff/Rewind/Endow 扫词用；仅初始触发有意义） */
+  letterIndex?: number
+  /** 本次触发是否是玩家初始按键（非链式）— 限定 Handoff/Rewind/Endow 等"同词时序型"词条只在初始触发生效 */
+  isInitialTrigger?: boolean
   // ── Story 41.3: Ligature 质变关卡累计按键计数 ──
   /** 关卡内每个键被按下的累计次数（质变 Ligature 使用） */
   ligatureStageCounts?: Map<string, number>
@@ -345,6 +349,12 @@ export type Phase6Action =
   | { type: 'conduit', targetKey: string, conduitCount: number }
   | { type: 'relay', targetKey: string }
   | { type: 'apprentice_neighbor', neighborKey: string, growthDelta: number }
+  /** Handoff 接力：让 targetKey 所在的技能在轮到它时额外触发 extraCount 次 */
+  | { type: 'word_handoff', targetKey: string, extraCount: number }
+  /** Rewind 回溯：依次对 targetKeys 里的每个键额外触发 1 次 */
+  | { type: 'word_rewind', targetKeys: string[] }
+  /** Endow 遗产：向 targetKeys 里的每个技能写入 amountPerTarget 的基础产出加成 */
+  | { type: 'word_endow', targetKeys: string[], amountPerTarget: number }
 
 export interface Phase6Result {
   actions: Phase6Action[]
@@ -383,6 +393,8 @@ export interface TriggerResult {
   phase6?: Phase6Result
   /** 本次触发的键位（链式飞行定位用） */
   triggerKey: string
+  /** 本次触发的工作类型（initial/splash/conduit/...）— 链式连线颜色区分用 */
+  triggerType?: string
   /** Story 41-5: Charge 质变 — 满蓄力释放自动完成当前单词 */
   chargeAutoComplete?: boolean
   /** 叠层效果是否触发（遗物钩子用） */
@@ -1916,7 +1928,8 @@ export function triggerAffixSkill(
   const AURA_RELAY_TYPES = new Set([AffixType.AuraFury, AffixType.AuraMorale, AffixType.Conduit])
   const hasSelfZero = effectiveSkill.affixes.some(a => SELF_ZERO_TYPES_SET.has(a.type))
   const isAuraOnly = effectiveSkill.affixes.some(a => AURA_RELAY_TYPES.has(a.type)) && !effectiveSkill.affixes.some(a => !AURA_RELAY_TYPES.has(a.type) && SELF_ZERO_TYPES_SET.has(a.type))
-  const base = hasSelfZero ? 0 : resolvePhase1(effectiveSkill)
+  // Endow 基础产出加成（逐词重置，见 battle.ts playerCorrect 词首重置逻辑）
+  const base = hasSelfZero ? 0 : resolvePhase1(effectiveSkill) + (runtimeState.wordBaseBonus ?? 0)
 
   // Phase 2: 加算层
   const p2 = resolvePhase2(effectiveSkill, runtimeState, ctx, base)
@@ -1945,6 +1958,96 @@ export function triggerAffixSkill(
 
   // Phase 6: 邻居通知（感应词条检查触发技能词条类型）
   const p6 = resolvePhase6(ctx.triggerKey, effectiveSkill, runtimeState, ctx, p4.targetResource, p3.flags.isCrit, p2.bonusPercent)
+
+  // ── 同词时序型词条：Handoff / Rewind / Endow（仅初始触发生效） ──
+  // 这三个词条依赖"当前词内字母索引"与"玩家正按下的字母序列"，因此链式触发（splash/conduit/...）不参与。
+  if (ctx.isInitialTrigger && ctx.letterIndex != null && ctx.currentWord) {
+    const word = ctx.currentWord.toLowerCase()
+    const lIdx = ctx.letterIndex
+    const selfSkillId = skill.id
+
+    // 扫描"同词下"未来的绑定键（按字母顺序，跳过本技能占据的键，去重技能）
+    const futureBoundKeys = (limit: number): string[] => {
+      const out: string[] = []
+      const seen = new Set<string>([selfSkillId])
+      for (let i = lIdx + 1; i < word.length && out.length < limit; i++) {
+        const k = word[i]
+        const sid = ctx.bindings.get(k)
+        if (!sid || seen.has(sid)) continue
+        seen.add(sid)
+        out.push(k)
+      }
+      return out
+    }
+    // 扫描"同词上"最近已触发的绑定键（倒序，去重技能）
+    const pastBoundKeys = (limit: number): string[] => {
+      const out: string[] = []
+      const seen = new Set<string>([selfSkillId])
+      for (let i = lIdx - 1; i >= 0 && out.length < limit; i--) {
+        const k = word[i]
+        const sid = ctx.bindings.get(k)
+        if (!sid || seen.has(sid)) continue
+        seen.add(sid)
+        out.push(k)
+      }
+      return out
+    }
+
+    for (const affix of effectiveSkill.affixes) {
+      if (affix.type === AffixType.Handoff) {
+        const n = affix.handoffCount ?? 0
+        if (n <= 0) continue
+        const future = futureBoundKeys(1)
+        if (future.length > 0) {
+          p6.actions.push({ type: 'word_handoff', targetKey: future[0], extraCount: n })
+        }
+      } else if (affix.type === AffixType.Rewind) {
+        const n = affix.rewindCount ?? 0
+        if (n <= 0) continue
+        const past = pastBoundKeys(n)
+        if (past.length > 0) {
+          p6.actions.push({ type: 'word_rewind', targetKeys: past })
+        }
+      } else if (affix.type === AffixType.Endow) {
+        const n = affix.endowCount ?? 0
+        if (n <= 0) continue
+        // 乘算化技能产出是"乘数"而非加数，无法标准化为底分；直接跳过
+        if (effectiveSkill.affixes.some(a => a.type === AffixType.Multiply)) continue
+        // 本次产出 ≤0（禁忌惩罚/初始化）时无可捐赠物，跳过
+        if (p3.output <= 0) continue
+        const future = futureBoundKeys(n)
+        if (future.length === 0) continue
+        // 标准化：以 Lv1 BASE_VALUES 作为跨资源固定汇率，使换算与等级无关
+        // 原则：40 score 不论由 Lv1 还是 Lv3 技能产出，换算成 time 都应是相同数量
+        // 每个目标都拿"依次全量"，不均摊
+        const srcRes = p4.targetResource
+        const srcBase = BASE_VALUES[srcRes]?.[0] ?? 1
+        const srcOutput = p3.output
+        for (const tk of future) {
+          const tSid = ctx.bindings.get(tk)
+          if (!tSid) continue
+          const tSkill = ctx.allSkills.get(tSid)
+          if (!tSkill) continue
+          // MultiplyOperator 附魔（已质变）把 applyResource 从 += 改成 *=，
+          // 目标 base 是 ~1.1 量级的乘数；加上 donation（加法单位）会让 base
+          // 暴涨到几十，直接 `state.resources *= 41` 导致数值爆炸。
+          // 捐赠给这类目标意义不明且危险 → 跳过。Multiply 词条本身（非附魔）
+          // 只影响目标 Phase3 乘算链，仍按加法写入资源池，是合理协同，保留。
+          const tRt = ctx.skillStates.get(tSid)
+          if (tRt && (tSkill.enchantmentIds.includes(EnchantmentType.MultiplyOperator) || tSkill.enchantmentIds.includes(EnchantmentType.QuestMultiplyOp))
+            && isAffixGloballyTransformed(AffixType.Multiply, ctx.allSkills, ctx.skillStates)) {
+            continue
+          }
+          const tBase = BASE_VALUES[tSkill.resource]?.[0] ?? 1
+          const normalized = srcOutput * (tBase / Math.max(1e-6, srcBase))
+          p6.actions.push({ type: 'word_endow', targetKeys: [tk], amountPerTarget: normalized })
+        }
+        // 本次产出清零（Endow 的输出转为捐赠，不直接入账）
+        p3.output = 0
+        p4.output = 0
+      }
+    }
+  }
 
   // 合并状态变更
   const allMutations = [...p2.mutations, ...p3.mutations]
@@ -2457,6 +2560,7 @@ export function resetStageState(
     if (!perpetualEngine) state.stacks = 0
     state.chargeAccumulated = 0
     state.silkwormStacks = 0
+    state.wordBaseBonus = 0
 
     // Decay: 每关重置 currentDecayMult（Story 41.2 AC7 — 跨单词不重置，仅跨关重置）
     const skill = skills.get(skillId)
@@ -2620,6 +2724,7 @@ export function deserializeSkill(
     mutacritAccum: (data.runtime as any).mutacritAccum ?? 0,
     reechoStacks: (data.runtime as any).reechoStacks ?? 0,
     silkwormStacks: (data.runtime as any).silkwormStacks ?? 0,
+    wordBaseBonus: (data.runtime as any).wordBaseBonus ?? 0,
   }
   return { skill, runtimeState }
 }

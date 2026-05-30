@@ -200,6 +200,21 @@ export function spawnFlightText(
   }
 }
 
+/** 只生成一条静态文本标签（无飞行小球），用于叠层等"只展示数字不送资源"的反馈 */
+export function spawnLabelText(
+  text: string, color: string, scale: number,
+  x: number, y: number,
+): void {
+  const s = Math.max(0.5, scale);
+  const f = acquire();
+  if (!f) return;
+  f.active = true; f.text = text; f.color = color;
+  f.x = x; f.y = y - 15;
+  f.life = 0; f.maxLife = Math.min(1500, Math.round(400 * Math.pow(s, 0.5)));
+  f.size = Math.round(6 * s); f.flight = false;
+  f.onArrive = undefined;
+}
+
 export function clearFloatTexts(): void {
   for (const f of pool) f.active = false;
   if (ctx && canvas) ctx.clearRect(0, 0, canvas.width, canvas.height);

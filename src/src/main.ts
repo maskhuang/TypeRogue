@@ -30,8 +30,9 @@ import {
   IS_DEMO,
   DEMO_STARTER_RELIC, DEMO_STARTER_BINDINGS
 } from './demo/demo-config';
-import { generateSkill } from './data/skillGeneration';
-import { createSkillRuntimeState, rollAffixWeights } from './data/affixes';
+import { generateSkill, rollAffixParams } from './data/skillGeneration';
+import { createSkillRuntimeState, rollAffixWeights, AffixType } from './data/affixes';
+import { PositionRelation } from './data/keyboardTopology';
 import { bindShapeToKeys, getBindingState } from './systems/bindingManager';
 import { cleanDemoDom, installDemoErrorBoundary, checkWebGLSupport, showWebGLError } from './demo/demo-dom-cleanup';
 import { trackEvent } from './demo/demo-analytics';
@@ -94,13 +95,17 @@ async function init(): Promise<void> {
     rollAffixWeights(random);
 
     // 预设技能绑定（词条制技能系统）
-    for (const { resource, key } of DEMO_STARTER_BINDINGS) {
+    // DEBUG: 给每个初始技能分配一种"触发其他技能"词条，方便测试像素风链式连线反馈
+    const CHAIN_AFFIX_TEST_TYPES = [AffixType.Splash, AffixType.Conduit, AffixType.Relay];
+    DEMO_STARTER_BINDINGS.forEach(({ resource, key }, i) => {
       const sk = generateSkill({ resource, rarity: 0, level: 1 });
+      const testType = CHAIN_AFFIX_TEST_TYPES[i % CHAIN_AFFIX_TEST_TYPES.length];
+      sk.affixes.push(rollAffixParams(testType, resource, undefined, undefined, PositionRelation.Adjacent));
       state.player.skills.set(sk.id, { level: 1 });
       state.affixSkills.set(sk.id, sk);
       state.affixSkillStates.set(sk.id, createSkillRuntimeState(sk.id));
       bindShapeToKeys(getBindingState(state), sk.id, key);
-    }
+    });
     // Story 54.2: 初始金币由练习关得分映射，不再固定赋值
 
     // 赠送开局遗物

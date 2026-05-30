@@ -571,6 +571,11 @@ function restoreFromPreview(): void {
     clearTimeout(previewState.submitFallbackTimerId);
     previewState.submitFallbackTimerId = null;
   }
+  // BUGFIX: ESC 离店时停掉限时拍卖计时器。否则 timed_auction 计时器在玩家已回到主菜单后
+  // 仍归零 → onExpire 调 proceedSubmit → executeSubmitTransition → 从菜单凭空 startLevel。
+  // executeSubmitTransition 已含 clearAuctionTimer（经 proceedSubmit），但 ESC 路径之前漏清。
+  clearAuctionTimer();
+  clearAuctionTimerDisplay();
   // 同 executeSubmitTransition：clear DOM 残留以防按钮 stuck disabled
   setSubmitButtonAwaiting(false);
   document.querySelector('.submit-stamp-overlay')?.remove();
@@ -921,6 +926,38 @@ if (typeof queueMicrotask === 'function') {
 }
 
 /**
+ * 把全局 dragManager 接回「工作台」配置：listeners + 形状预览渲染器 +
+ * 工作台版 onDragStart/onDragEnd + 工作台放置区（.kb-key / .wb-foam-case / 回收槽）。
+ *
+ * 必须在 openShop → renderBuildManager() → registerShopDropZones()（classic 放置区）
+ * 之后调用以覆盖之，否则工作台无有效放置区。fresh-entry 与 active 卡 true 的二次进店
+ * 两条路径都要走这里。dragManager.init() 自带幂等守卫（已 active 则 no-op）。
+ */
+function wireWorkbenchDrag(): void {
+  dragManager.init();
+  // Story 60.1 follow-up: 注册形状预览渲染器，让 dragManager pickup 模式右键旋转
+  // 时能更新幽灵的 shape thumbnail（与 classic shop 共用同一渲染器）
+  registerShapePreviewRenderer(renderShapePreview);
+  // 全局 dragend 兜底清理形状高亮 + effect radius 高亮 + cancel drag-hover RAF
+  dragManager.onDragEnd = () => {
+    clearShapePlacementOnWorkbench();
+    workbench.clearEffectRadiusHighlight();
+    workbench.cancelDragHoverPending();
+    workbench.armDisposalZone(false);
+  };
+  // Story 60.9: 拖拽起势时全局隐藏所有 tooltip（不挡视线）
+  // Story 60.12: 同时播放 pickup 音效（抓握刺啦）
+  dragManager.onDragStart = (payload) => {
+    keyTooltip.hide();
+    hideRelicTooltip();
+    deskSfx('paper'); // workbench drag pickup → paper rustle
+    // IN-tray 卡拖起 → 回收槽点亮邀请投放
+    if (payload?.type === 'skill-inventory') workbench.armDisposalZone(true);
+  };
+  workbench.setupDragZones();
+}
+
+/**
  * Story 60.5: 进入终端商店（取代 Phase 1 的 enterPreview hash 入口）。
  * `won` 参数预留接口与 classic openShop 同源，当前函数体不消费。
  * `#shop-preview` hash 仍走本函数（dev 调试入口）；正式入口由 systems/shop.ts:openShop
@@ -936,6 +973,13 @@ export function enterTerminalShop(_won?: boolean): void {
       workbench.syncWorkbenchRelics();
       workbench.syncWorkbenchKeys();
       workbench.refreshWorkbenchNote();
+      // BUGFIX: openShop 末尾必经 renderBuildManager() → registerShopDropZones()，
+      // 它 clearDropZones() 后注册的是 classic 商店的 .key-slot 放置区（工作台 DOM
+      // 里根本不存在），并把 onDragStart/onDragEnd 改写成 classic 版。fresh-entry 路径
+      // 靠下方 wireWorkbenchDrag() 覆盖回工作台放置区；但本 early-return 分支之前漏调，
+      // 导致 active 卡 true 的二次进店后工作台只剩 classic 放置区 → IN-tray 技能拖不进
+      // 键盘、键盘技能也拖不动（拖得起但无落点）。这里补回。
+      wireWorkbenchDrag();
     }
     return;
   }
@@ -963,27 +1007,7 @@ export function enterTerminalShop(_won?: boolean): void {
   // body class 标记：让 paper-craft 缩略图样式能 scope 到拖拽幽灵（dragGhost
   // 创建在 <body> 上，不在 #workbench-screen-preview 内，所以靠 body class 区分）
   document.body.classList.add('shop-preview-active');
-  dragManager.init();
-  // Story 60.1 follow-up: 注册形状预览渲染器，让 dragManager pickup 模式右键旋转
-  // 时能更新幽灵的 shape thumbnail（与 classic shop 共用同一渲染器）
-  registerShapePreviewRenderer(renderShapePreview);
-  // 全局 dragend 兜底清理形状高亮 + effect radius 高亮 + cancel drag-hover RAF
-  dragManager.onDragEnd = () => {
-    clearShapePlacementOnWorkbench();
-    workbench.clearEffectRadiusHighlight();
-    workbench.cancelDragHoverPending();
-    workbench.armDisposalZone(false);
-  };
-  // Story 60.9: 拖拽起势时全局隐藏所有 tooltip（不挡视线）
-  // Story 60.12: 同时播放 pickup 音效（抓握刺啦）
-  dragManager.onDragStart = (payload) => {
-    keyTooltip.hide();
-    hideRelicTooltip();
-    deskSfx('paper'); // workbench drag pickup → paper rustle
-    // IN-tray 卡拖起 → 回收槽点亮邀请投放
-    if (payload?.type === 'skill-inventory') workbench.armDisposalZone(true);
-  };
-  workbench.setupDragZones();
+  wireWorkbenchDrag();
   setupDrawerHandlers();
   startAuctionIfNeeded();  // timed_auction：进店启动 30s 倒计时
   setTimeout(() => {

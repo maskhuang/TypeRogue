@@ -17,7 +17,7 @@ import { playSound, initAudio, playScoreSound, playRatingSound, startBGM, stopBG
 import { spawnParticles } from '../effects/particles';
 import { setPaletteHsl as setBgPalette, setLightnessBias as setBgLBias, setRandomStyle as setBgRandomStyle, setSpeedMultiplier as setBgSpeedMul } from '../effects/balatroBackground';
 import { installSkipListener, type SkipController } from '../effects/skipAnimation';
-import { initFloatTextCanvas, spawnFloatText, spawnFloatTextAt, spawnFlightText, clearFloatTexts, preheatFloatTexts } from '../ui/effects/FloatTextPool';
+import { initFloatTextCanvas, spawnFloatText, spawnFloatTextAt, spawnFlightText, spawnLabelText, clearFloatTexts, preheatFloatTexts } from '../ui/effects/FloatTextPool';
 import { triggerSkill, clearPseudoInfinite, resetWordResourceTypes, getWordResourceTypeCount, updateChargeProducers, getWordResourceOutput, isChargeSkill, isReechoSkill, resetStageProduced } from './skills';
 import { HAND_MAP } from '../data/keyboardTopology';
 import { openShop, showWordPackReward } from './shop';
@@ -420,13 +420,14 @@ function setWord(): void {
   wordStartScore = state.score; // 玻璃大炮：记录词开始时总分
   setTimeout(() => updateTaikoJudge(), 0); // 新词渲染后更新判定点
   resetWordResourceTypes(); // 重置词级资源追踪
-  // 逐词重置：蚕食累积损失（质变·化茧：达到阈值后不重置，逐关重置）
+  // 逐词重置：蚕食累积损失（质变·化茧：达到阈值后不重置，逐关重置）+ 遗产基础产出加成
   const silkwormCocoonActive = isAffixGloballyTransformed(AffixType.Silkworm, state.affixSkills, state.affixSkillStates);
   for (const [, rt] of state.affixSkillStates) {
     if (rt.silkwormStacks > 0) {
       if (silkwormCocoonActive && rt.silkwormStacks >= 8) continue;
       rt.silkwormStacks = 0;
     }
+    if (rt.wordBaseBonus > 0) rt.wordBaseBonus = 0;
   }
   leftHandTriggered = false; // 重置左右手追踪
   rightHandTriggered = false;
@@ -1981,24 +1982,14 @@ function updateTimerDisplay(): void {
   const el = getElements();
   const totalTime = state.timeMax + state.player.timeBonus;
 
-  // 滚轮目标：排除待确认的时间加成
-  timerRoller.setTarget(Math.ceil(Math.max(0, state.time - _pendingTimeBonus)));
+  // 滚轮目标：直接跟随 state.time
+  timerRoller.setTarget(Math.ceil(Math.max(0, state.time)));
   // 显示由 rAF tick 更新
-
-  // 实条：排除待确认的时间加成
-  const confirmedTime = Math.max(0, state.time - _pendingTimeBonus);
-  el.timerBar.style.width = (confirmedTime / totalTime * 100) + '%';
-
-  // 虚条：覆盖待确认区域（从 0 到 state.time 的完整宽度）
+  el.timerBar.style.width = (Math.max(0, state.time) / totalTime * 100) + '%';
   const ghostEl = document.getElementById('timer-bar-ghost');
   if (ghostEl) {
-    if (_pendingTimeBonus > 0) {
-      ghostEl.style.width = (state.time / totalTime * 100) + '%';
-      ghostEl.style.opacity = '0.35';
-    } else {
-      ghostEl.style.width = el.timerBar.style.width;
-      ghostEl.style.opacity = '0';
-    }
+    ghostEl.style.width = el.timerBar.style.width;
+    ghostEl.style.opacity = '0';
   }
 
   if (state.time <= 5) {
@@ -3017,7 +3008,7 @@ export function updateHUD(): void {
   // 各滚轮目标设置（显示由 rAF tick 更新）
   comboRoller.setTarget(state.combo);
   multRoller.setTarget(Math.round(state.multiplier * 10));
-  goldRoller.setTarget(Math.floor(Math.max(0, state.resources.gold - _pendingGoldBonus)));
+  goldRoller.setTarget(Math.floor(Math.max(0, state.resources.gold)));
 
   // Story 36.12: 分数黑洞 — HUD 分数显示 "???"（未结算时隐藏真实分数+进度色+tier class）
   const blackHoleHidden = isBlackHoleActive() && !hasBlackHoleSettled();
@@ -3133,11 +3124,8 @@ function renderActiveLibrary(): void {
 
 // === 浮字系统（Canvas2D 渲染） ===
 const FLOAT_INTERVAL = 150; // 链式浮字间隔 ms
-let floatQueue: Array<{ text: string; color: string; scale?: number; skillAnchor?: { letterIndex?: number; fromElementId?: string; resource: string; amount?: number }; relicAnchor?: { relicId: string; resource: string; amount?: number } }> = [];
+let floatQueue: Array<{ text: string; color: string; scale?: number; skillAnchor?: { letterIndex?: number; fromElementId?: string; resource: string; amount?: number; labelOnly?: boolean }; relicAnchor?: { relicId: string; resource: string; amount?: number } }> = [];
 
-/** 飞行中待确认的资源加成 */
-let _pendingTimeBonus = 0;
-let _pendingGoldBonus = 0;
 let queueTimer: ReturnType<typeof setTimeout> | null = null;
 
 /** 资源类型 → HUD 元素 ID 映射 */
@@ -3187,7 +3175,7 @@ export function refreshFloatPositionCache(): void {
 }
 
 /** 创建一个浮字（Canvas2D 渲染） */
-function createFloatText(text: string, color: string, scale = 1, skillAnchor?: { letterIndex?: number; fromElementId?: string; resource: string; amount?: number }, relicAnchor?: { relicId: string; resource: string; amount?: number }): void {
+function createFloatText(text: string, color: string, scale = 1, skillAnchor?: { letterIndex?: number; fromElementId?: string; resource: string; amount?: number; labelOnly?: boolean }, relicAnchor?: { relicId: string; resource: string; amount?: number }): void {
   let startEl: HTMLElement | undefined;
   let flightResource: string | undefined;
   let flightAmount = 0;
@@ -3214,6 +3202,16 @@ function createFloatText(text: string, color: string, scale = 1, skillAnchor?: {
     }
   }
 
+  // 纯标签模式：只在起点上方显示文字，不飞行不生成小球（叠层反馈用）
+  if (skillAnchor?.labelOnly && startEl && _cachedContainerRect) {
+    const cr = _cachedContainerRect;
+    const startRect = startEl.getBoundingClientRect();
+    const startX = startRect.left + startRect.width / 2 - cr.left;
+    const startY = startRect.top - cr.top - 30;
+    spawnLabelText(text, color, scale, startX, startY);
+    return;
+  }
+
   if (startEl && flightResource && _cachedContainerRect) {
     // === 飞行浮字 — 用缓存坐标，只对 startEl 做一次 getBoundingClientRect ===
     const cr = _cachedContainerRect;
@@ -3237,15 +3235,9 @@ function createFloatText(text: string, color: string, scale = 1, skillAnchor?: {
     const duration = Math.max(250, Math.min(800, dist / 0.35));
     const res = flightResource;
 
-    let pendingTime = 0, pendingGold = 0;
-    if (flightAmount > 0 && res === 'time') { pendingTime = flightAmount; _pendingTimeBonus += flightAmount; }
-    if (flightAmount > 0 && res === 'gold') { pendingGold = flightAmount; _pendingGoldBonus += flightAmount; }
-
-    spawnFlightText(text, color, scale, startX, startY, cpX, cpY, endX, endY, duration, 250, () => {
-      if (pendingTime > 0) _pendingTimeBonus = Math.max(0, _pendingTimeBonus - pendingTime);
-      if (pendingGold > 0) _pendingGoldBonus = Math.max(0, _pendingGoldBonus - pendingGold);
-      RESOURCE_BUMP_FNS[res]?.();
-    });
+    // HUD 弹跳已在 showFeedback 触发时即时播放（仅真正产出时），此处不再重复
+    void res;
+    spawnFlightText(text, color, scale, startX, startY, cpX, cpY, endX, endY, duration, 250);
   } else {
     // === 非飞行浮字 — 用缓存尺寸 ===
     spawnFloatText(text, color, scale, _cachedContainerW, _cachedContainerH);
@@ -3303,25 +3295,23 @@ function pulseRelicIcon(relicId: string, color?: string): void {
   });
 }
 
-/** 遗物图标到目标的瞬间闪光连线（target 可为元素 ID 字符串或直接 HTMLElement）
- *  优化：复用缓存容器坐标，一次 rAF 批量操作 DOM */
-function flashRelicLine(relicIndex: number, target: string | HTMLElement, color: string): void {
-  const el = getElements();
-  const iconEl = el.playerRelics.children[relicIndex] as HTMLElement | undefined;
-  const targetEl = typeof target === 'string' ? document.getElementById(target) : target;
-  if (!iconEl || !targetEl || !_cachedContainerRect) return;
+/** 核心闪光连线绘制：从 fromEl 到 toEl 画一条瞬间闪光线
+ *  复用缓存容器坐标，避免额外 getBoundingClientRect */
+function drawFlashLine(fromEl: HTMLElement, toEl: HTMLElement, color: string): void {
+  if (!_cachedContainerRect) return;
+  if (fromEl === toEl) return;
 
-  // 用缓存的容器坐标避免额外 getBoundingClientRect
   const cr = _cachedContainerRect;
-  const iconRect = iconEl.getBoundingClientRect();
-  const targetRect = targetEl.getBoundingClientRect();
+  const fromRect = fromEl.getBoundingClientRect();
+  const toRect = toEl.getBoundingClientRect();
 
-  const x1 = iconRect.left + iconRect.width / 2 - cr.left;
-  const y1 = iconRect.top + iconRect.height / 2 - cr.top;
-  const x2 = targetRect.left + targetRect.width / 2 - cr.left;
-  const y2 = targetRect.top + targetRect.height / 2 - cr.top;
+  const x1 = fromRect.left + fromRect.width / 2 - cr.left;
+  const y1 = fromRect.top + fromRect.height / 2 - cr.top;
+  const x2 = toRect.left + toRect.width / 2 - cr.left;
+  const y2 = toRect.top + toRect.height / 2 - cr.top;
 
   const dist = Math.hypot(x2 - x1, y2 - y1);
+  if (dist < 1) return;
   const angle = Math.atan2(y2 - y1, x2 - x1) * (180 / Math.PI);
 
   const line = document.createElement('div');
@@ -3329,7 +3319,45 @@ function flashRelicLine(relicIndex: number, target: string | HTMLElement, color:
   line.style.cssText = `width:${dist}px;left:${x1}px;top:${y1 - 1}px;color:${color};transform:rotate(${angle}deg)`;
   line.onanimationend = () => line.remove();
 
-  el.container.appendChild(line);
+  getElements().container.appendChild(line);
+}
+
+/** 遗物图标到目标的瞬间闪光连线（target 可为元素 ID 字符串或直接 HTMLElement） */
+function flashRelicLine(relicIndex: number, target: string | HTMLElement, color: string): void {
+  const el = getElements();
+  const iconEl = el.playerRelics.children[relicIndex] as HTMLElement | undefined;
+  const targetEl = typeof target === 'string' ? document.getElementById(target) : target;
+  if (!iconEl || !targetEl) return;
+  drawFlashLine(iconEl, targetEl, color);
+}
+
+/** 把链式锚点 ({letterIndex} 或 {fromElementId}) 解析为 DOM 元素 */
+function resolveAnchorElement(
+  anchor: { letterIndex?: number; fromElementId?: string } | null | undefined,
+): HTMLElement | null {
+  if (!anchor) return null;
+  if (anchor.letterIndex != null) {
+    const el = getElements().word.children[anchor.letterIndex] as HTMLElement | undefined;
+    return el ?? null;
+  }
+  if (anchor.fromElementId) {
+    return document.getElementById(anchor.fromElementId);
+  }
+  return null;
+}
+
+/** 词条链式触发闪光连线：source/target 都以链式锚点表示；两端同为词库 UI 时跳过 */
+export function flashChainLine(
+  from: { letterIndex?: number; fromElementId?: string },
+  to: { letterIndex?: number; fromElementId?: string },
+  color: string,
+): void {
+  // 两端都是词库 UI → 不画
+  if (from.fromElementId && to.fromElementId && from.fromElementId === to.fromElementId) return;
+  const fromEl = resolveAnchorElement(from);
+  const toEl = resolveAnchorElement(to);
+  if (!fromEl || !toEl) return;
+  drawFlashLine(fromEl, toEl, color);
 }
 
 /** 清除所有残留闪光连线（关卡结束时调用） */
@@ -3340,8 +3368,7 @@ function clearFlashLines(): void {
 /** 清空浮字队列和定时器（关卡结束时调用） */
 function clearFloatQueue(): void {
   floatQueue.length = 0;
-  _pendingTimeBonus = 0;
-  _pendingGoldBonus = 0;
+  // （资源反馈不再依赖 pending；状态写入即时，视觉用连线表达）
   if (_glassCannonTimer) {
     clearTimeout(_glassCannonTimer);
     _glassCannonTimer = null;
@@ -3359,12 +3386,14 @@ function clearFloatQueue(): void {
 /** 调试开关：设为 true 禁用所有浮字，用于定位性能瓶颈 */
 const _DEBUG_DISABLE_FLOAT = false;
 
-export function showFeedback(txt: string, color: string, scale?: number, skillAnchor?: { letterIndex?: number; fromElementId?: string; resource: string; amount?: number }, relicAnchor?: { relicId: string; resource: string; amount?: number }): void {
+export function showFeedback(txt: string, color: string, scale?: number, skillAnchor?: { letterIndex?: number; fromElementId?: string; resource: string; amount?: number; labelOnly?: boolean }, relicAnchor?: { relicId: string; resource: string; amount?: number }): void {
   if (_DEBUG_DISABLE_FLOAT) return;
-  // === 诊断：逐步启用，找出卡顿根源 ===
-  // Level 1: 只 push 到队列，不 drain（测试对象分配）
-  // Level 2: push + drain（测试 createFloatText 路径）
-  // Level 3: 全部启用
+  // HUD 弹跳：真正产出时立即触发（而非小球到达 HUD 时），匹配 state 写入时机
+  // labelOnly（叠层反馈）和无 resource 的纯文本不弹跳
+  if (!skillAnchor?.labelOnly) {
+    const bumpRes = skillAnchor?.resource ?? relicAnchor?.resource;
+    if (bumpRes) RESOURCE_BUMP_FNS[bumpRes]?.();
+  }
   floatQueue.push({ text: txt, color, scale, skillAnchor, relicAnchor });
   if (!queueTimer) drainQueue();
 }
