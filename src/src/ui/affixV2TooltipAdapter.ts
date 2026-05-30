@@ -254,8 +254,12 @@ function formatCondition(cond: ConditionSpec): string {
 
 /** 当前场上（已装备）含某 tag 的词条数 + scale 因子 · 仅 all_skills scope 可在 tooltip 精确预览
  *  （所有生成的 scale 都是 all_skills · 见 affixV2Generator）；其他 scope 需宿主键位，返回 null 不预览。*/
-/** 宿主上下文（已绑定 skill 的 tooltip 才有）· neighbors scope 需键位解析邻居；affixName scope 需 defId 自指计数 */
-type HostCtx = { skillId: string; key: string; defId?: string }
+/** 宿主上下文 · neighbors scope 需键位解析邻居；affixName scope 需 defId 自指计数。
+ *  key 可缺省：In-tray（待装配·未绑定到键位）只有 skillId，无 key —— posRel 锚
+ *  （scopePosAnchor/triggerPosAnchor）纯由 skillId 派生，不依赖 key，故无 key 也能
+ *  让 tooltip 的 scope 方向 = 装配后运行时实际方向。无 key 时依赖键位的计数预览
+ *  （empty/neighbors）自然回落到「只显规则不显数」。*/
+type HostCtx = { skillId: string; key?: string; defId?: string }
 
 function liveScale(scale: ScaleByTag, host?: HostCtx): { count: number; factor: number } | null {
   // 复用运行时同口径的 source/scope 解析（仅监听 scope 内的匹配单位）· 无法解析的上下文 → null 只显规则
@@ -689,12 +693,14 @@ export function affixV2SkillToTooltipInfo(skill: {
     if (effTagsInfo) out.push(effTagsInfo)
     return out
   }
-  // fallback: 未绑定 skill（shop preview 等），用 v2Ids 展示原效果（无附魔）
+  // fallback: 未绑定 skill（In-tray 待装配 / shop preview 等），用 v2Ids 展示原效果（无附魔）
+  // 传 skillId-only host：让 posRel 锚（scope/trigger/gain_skill neighborPosRel）按
+  // 装配后运行时口径解析 —— 否则 In-tray tooltip 显示生成期 rolled 值，与上场后实际 scope 不符。
   if (!skill.v2Ids) return out
   for (const defId of skill.v2Ids) {
     const def = getAffixV2Definition(defId)
     if (!def) continue
-    const info = affixV2DefinitionToTooltipInfo(def, skillResource)
+    const info = affixV2DefinitionToTooltipInfo(def, skillResource, undefined, { skillId: skill.id })
     out.push(withUsesLeft(info, def, skill.v2Uses?.[defId] ?? 0))
   }
   return out
