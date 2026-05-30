@@ -75,12 +75,14 @@ const TRIGGER_SOURCE_PREVIEW_CLASS = 'trigger-source-preview'
  * 单格：直接用 hoverKey。
  * 多个范围词条 posRel union 显示（如同时有 splash + aura → 多 posRel 并集）。
  */
-function getEffectRadiusKeys(skillId: string, hoverKey: string, payloadShapeId?: string, payloadRotation?: number): string[] {
+function getEffectRadiusKeys(skillId: string, hoverKey: string, payloadShapeId?: string, payloadRotation?: number, occupiedOverride?: string[]): string[] {
   const skill = state.affixSkills.get(skillId)
   if (!skill) return []
-  // 算 skill 实际 occupied keys（多格用 payload 的 shape，单格直接 [hoverKey]）
-  let occupiedKeys: string[] = [hoverKey]
-  if (payloadShapeId && payloadShapeId !== 'monomino') {
+  // 算 skill 实际 occupied keys：
+  //   - occupiedOverride（hover 已放置技能时传其真实占位键）优先
+  //   - 否则拖拽态用 hoverKey + payload shape 推算（多格用 mapShapeToKeys，单格 [hoverKey]）
+  let occupiedKeys: string[] = occupiedOverride && occupiedOverride.length > 0 ? occupiedOverride : [hoverKey]
+  if (!(occupiedOverride && occupiedOverride.length > 0) && payloadShapeId && payloadShapeId !== 'monomino') {
     const fit = mapShapeToKeys(hoverKey, payloadShapeId, payloadRotation ?? 0)
     if (fit) occupiedKeys = fit
     // mapShapeToKeys 返 null 表示放不下 — fallback 仅 hoverKey
@@ -112,17 +114,17 @@ function getEffectRadiusKeys(skillId: string, hoverKey: string, payloadShapeId?:
 /** 给候选范围键加 outline 高亮 class — exported for unit testing (60.18 review M1 fix)
  *  同时为 V2 trigger.filter 监听源加 dashed inner ring（trigger-source-preview）
  */
-export function highlightEffectRadius(hoverKey: string, skillId: string, shapeId?: string, rotation?: number): void {
+export function highlightEffectRadius(hoverKey: string, skillId: string, shapeId?: string, rotation?: number, occupiedOverride?: string[]): void {
   const root = document.getElementById('workbench-screen-preview')
   if (!root) return
   // effect 目标键：solid outline
-  const effectKeys = getEffectRadiusKeys(skillId, hoverKey, shapeId, rotation)
+  const effectKeys = getEffectRadiusKeys(skillId, hoverKey, shapeId, rotation, occupiedOverride)
   for (const k of effectKeys) {
     const keyEl = root.querySelector<HTMLElement>(`.kb-key.kb-tier-1[data-key="${CSS.escape(k)}"]`)
     if (keyEl) keyEl.classList.add(RADIUS_PREVIEW_CLASS)
   }
   // V2 trigger.filter 监听源键：dashed inner ring
-  const triggerKeys = getTriggerSourceKeys(skillId, hoverKey, shapeId, rotation)
+  const triggerKeys = getTriggerSourceKeys(skillId, hoverKey, shapeId, rotation, occupiedOverride)
   for (const k of triggerKeys) {
     const keyEl = root.querySelector<HTMLElement>(`.kb-key.kb-tier-1[data-key="${CSS.escape(k)}"]`)
     if (keyEl) keyEl.classList.add(TRIGGER_SOURCE_PREVIEW_CLASS)
@@ -153,12 +155,12 @@ export function clearEffectRadiusHighlight(): void {
  *  filter.resource → 场上该资源 skill 键
  *  is_crit / stack_state 不是位置维度，无 highlight 输出
  */
-function getTriggerSourceKeys(skillId: string, hoverKey: string, payloadShapeId?: string, payloadRotation?: number): string[] {
+function getTriggerSourceKeys(skillId: string, hoverKey: string, payloadShapeId?: string, payloadRotation?: number, occupiedOverride?: string[]): string[] {
   const skill = state.affixSkills.get(skillId)
   if (!skill?.v2Ids?.length) return []
-  // occupied keys（与 effect radius 同算法）
-  let occupiedKeys: string[] = [hoverKey]
-  if (payloadShapeId && payloadShapeId !== 'monomino') {
+  // occupied keys（与 effect radius 同算法 · occupiedOverride 优先用于 hover 已放置技能）
+  let occupiedKeys: string[] = occupiedOverride && occupiedOverride.length > 0 ? occupiedOverride : [hoverKey]
+  if (!(occupiedOverride && occupiedOverride.length > 0) && payloadShapeId && payloadShapeId !== 'monomino') {
     const fit = mapShapeToKeys(hoverKey, payloadShapeId, payloadRotation ?? 0)
     if (fit) occupiedKeys = fit
   }
@@ -599,6 +601,10 @@ export function attachWorkbenchTooltips(): void {
       const data = buildSkillKeyTooltipData(skillId, boundKeys);
       if (!data) return;
       showWorkbenchBottomTooltip(data);
+      // hover 已放置技能 → 高亮其作用范围（与拖拽放置时同口径 · 用真实占位键）。
+      // 多格技能传 boundKeys 作 occupiedOverride，避免从单个 hoverKey 误推 occupied。
+      clearEffectRadiusHighlight();
+      highlightEffectRadius(boundKeys[0] ?? keyEl.dataset.key!, skillId, undefined, undefined, boundKeys);
     });
     keyEl.addEventListener('mouseleave', () => {
       // 取消可能 pending 的 drag-preview build；hide floating tooltip（拖拽预估用）+ 底部面板
@@ -606,6 +612,8 @@ export function attachWorkbenchTooltips(): void {
       dragHoverLastKey = null;
       keyTooltip.hide();
       hideWorkbenchBottomTooltip();
+      // 清 hover 范围高亮 — 但拖拽态由 dragManager 的 onDragEnter/Leave 管，勿越权清掉
+      if (!dragManager.dragging) clearEffectRadiusHighlight();
     });
   });
 

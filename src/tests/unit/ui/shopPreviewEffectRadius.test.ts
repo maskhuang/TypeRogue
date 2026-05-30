@@ -302,4 +302,34 @@ describe('meta-progression 操纵家族 effect radius', () => {
     setupV2Skill('sk_haste', defId)
     expectAnchorNeighborsHighlighted('sk_haste')
   })
+
+  // 回归：hover 已放置技能时显示范围预览（之前 workbench hover 只显描述、不高亮键盘）。
+  // 关键是用技能「真实占位键集」(occupiedOverride) 而非从单个 hoverKey 重推 —— 多格技能
+  // 必须高亮所有占位键的锚邻位并集，否则只显示被悬停那一格的邻位（漏半边）。
+  it('occupiedOverride（hover 已放置多格技能）→ 高亮所有占位键的锚邻位并集', () => {
+    const defId = generateAffixV2(RECIPE_IMITATE)
+    const def = getAffixV2Definition(defId)! as { effect: { filter: { neighborPosRel: string } } }
+    def.effect.filter.neighborPosRel = PositionRelation.Adjacent  // rolled 值 · 应被锚覆盖
+    setupV2Skill('sk_hover_multi', defId)
+    const elMap = new Map<string, FakeKeyEl>()
+    for (const k of ALL_KEYS) elMap.set(k, makeFakeKey(k))
+    fakeDom(elMap)
+
+    const occupied = ['f', 'g']  // 多格：技能实际占两个键
+    highlightEffectRadius('f', 'sk_hover_multi', undefined, undefined, occupied)
+
+    const anchor = scopePosAnchor('sk_hover_multi')
+    const expected = new Set(
+      [...getKeysWithRelation('f', anchor), ...getKeysWithRelation('g', anchor)]
+        .filter(k => !occupied.includes(k)),
+    )
+    expect(expected.size).toBeGreaterThan(0)
+    for (const k of expected) {
+      const el = elMap.get(k)
+      if (el) expect(el.classList.contains(RADIUS_CLASS)).toBe(true)
+    }
+    // 占位键自身不高亮
+    expect(elMap.get('f')!.classList.contains(RADIUS_CLASS)).toBe(false)
+    expect(elMap.get('g')!.classList.contains(RADIUS_CLASS)).toBe(false)
+  })
 })
