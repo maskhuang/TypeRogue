@@ -449,7 +449,7 @@ export function formatEffectDescription(effect: EffectSpec, skillResource?: stri
     case 'gain_skill': {
       const count = effect.count ?? 1
       const lvStr = formatLevelMode(effect.levelMode)
-      const filterStr = formatSkillFilter(effect.filter, defSection)
+      const filterStr = formatSkillFilter(effect.filter, defSection, host)
       const sourceStr = formatGainSkillSource(effect.source ?? 'recipe_pool')
       return zh
         ? `${sourceStr} ${count} 个${filterStr}技能（${lvStr}）`
@@ -467,7 +467,7 @@ export function formatEffectDescription(effect: EffectSpec, skillResource?: stri
           : `spawn ${count} temp copy of this skill on a free key in ${where}`
       }
       const lvStr = formatLevelMode(effect.levelMode)
-      const filterStr = formatSkillFilter(effect.filter, defSection)
+      const filterStr = formatSkillFilter(effect.filter, defSection, host)
       return zh
         ? `在${where}空位生成 ${count} 个${filterStr}临时技能（${lvStr}）· 战斗结束移除`
         : `spawn ${count} temp ${filterStr} skill${count > 1 ? 's' : ''} on a free key in ${where} (${lvStr}) · removed at battle end`
@@ -482,7 +482,7 @@ export function formatEffectDescription(effect: EffectSpec, skillResource?: stri
         : `graft 1 affix from ${formatSelector(effect.from, host)} to this skill`
     case 'consume_skill': {
       // 取代：移除 selector 内（满足 filter 的）1 个技能，获得 ratio× 其基础产出（本场移除，下场恢复）
-      const filterStr = effect.filter ? formatSkillFilter(effect.filter, defSection) : ''
+      const filterStr = effect.filter ? formatSkillFilter(effect.filter, defSection, host) : ''
       const target = formatSelector(effect.selector, host)
       const nx = `${Math.round(effect.ratio * 100) / 100}×`
       return zh
@@ -525,7 +525,7 @@ function formatGainSkillSource(source: GainSkillSource): string {
   return (isZh() ? ZH_SOURCE_VERB : EN_SOURCE_VERB)[source] ?? source
 }
 
-function formatSkillFilter(filter: SkillFilter, defSection?: SectionTag): string {
+function formatSkillFilter(filter: SkillFilter, defSection?: SectionTag, host?: HostCtx): string {
   const zh = isZh()
   const parts: string[] = []
   // hasTagFromHost 优先于显式 hasTag · runtime 同语义（覆盖 hasTag）
@@ -553,7 +553,12 @@ function formatSkillFilter(filter: SkillFilter, defSection?: SectionTag): string
     parts.push(zh ? `${rs}产出` : `${rs}-producing`)
   }
   if (filter.neighborPosRel !== undefined) {
-    parts.push(zh ? `${locRel(filter.neighborPosRel)}邻位` : `${locRel(filter.neighborPosRel)} neighbor`)
+    // scope 锚统一：宿主已绑定时运行时用 scopePosAnchor(skillId)（见 affixV2SkillFilter
+    // .filterByNeighborPosRel，忽略 per-affix rolled posRel）。tooltip 必须同口径，否则
+    // 显示的"邻位"方向与实际复制对象方向不符（imitate 模仿这个）。与 formatSelector
+    // 的 neighbors 分支同模式。未绑定时退化为 def 内 rolled 值。
+    const rel = host?.skillId ? scopePosAnchor(host.skillId) : filter.neighborPosRel
+    parts.push(zh ? `${locRel(rel)}邻位` : `${locRel(rel)} neighbor`)
   }
   if (filter.rarity !== undefined) {
     if (typeof filter.rarity === 'number') {
