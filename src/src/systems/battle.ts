@@ -1027,7 +1027,7 @@ function playerCorrect(k: string): void {
   }
 
   spawnParticles(letter, shouldTrigger ? 10 : 5, '#4ecdc4');
-  playSound('type');
+  playSound('type', k); // A 轴：传当前字符，乐器层据此锁调（字符决定论）
 
   // Boss 修饰器：击键代价 — 每次正确击键扣时间
   {

@@ -24,7 +24,7 @@ const VOICING = [0.5, 1, 3 / 2, 2, 9 / 4] as const
 const VOICE_GAINS = [0.10, 0.085, 0.06, 0.05, 0.038] as const
 const ANCHOR_COUNT = 2             // 前 2 个声部（低八度+根音）固定，作锚
 const BED_ROOT_HZ = 131            // 低音区底乐根音（≈ C3）
-const MAX_DETUNE_CENTS = 240       // coherence=0 时的最大随机失谐展宽
+export const MAX_DETUNE_CENTS = 240 // coherence=0 时的最大随机失谐展宽（打字乐器层共用）
 const CHORUS_CENTS = 7             // 成对振荡器的静态合唱失谐
 const NOISE_MIX = 0.32             // 噪声端相对 pad 的音量上限
 
@@ -40,8 +40,9 @@ const ROOT_DEGREES = [2 / 3, 3 / 4, 1, 9 / 8, 4 / 3, 3 / 2] as const
 const TEXTURE_KINDS = ['thunk', 'click', 'rustle'] as const
 
 // 缓慢旋律线（自然小调纯律；克制、中低音区、暖音色、稍凄凉，不抢前景）
-const MELODY_SCALE = [1, 9 / 8, 6 / 5, 4 / 3, 3 / 2, 8 / 5, 9 / 5, 2] as const
-const MELODY_OCTAVE = 2           // 根音上方一个八度
+// export：打字乐器层（A 轴）共用同一音阶/八度，保证击键音与底乐永远同调
+export const MELODY_SCALE = [1, 9 / 8, 6 / 5, 4 / 3, 3 / 2, 8 / 5, 9 / 5, 2] as const
+export const MELODY_OCTAVE = 2    // 根音上方一个八度
 const MELODY_VOL = 0.055
 const MELODY_NOTE_LEN = 0.9       // 单音时值（秒）
 const MELODY_REST_CHANCE = 0.25   // 乐句留白概率
@@ -178,6 +179,11 @@ export class GenerativeBed {
 
   getTension(): number {
     return this.tension
+  }
+
+  /** 当前根音 Hz（转调后）— 打字乐器层用它锁定调性 */
+  getRootHz(): number {
+    return this.rootHz
   }
 
   getLevel(): number {

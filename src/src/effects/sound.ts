@@ -5,14 +5,14 @@
 import { SOUND_PROFILES } from '../core/constants';
 import { state } from '../core/state';
 import { getScoreSoundTier } from './juice';
-import { GenerativeBed, computeCoherence } from './generativeBed';
+import { GenerativeBed, computeCoherence, MELODY_SCALE, MELODY_OCTAVE, MAX_DETUNE_CENTS } from './generativeBed';
 import { eventBus } from '../core/events/EventBus';
 
 let audioContext: AudioContext | null = null;
 let masterGain: GainNode | null = null;
 
 // === 打字三层音效：click（触底冲击）+ thock（壳体共鸣）+ tone（combo 积累感） ===
-function playTypeSound(): void {
+function playTypeSound(char?: string): void {
   if (!audioContext) return;
   const ctx = audioContext;
   const t = ctx.currentTime;
@@ -48,20 +48,94 @@ function playTypeSound(): void {
   thockOsc.start(t);
   thockOsc.stop(t + 0.04);
 
-  // 3) Tone 层 — 轻柔 sine，combo 驱动音高缓升，体现积累感
-  const toneFreq = 300 + 400 * Math.log2(1 + combo * 0.06); // 300→~700Hz
-  const toneVol = Math.min(0.07, 0.024 + combo * 0.001);  // 陪衬
-  const toneDec = 0.06;
-  const toneOsc = ctx.createOscillator();
-  const toneGain = ctx.createGain();
-  toneOsc.type = 'sine';
-  toneOsc.connect(toneGain);
-  connectToOutput(toneGain);
-  toneOsc.frequency.setValueAtTime(randomize(toneFreq, 0.03), t);
-  softAttack(toneGain, toneVol, t);
-  toneGain.gain.exponentialRampToValueAtTime(0.001, t + toneDec);
-  toneOsc.start(t);
-  toneOsc.stop(t + toneDec);
+  // 3) 乐器层（A 轴：打字即乐器）
+  // 底乐活跃时 → 锁定底乐当前调性的旋律音，走 bgmBus，受 coherence 调制（文本即乐谱）。
+  // 否则（菜单/教学，无底乐）→ 回退到旧的 combo-tone 陪衬层。
+  if (char && bed && bed.isActive() && bgmBusGain) {
+    playTypeInstrument(char, combo, t);
+  } else {
+    const toneFreq = 300 + 400 * Math.log2(1 + combo * 0.06); // 300→~700Hz
+    const toneVol = Math.min(0.07, 0.024 + combo * 0.001);  // 陪衬
+    const toneDec = 0.06;
+    const toneOsc = ctx.createOscillator();
+    const toneGain = ctx.createGain();
+    toneOsc.type = 'sine';
+    toneOsc.connect(toneGain);
+    connectToOutput(toneGain);
+    toneOsc.frequency.setValueAtTime(randomize(toneFreq, 0.03), t);
+    softAttack(toneGain, toneVol, t);
+    toneGain.gain.exponentialRampToValueAtTime(0.001, t + toneDec);
+    toneOsc.start(t);
+    toneOsc.stop(t + toneDec);
+  }
+}
+
+// === A 轴：打字即乐器 ===
+// 字符决定论：degree = charCode % 音阶长度 → 同一文本永远弹出同一段旋律
+//（未受理文本通过录入员的击键"唱"出来）。combo 升八度；coherence 失谐 + 受理闪断。
+const TYPE_INSTR_LPF = 2600;        // 去亮保暖
+const TYPE_INSTR_DECAY = 0.18;      // 短衰减，快打不糊
+const TYPE_INSTR_MAX_OCTAVE = 2;    // combo 升八度封顶（每 +10 combo 升一级）
+
+/** 在底乐当前调性上合成一个锁调旋律音；低 coherence 时失谐并偶发受理闪断 */
+function playTypeInstrument(char: string, combo: number, t: number): void {
+  if (!audioContext || !bgmBusGain || !bed) return;
+  const ctx = audioContext;
+  const coh = bed.getCoherence();
+
+  // 受理闪断：coherence < 0.3 后按概率把这次击键"抹除"为一声 redaction 杂音
+  // （coh 0.3→0%，coh 0.05→~8.75%）
+  const blipChance = Math.max(0, 0.3 - coh) * 0.35;
+  if (Math.random() < blipChance) {
+    playRedactionBlip(t);
+    return;
+  }
+
+  const root = bed.getRootHz();
+  const octaveStep = Math.min(TYPE_INSTR_MAX_OCTAVE, Math.floor(combo / 10));
+  const octaveMul = MELODY_OCTAVE * Math.pow(2, octaveStep);
+  const code = char.charCodeAt(0);
+  const degree = ((code % MELODY_SCALE.length) + MELODY_SCALE.length) % MELODY_SCALE.length;
+  const freq = root * octaveMul * MELODY_SCALE[degree];
+  const detune = (Math.random() * 2 - 1) * (1 - coh) * MAX_DETUNE_CENTS; // 越不协和越走调
+  const vol = Math.min(0.05, 0.03 + combo * 0.0006);
+
+  const osc = ctx.createOscillator();
+  osc.type = 'triangle';
+  const lpf = ctx.createBiquadFilter();
+  lpf.type = 'lowpass';
+  lpf.frequency.value = TYPE_INSTR_LPF;
+  const g = ctx.createGain();
+  osc.connect(lpf);
+  lpf.connect(g);
+  g.connect(bgmBusGain);
+  osc.frequency.setValueAtTime(randomize(freq, 0.01), t);
+  osc.detune.setValueAtTime(detune, t);
+  g.gain.setValueAtTime(0.001, t);
+  g.gain.linearRampToValueAtTime(vol, t + 0.006);
+  g.gain.exponentialRampToValueAtTime(0.001, t + TYPE_INSTR_DECAY);
+  osc.start(t);
+  osc.stop(t + TYPE_INSTR_DECAY + 0.02);
+}
+
+/** 受理闪断：一声极短带通杂音，替代本该响起的旋律音（"你输入的字当场被抹掉了"） */
+function playRedactionBlip(t: number): void {
+  if (!audioContext || !bgmBusGain) return;
+  const ctx = audioContext;
+  const noise = ctx.createBufferSource();
+  noise.buffer = getNoiseBuffer();
+  const bp = ctx.createBiquadFilter();
+  bp.type = 'bandpass';
+  bp.frequency.value = randomize(900, 0.2);
+  bp.Q.value = 1.2;
+  const g = ctx.createGain();
+  noise.connect(bp);
+  bp.connect(g);
+  g.connect(bgmBusGain);
+  g.gain.setValueAtTime(0.05, t);
+  g.gain.exponentialRampToValueAtTime(0.001, t + 0.05);
+  noise.start(t);
+  noise.stop(t + 0.06);
 }
 
 // === 随机化工具：每次播放微小随机偏移，避免完全相同的重复 ===
@@ -183,7 +257,7 @@ export function setMasterVolume(v: number): void {
 }
 
 // === 播放音效 ===
-export function playSound(type: keyof typeof SOUND_PROFILES): void {
+export function playSound(type: keyof typeof SOUND_PROFILES, char?: string): void {
   if (!audioContext) return;
 
   const oscillator = audioContext.createOscillator();
@@ -194,12 +268,12 @@ export function playSound(type: keyof typeof SOUND_PROFILES): void {
 
   const time = audioContext.currentTime;
 
-  // 特殊处理: type 音效 — 三层键盘音（click + thock + tone）
+  // 特殊处理: type 音效 — click + thock（触感）+ 乐器层（A 轴，char 决定旋律音）
   if (type === 'type') {
     // 释放预创建的 oscillator/gainNode（不使用）
     oscillator.disconnect();
     gainNode.disconnect();
-    playTypeSound();
+    playTypeSound(char);
     return;
   }
 
@@ -881,7 +955,7 @@ export const _chordInternals = {
 
 // === 便捷函数 ===
 export const sound = {
-  type: () => playSound('type'),
+  type: (char?: string) => playSound('type', char),
   wrong: () => playSound('wrong'),
   skill: () => playSound('skill'),
   levelup: () => playSound('levelup'),
