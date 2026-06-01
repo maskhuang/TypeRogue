@@ -372,8 +372,8 @@ function handleOptionSelect(
     showUpgradeChoice((chosen) => {
       const resultText = document.getElementById('rest-result-text');
       if (resultText) resultText.textContent = chosen
-        ? t('rest.upgrade.r', { name: localizeItemName(chosen.id, chosen.name), level: chosen.newLevel })
-        : t('rest.upgrade.no_skill');
+        ? t('rest.enchant.r', { name: localizeItemName(chosen.id, chosen.name) })
+        : t('rest.enchant.no_skill');
       resultEl.classList.remove('rest-result-hidden');
       continueBtn.onclick = () => completeRestStage();
       playSound('skill');
@@ -391,11 +391,12 @@ function handleOptionSelect(
   playSound('skill');
 }
 
-/** 显示升级三选一面板 */
-function showUpgradeChoice(onPick: (chosen: { id: string; name: string; newLevel: number } | null) => void): void {
-  const TARGET_LEVEL = 3;
+/** 显示附魔三选一面板（只给附魔，不再升级技能等级）·
+ *  候选 = 拥有 V2 词条（可被封装）的技能，与等级无关。*/
+function showUpgradeChoice(onPick: (chosen: { id: string; name: string } | null) => void): void {
+  const enchantableSkillIds = new Set(listAllEquipped().map(e => e.skillId));
   const candidates = [...state.player.skills.entries()]
-    .filter(([, data]) => data.level < TARGET_LEVEL)
+    .filter(([skillId]) => enchantableSkillIds.has(skillId))
     .map(([skillId, data]) => ({ skillId, data, affix: state.affixSkills.get(skillId)! }))
     .filter(c => c.affix);
 
@@ -416,7 +417,7 @@ function showUpgradeChoice(onPick: (chosen: { id: string; name: string; newLevel
   top.className = 'crt-modal-bezel-top';
   top.innerHTML = `
     <span class="crt-modal-led"></span>
-    <span>DPCA · VT220 · SKILL-UPGRADE</span>
+    <span>DPCA · VT220 · SKILL-ENCHANT</span>
     <span style="margin-left:auto;font-size:9px;color:#888;letter-spacing:2px;">SESSION 0x${(Date.now() & 0xffff).toString(16).toUpperCase()}</span>
   `;
 
@@ -434,15 +435,12 @@ function showUpgradeChoice(onPick: (chosen: { id: string; name: string; newLevel
     btn.dataset.marker = String(i + 1);
     btn.innerHTML = `
       <div class="crt-modal-item-name">${c.affix.icon} ${c.affix.name}</div>
-      <div class="crt-modal-item-desc">CURRENT Lv.${c.data.level} → Lv.${TARGET_LEVEL} · + ENCHANT</div>
+      <div class="crt-modal-item-desc">Lv.${c.data.level} · + ENCHANT</div>
     `;
     btn.onclick = () => {
-      const levelsToGain = TARGET_LEVEL - c.data.level;
-      c.data.level = TARGET_LEVEL;
-      applyAffixLevelScaling(c.affix.affixes, levelsToGain);
       overlay.remove();
       showV2EnchantPicker(c.skillId, () => {
-        onPick({ id: c.skillId, name: c.affix.name, newLevel: TARGET_LEVEL });
+        onPick({ id: c.skillId, name: c.affix.name });
       });
     };
     screen.appendChild(btn);

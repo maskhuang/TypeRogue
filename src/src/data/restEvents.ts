@@ -5,7 +5,6 @@
 
 import type { GameState } from '../core/types'
 import { t } from '../demo/demo-i18n'
-import { queryRelicFlag } from '../systems/relics/RelicPipeline'
 
 // === 选项类型定义 ===
 
@@ -60,12 +59,8 @@ const RELIC_OPTIONS: RelicOptionEntry[] = [
 export function buildRestOptions(state: GameState): RestOption[] {
   const options: RestOption[] = []
 
-  // --- 基础选项 A: 技能升级 ---
-  const maxSkillLevel = queryRelicFlag('max_skill_level') as number
-  const levelCap = maxSkillLevel === Infinity ? 3 : maxSkillLevel
-  const hasUpgradable = [...state.player.skills.entries()]
-    .some(([, data]) => data.level < levelCap)
-  if (state.player.skills.size >= 1 && hasUpgradable) {
+  // --- 基础选项 A: 技能附魔（只给附魔，不再升级等级）---
+  if (state.player.skills.size >= 1) {
     options.push({
       id: 'base_upgrade',
       label: t('rest.opt.upgrade'),

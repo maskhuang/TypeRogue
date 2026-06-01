@@ -45,7 +45,7 @@ function createTestState(overrides?: Partial<GameState>): GameState {
 }
 
 describe('restEvents - buildRestOptions', () => {
-  it('基础选项：有技能时返回2个选项（升级+增强）', () => {
+  it('基础选项：有技能时返回2个选项（附魔+增强）', () => {
     const state = createTestState()
     const options = buildRestOptions(state)
     expect(options).toHaveLength(2)
@@ -61,11 +61,11 @@ describe('restEvents - buildRestOptions', () => {
     expect(options[0].id).toBe('base_buff')
   })
 
-  it('所有技能已满级时不显示升级选项', () => {
+  it('技能已满级仍显示附魔选项（只给附魔，与等级无关）', () => {
     const state = createTestState()
     state.player.skills = new Map([['prod_burst', { level: 3 }]])
     const options = buildRestOptions(state)
-    expect(options.find(o => o.id === 'base_upgrade')).toBeUndefined()
+    expect(options.find(o => o.id === 'base_upgrade')).toBeDefined()
     expect(options.find(o => o.id === 'base_buff')).toBeDefined()
   })
 
