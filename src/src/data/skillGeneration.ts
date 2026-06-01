@@ -453,9 +453,9 @@ export function generateSkill(options?: GenerateSkillOptions): AffixSkillInstanc
   if (resource === 'multiplier') excludeTypes.add(AffixType.Reecho)
   if (resource === 'base') excludeTypes.add(AffixType.Silkworm)
 
-  // ── V2 接管：词条数 = rarity + 1（稀有度 0/1/2/3 → 1/2/3/4 个词条）· hostRarity 仍传实际稀有度(0-3)──
+  // ── V2 接管：词条数 = rarity（稀有度 0/1/2/3 → 0/1/2/3 个词条）· hostRarity 仍传实际稀有度(0-3)──
   // 旧 AffixInstance 通道已禁用（orchestrator 入口短路）；保留 affixes=[] 供 UI 兼容
-  const v2Ids = sampleV2Ids(rarity + 1, resource, rarity, options?.forcedRecipe, options?.excludeMeta, options?.inertMeta)
+  const v2Ids = sampleV2Ids(rarity, resource, rarity, options?.forcedRecipe, options?.excludeMeta, options?.inertMeta)
   const affixes: AffixInstance[] = []
 
   // 自动命名：skill.name 只存资源 base，V2 词条名由 display 层（itemDescriptors / shopTerminal）
@@ -500,7 +500,7 @@ export function generateSkill(options?: GenerateSkillOptions): AffixSkillInstanc
 
 /** 用 affixV2Generator.generateAffixV2 为 skill 滚 count 个 V2 词条
  *  每个词条独立选 recipe + 随机 trigger + magnitude scaling
- *  count = rarity + 1（稀有度 0/1/2/3 → 1/2/3/4 个词条）；返回生成出的 (动态注册的) def id 列表
+ *  count = rarity（稀有度 0/1/2/3 → 0/1/2/3 个词条）；返回生成出的 (动态注册的) def id 列表
  *  @param skillResource  词条所在 skill 的资源（传给 convert recipe 用作 source 锚点）
  *  @param hostRarity     宿主技能实际稀有度(0-3) · 用于 by:'rarity' scale 排除自身稀有度（≠ count）
  *  @param forcedRecipe   非空时第 1 个词条强制用此 recipe（gain_skill 按 tag 生成 ·
