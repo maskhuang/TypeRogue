@@ -513,18 +513,6 @@ export const RELICS_NARRATIVE = {
       "text_en": "Sacred Artifact Registry · SA-0774\nGradus: Inversum\nDescription: A brass registration tab, roughly palm-width, edges worn smooth. No markings on the surface. Contact reportedly produces faint vibration. Recovered from a disused workstation drawer, Layer V, alongside several unreadable punch-cards.\nRecovery Date: M.2██.██\nCustody Record: D-2847 / D-2848 / D-2849 (sequential requisition; all reported missing within ██ days)\nAnomalous Observations: All three custodians expressed, prior to disappearance, a similar disorientation — each described \"knowing the next slug before it fell.\" Each independently requested reassignment to quieter duties. Requests were denied per §4.2.\nNote: D-2849's final F-017 submission was filed ██ hours before the incident it describes. Timestamp discrepancy unresolved. No corrective action taken."
     }
   },
-  "rhythm_adapt": {
-    "bell": {
-      "name_zh": "节拍压板",
-      "name_en": "Metered Platen",
-      "text_zh": "压板上有一道道浅痕，是某人用指节敲出的。教堂里有些铭刻不是用眼睛做的，是用耳朵——唯有合拍之击，铅字方重。",
-      "text_en": "Someone kept time with their knuckles. Some inscriptions are made by ear. Strike in beat; the lead remembers weight."
-    },
-    "doc": {
-      "text_zh": "使用日志 · SA-0441 · 铭刻导引棒\n版级：逆版 / Inversum\n\n0612 — D-3847 开始值守。导引棒已登记签领。初始记录正常。铅字落版节律稳定。\n0741 — D-3847 报告",
-      "text_en": "Usage Log · SA-0441 · Inscription-Guide Bar\nGradus Formae: Inversum\n\n0612 — D-3847 begins shift. Bar signed out per F-001. Initial record nominal. Impression cadence stable.\n0741 — D-3847 reports hearing a low tone beneath the press. Origin not located. Log continues uninterrupted.\n0809 — D-3847 reports hearing a low tone beneath the press. Wording identical to 0741 entry. Timestamp confirmed distinct.\n0923 — Notation in margin, unattributed: 'I am pressing in time with something I cannot hear.'\n1104 — D-3847 reports hearing a low tone beneath the press.\n[Six further entries. Wording identical. Timestamps distinct.]\n1347 — Final entry: 'It is easier when I stop trying.'\n[Log ends. D-3847 not located at shift change. F-044 filed by floor supervisor. SA-0441 returned to shelf. No anomalous residue detected.]\nNote: Replacement assigned per §4.2. No further action required."
-    }
-  },
   "multiplier_prism": {
     "bell": {
       "name_zh": "半满油壶",
@@ -547,18 +535,6 @@ export const RELICS_NARRATIVE = {
     "doc": {
       "text_zh": "回收文档 RC-0471 · 发现于第 IV 层铸字坊 D-3847 工位台面 · 纸质便条（已碳化边缘）\n版级：脱版 / Solum",
       "text_en": "Recovered Document RC-0471 · Found on workstation surface of D-3847, Layer IV Typecasting Floor · Paper note (carbonized edges)\nGradus Formae: Solum\n\n[手写，墨迹不稳，部分字被划掉重写]\n\n第一天：这东西压在祈念键座下面已经 ██ 年了。我捡起来擦干净。感觉像铁，但没有铁的温度。\n\n第四天：有意思。我连祷的时候它变热。不是一点点——是真的烫。我数过，第十三击时烫到我撒手，第十五击……没到过第十五击。\n\n第七天：今天到了。到了之后铭文组自己动了。我没有按。我的手在键座上但我没有按任何东西。我确认过。我很确认。\n\n第八天：[空白]\n\n[便条背面，不同笔迹，更潦草]\n接替 D-3847 工位的 D-3901 报告：台面有烧焦痕迹，面积与该回收物轮廓吻合。该物品已移交气动征用管。移交时温度：正常。无异常。\n\nF-044 已代为存档。\n\n—— 编号 ████ 值班主事"
-    }
-  },
-  "cancel": {
-    "bell": {
-      "name_zh": "末句截令牌",
-      "name_en": "Token of the Severed Verse",
-      "text_zh": "刻有半截经文的铜牌。前任在句末打住，从不说完——据说如此，铅字反而铸得更多。那人后来也被截断了。",
-      "text_en": "The verse on it stops mid-word. Its last owner never finished sentences either. He finished more than anyone else."
-    },
-    "doc": {
-      "text_zh": "【回收物 RC-2847 · 发现于第 V 层排字区 · D-3801 工位抽屉底层】\n\n一截铜制节拍器摆锤，与摆杆分离，单独保存于电传机色带布包中。表面有指甲划痕，非操作性损伤。\n\n布包内附便条（手写，笔迹鉴定属 D-3801）：\n\n",
-      "text_en": "[ Recovery RC-2847 · Discovered in Layer V Compositing Hall · Bottom drawer of D-3801's workstation ]\n\nA brass metronome pendulum, detached from its column, wrapped in a length of teleprinter ribbon. Surface shows fingernail scoring; non-operational in origin.\n\nEnclosed note (handwritten; attributed to D-3801 by graphological analysis):"
     }
   },
   "fury_beat": {
@@ -679,20 +655,6 @@ export const RELICS_NARRATIVE = {
     "doc": {
       "text_zh": "回收物 RC-1147 · 发现于第 IV 层铸字坊 D-2291 工位搁板 · 铜制导轨片段，约 23 厘米，边缘有锉磨痕迹\n\n工位于 M.2██.03 例行清查时被确认空置。D-2291 失联，编号已回收。\n\n搁板上遗留铜导轨一段，来源不明——铸字坊标准设备未记录此规格。导轨两端均有切割痕，中段有不规则缺口，约两指宽。\n\n接手该工位的 D-2344 于移交第一天提交了 F-017 事件报告，称",
       "text_en": "Recovered Object RC-1147 · Found on shelf above D-2291's workstation, Layer IV Typecasting Hall · Copper rail segment, approx. 23 cm, edges filed\n\nStation confirmed vacant during routine inspection M.2██.03. D-2291 listed as missing; designation reassigned.\n\nOne copper rail remained on the shelf, provenance unverified — no standard specification for this component exists in Typecasting Hall equipment registers. Both ends show clean cuts; a two-finger gap interrupts the midsection.\n\nD-2344, assigned to the vacated station, filed F-017 on the first day of occupancy. Contents: ████████████████. Disposition: no action required.\n\nD-2344 filed a second F-017 the following morning. Contents identical to the first.\n\nRail has since been requisitioned under §4.2 for redistribution. Recipient: ████████. Current location: unverified."
-    }
-  },
-  "line_clear": {
-    "bell": {
-      "name_zh": "满版印",
-      "name_en": "Plena Impressio",
-      "text_zh": "排字棒滑过整行——键徒说，铅字会在落版前彼此传递些什么。唯有整行齐满，那种颤动方能留下来。",
-      "text_en": "They said the slugs speak to each other before the pull. Only a full line remembers the conversation.",
-      "sigil_name_zh": "-",
-      "sigil_name_en": "-"
-    },
-    "doc": {
-      "text_zh": "事故报告 IR-2██\n日期：M.2██.██.██\n涉及圣器：SA-0██「排版规尺」— 版级：逆版 / Inversum\n\n经过：\n0800 — D-3441 领取规尺，用于第 IV 层标准铭刻作业。规尺为黄铜质，刻度已磨损至不可读。\n1140 — D-3441 报告",
-      "text_en": " 铅字落格时有回响，像是同一个字被念了很多遍。"
     }
   },
   "dual_concerto": {

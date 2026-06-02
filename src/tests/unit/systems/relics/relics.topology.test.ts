@@ -9,13 +9,10 @@ import {
   CORNER_POWER_RATE,
   DUAL_CONCERTO_TIME,
   ROW_SWITCH_GOLD,
-  LINE_CLEAR_OUTPUT_RATIO,
   KEY_STORM_SCORE_PENALTY,
   getAdjacentPowerBonus,
   getCornerPowerBonus,
   checkRowSwitch,
-  recordLineClearHit,
-  checkLineClear,
   checkDualConcerto,
   resetDualConcertoHand,
   hasKeyStorm,
@@ -56,9 +53,6 @@ describe('键盘拓扑遗物行为 (Story 36.6)', () => {
     })
     it('ROW_SWITCH_GOLD = 1', () => {
       expect(ROW_SWITCH_GOLD).toBe(1)
-    })
-    it('LINE_CLEAR_OUTPUT_RATIO = 0.5', () => {
-      expect(LINE_CLEAR_OUTPUT_RATIO).toBe(0.5)
     })
     it('KEY_STORM_SCORE_PENALTY = 0.5', () => {
       expect(KEY_STORM_SCORE_PENALTY).toBe(0.5)
@@ -180,121 +174,6 @@ describe('键盘拓扑遗物行为 (Story 36.6)', () => {
     })
   })
 
-  // === 消行满贯 (line_clear) ===
-  describe('消行满贯 (line_clear)', () => {
-    it('无遗物 → 不记录', () => {
-      bindKey('a', 's1')
-      bindKey('s', 's2')
-      recordLineClearHit('a')
-      recordLineClearHit('s')
-      expect(checkLineClear()).toEqual([])
-    })
-
-    it('有遗物但未满行 → 空数组', () => {
-      state.player.relics.add('line_clear')
-      bindKey('a', 's1')
-      bindKey('s', 's2')
-      bindKey('d', 's3')
-      // 只命中 a 和 s，d 未命中
-      recordLineClearHit('a')
-      recordLineClearHit('s')
-      expect(checkLineClear()).toEqual([])
-    })
-
-    it('一行只有1个已装备技能 → 不触发（需 ≥2）', () => {
-      state.player.relics.add('line_clear')
-      bindKey('a', 's1') // 中行唯一
-      recordLineClearHit('a')
-      expect(checkLineClear()).toEqual([])
-    })
-
-    it('一行2个已装备技能全部命中 → 消行', () => {
-      state.player.relics.add('line_clear')
-      bindKey('a', 's1')
-      bindKey('s', 's2')
-      recordLineClearHit('a')
-      recordLineClearHit('s')
-      const result = checkLineClear()
-      expect(result).toHaveLength(2)
-      expect(result.map(r => r.key).sort()).toEqual(['a', 's'])
-      expect(result.map(r => r.skillId).sort()).toEqual(['s1', 's2'])
-    })
-
-    it('一行3个已装备技能全部命中 → 消行返回3个', () => {
-      state.player.relics.add('line_clear')
-      bindKey('a', 's1')
-      bindKey('s', 's2')
-      bindKey('d', 's3')
-      recordLineClearHit('a')
-      recordLineClearHit('s')
-      recordLineClearHit('d')
-      const result = checkLineClear()
-      expect(result).toHaveLength(3)
-    })
-
-    it('多行可同时消行', () => {
-      state.player.relics.add('line_clear')
-      bindKey('q', 's1')
-      bindKey('w', 's2')
-      bindKey('a', 's3')
-      bindKey('s', 's4')
-      recordLineClearHit('q')
-      recordLineClearHit('w')
-      recordLineClearHit('a')
-      recordLineClearHit('s')
-      const result = checkLineClear()
-      expect(result).toHaveLength(4) // 上行2 + 中行2
-    })
-
-    it('非装备键不计入', () => {
-      state.player.relics.add('line_clear')
-      bindKey('a', 's1')
-      bindKey('s', 's2')
-      // 'f' 未装备，recordLineClearHit 应忽略
-      recordLineClearHit('a')
-      recordLineClearHit('f')
-      expect(checkLineClear()).toEqual([]) // a 命中但 s 未命中
-    })
-
-    it('跨词累积：第一词命中 a，第二词命中 s → 消行', () => {
-      state.player.relics.add('line_clear')
-      bindKey('a', 's1')
-      bindKey('s', 's2')
-      // 第一词：命中 a
-      recordLineClearHit('a')
-      expect(checkLineClear()).toEqual([]) // 未满行
-      // 第二词：命中 s → 跨词累积触发消行
-      recordLineClearHit('s')
-      const result = checkLineClear()
-      expect(result).toHaveLength(2)
-    })
-
-    it('消行后清除该行记录，需重新积累', () => {
-      state.player.relics.add('line_clear')
-      bindKey('a', 's1')
-      bindKey('s', 's2')
-      recordLineClearHit('a')
-      recordLineClearHit('s')
-      checkLineClear() // 消行 → 清除中行记录
-      // 再次检查，不应重复触发
-      expect(checkLineClear()).toEqual([])
-      // 重新积累后可再次触发
-      recordLineClearHit('a')
-      recordLineClearHit('s')
-      expect(checkLineClear()).toHaveLength(2)
-    })
-
-    it('resetTopologyRelicState 清空消行追踪', () => {
-      state.player.relics.add('line_clear')
-      bindKey('a', 's1')
-      bindKey('s', 's2')
-      recordLineClearHit('a')
-      resetTopologyRelicState()
-      recordLineClearHit('s')
-      // a 的记录被重置，只有 s，不够消行
-      expect(checkLineClear()).toEqual([])
-    })
-  })
 
   // === 双手协奏 (dual_concerto) ===
   describe('双手协奏 (dual_concerto)', () => {
@@ -448,26 +327,13 @@ describe('键盘拓扑遗物行为 (Story 36.6)', () => {
       // 重置后首次按键 → 0（无前行记录）
       expect(checkRowSwitch('q')).toBe(0)
     })
-
-    it('重置消行追踪', () => {
-      state.player.relics.add('line_clear')
-      bindKey('a', 's1')
-      bindKey('s', 's2')
-      recordLineClearHit('a')
-
-      resetTopologyRelicState()
-
-      // 重置后应无记录
-      expect(checkLineClear()).toEqual([])
-    })
   })
 
   // === 行为注册 ===
   describe('initTopologyRelicBehaviors', () => {
-    it('注册 line_clear, hand_alternation, key_storm 行为', () => {
+    it('注册 hand_alternation, key_storm 行为', () => {
       initTopologyRelicBehaviors()
       const handlers = getRegisteredBehaviors()
-      expect(handlers).toContain('line_clear')
       expect(handlers).toContain('hand_alternation')
       expect(handlers).toContain('key_storm')
     })

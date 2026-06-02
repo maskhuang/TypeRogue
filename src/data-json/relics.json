@@ -297,19 +297,6 @@
       "subsystem": "typing",
       "behaviorType": "autocomplete"
     },
-    "rhythm_adapt": {
-      "id": "rhythm_adapt",
-      "name": "尼姆·乔姆斯基",
-      "archiveCode": "Ptro-CUN-001",
-      "icon": "🎵",
-      "description": "单词下方出现节拍条，按键时命中节拍球可使该次技能产出+30%。",
-      "rarity": "epic",
-      "basePrice": 80,
-      "effects": [],
-      "flavor": "█████ 训练中习得 128 █████ 手势。█████ 后续分析认为多为节奏性模仿而非语法。",
-      "subsystem": "typing",
-      "behaviorType": "rhythm_adapt"
-    },
     "glass_cannon_v2": {
       "id": "glass_cannon_v2",
       "name": "薇姬",
@@ -360,19 +347,6 @@
       "flavor": "█████ M-group 暴政 alpha。████ 年被联盟以石头与棒打死。",
       "subsystem": "combo",
       "behaviorType": "combo_detonator"
-    },
-    "cancel": {
-      "id": "cancel",
-      "name": "恩托罗吉",
-      "archiveCode": "Ptro-MAH-001",
-      "icon": "⛓️‍💥",
-      "description": "新词出现0.4s内打对首字母=\"取消\"。取消词零失误完成→连锁+1（上限5），每层技能产出+10%。取消词打错→连锁归零并扣0.5s。",
-      "rarity": "epic",
-      "basePrice": 120,
-      "effects": [],
-      "flavor": "█████ M-group 长期 alpha。████ 年被本群联盟攻击致死。",
-      "subsystem": "combo",
-      "behaviorType": "cancel"
     },
     "immortal_combo": {
       "id": "immortal_combo",
@@ -511,19 +485,6 @@
       "effects": [],
       "flavor": "████ 年自其他群移入 █████。后被 █████ 群雄性杀害。",
       "subsystem": "topology"
-    },
-    "line_clear": {
-      "id": "line_clear",
-      "name": "菲根",
-      "archiveCode": "Ptro-KAS-008",
-      "icon": "🎖️",
-      "description": "命中某一行所有已装备技能(≥2)时「消行」——该行所有技能额外触发一次(50%产出)，跨词累积。",
-      "rarity": "epic",
-      "basePrice": 120,
-      "effects": [],
-      "flavor": "Flo 之子。从怯弱少年成长为 █████ 最会结盟的 alpha——靠盟友、亲族与策略反复夺回权威。",
-      "subsystem": "topology",
-      "behaviorType": "line_clear"
     },
     "dual_concerto": {
       "id": "dual_concerto",
@@ -1156,6 +1117,9 @@
     }
   },
   "deletedRelicIds": [
+    "rhythm_adapt",
+    "cancel",
+    "line_clear",
     "magnet",
     "combo_badge",
     "berserker_mask",

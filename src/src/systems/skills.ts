@@ -19,11 +19,10 @@ import { eventBus } from '../core/events/EventBus';
 import { random } from '../core/seededRandom';
 import { orchestrateAffixTrigger } from './affixTriggerOrchestrator';
 import { getAscendBaseScale, canAscend, executeAscend, RES_ENCHANTMENT_BY_RESOURCE, APPRENTICE_RES_EXP_RATE, APPRENTICE_CRIT_GROWTH } from '../data/affixTrigger';
-import { getMultiplierPrismBonus, getCancelChainBonus } from './relics/ComboRelicBehaviors';
-import { getTaikoBonus } from './relics/TypingRelicBehaviors';
+import { getMultiplierPrismBonus } from './relics/ComboRelicBehaviors';
 import { getFirstStrikeBonus, getLessIsMoreBonus, trackWordAffixTypes, resetWordAffixTypes, getUncrownedKingAffixlessBonus } from './relics/SkillRelicBehaviors';
 import { getApprenticeGrowthMultiplier, getEnchantDividendGold, getEnchantBoostBonus } from './relics/EnchantmentRelicBehaviors';
-import { getAdjacentPowerBonus, getCornerPowerBonus, recordLineClearHit } from './relics/TopologyRelicBehaviors';
+import { getAdjacentPowerBonus, getCornerPowerBonus } from './relics/TopologyRelicBehaviors';
 import { getSkillKeys, getBindingState, unbindSkill } from './bindingManager';
 import { getShortSprintBonus, getLongWordCritBonus } from './relics/WordRelicBehaviors';
 import { getResourceTideBonus, getResourceFocusBonus, getResourceDiversityBonus, rollProductionDividend, getTimeTrickle, applyFurnaceConversion } from './relics/ResourceRelicBehaviors';
@@ -377,12 +376,6 @@ function triggerAffixSkillWithFeedback(
   // Story 36.10: 暖身操加算（前 10 秒 +40%）
   const warmUpBonus = getWarmUpBonus();
   if (warmUpBonus > 0) relicBonus += warmUpBonus;
-  // 太鼓节拍命中加算（+30%）
-  const taikoBonus = getTaikoBonus();
-  if (taikoBonus > 0) relicBonus += taikoBonus;
-  // 取消连锁加算（取消状态下 +10%×层数）
-  const cancelBonus = getCancelChainBonus();
-  if (cancelBonus > 0) relicBonus += cancelBonus;
   // 附魔增幅：已附魔技能产出+15%
   const hasEnchantment = skill.enchantmentIds.length > 0;
   const enchantBoost = getEnchantBoostBonus(hasEnchantment);
@@ -552,8 +545,6 @@ function triggerAffixSkillWithFeedback(
 
   // Story 36.4: 爵士乐 — 追踪本词触发的词条类型
   trackWordAffixTypes(skill.affixes);
-  // 消行满贯 — 追踪本词技能命中行
-  recordLineClearHit(triggerKey);
 
   // Story 37.6: 缓存链式锚点（同一 triggerKey 只调一次 resolveChainAnchor，避免 random() 不一致）
   const chainAnchorCache = new Map<string, { letterIndex?: number; fromElementId?: string }>();

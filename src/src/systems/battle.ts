@@ -40,11 +40,11 @@ import { showActTransition, showBossIntro, updateStageInfo } from './actTransiti
 import { random, setNormalMode } from '../core/seededRandom';
 import { getMaxQueueLength } from './classes/FragmentQueue';
 import { routeEnergyToPipeline, ENERGY_PER_SLOT } from './classes/AssemblyPipeline';
-import { canAutocomplete, isRepeatWord, hasGlassCannon, resetTypingRelicState, trackWord, initTypingRelicBehaviors, checkSpeedRelics, recordKeypressForTaiko, checkTaikoHit, startTaikoSpawner, stopTaikoSpawner, updateTaikoJudge } from './relics/TypingRelicBehaviors';
-import { calculateComboBuffer, checkComboDetonator, onComboBreakDetonator, hasImmortalCombo, saveLastBattleCombo, resetComboRelicState, initComboRelicBehaviors, getMultiplierPrismBonus, onNewWordForCancel, checkCancelOnFirstLetter, getCancelChainBonus, getCancelChainCount, onCancelledWordComplete, onCancelledWordError, isWordCancelled } from './relics/ComboRelicBehaviors';
+import { canAutocomplete, isRepeatWord, hasGlassCannon, resetTypingRelicState, trackWord, initTypingRelicBehaviors, checkSpeedRelics } from './relics/TypingRelicBehaviors';
+import { calculateComboBuffer, checkComboDetonator, onComboBreakDetonator, hasImmortalCombo, saveLastBattleCombo, resetComboRelicState, initComboRelicBehaviors, getMultiplierPrismBonus } from './relics/ComboRelicBehaviors';
 import { checkJazzBonus, resetSkillRelicState, initSkillRelicBehaviors, hasUncrownedKing, checkD100OnBattleStart } from './relics/SkillRelicBehaviors';
 import { resetEnchantmentRelicState, initEnchantmentRelicBehaviors, getApprenticeGrowthMultiplier, getQuestEquipReduction, getGreedyInscriptionTargetMult } from './relics/EnchantmentRelicBehaviors';
-import { checkDualConcerto, resetDualConcertoHand, checkKeyStorm, hasKeyStorm, KEY_STORM_SCORE_PENALTY, checkRowSwitch, checkLineClear, LINE_CLEAR_OUTPUT_RATIO, resetTopologyRelicState, initTopologyRelicBehaviors } from './relics/TopologyRelicBehaviors';
+import { checkDualConcerto, resetDualConcertoHand, checkKeyStorm, hasKeyStorm, KEY_STORM_SCORE_PENALTY, checkRowSwitch, resetTopologyRelicState, initTopologyRelicBehaviors } from './relics/TopologyRelicBehaviors';
 import { checkWordCollection, checkLongWordMaster, initWordRelicBehaviors } from './relics/WordRelicBehaviors';
 import { incrementWordParity, getCurrentTideResource, checkUniversalFurnace, resetResourceRelicBattleState, initResourceRelicBehaviors } from './relics/ResourceRelicBehaviors';
 import { initShopRelicBehaviors, applyGoldInterest } from './relics/ShopRelicBehaviors';
@@ -416,9 +416,7 @@ function setWord(): void {
   state.resources.score = 0; // 重置即时加分
   state.wordPerfect = true;
   wordStartTime = state.time; // 记录词语开始时的剩余时间
-  onNewWordForCancel(); // 取消连锁：记录新词出现时间
   wordStartScore = state.score; // 玻璃大炮：记录词开始时总分
-  setTimeout(() => updateTaikoJudge(), 0); // 新词渲染后更新判定点
   resetWordResourceTypes(); // 重置词级资源追踪
   // 逐词重置：蚕食累积损失（质变·化茧：达到阈值后不重置，逐关重置）+ 遗产基础产出加成
   const silkwormCocoonActive = isAffixGloballyTransformed(AffixType.Silkworm, state.affixSkills, state.affixSkillStates);
@@ -902,22 +900,6 @@ function playerCorrect(k: string): void {
   state.wordScore += finalLetterBase * state.multiplier;
   synergy.letterBaseScore += letterBonusScore * letterBaseMult;
 
-  // 太鼓节拍：记录击键 + 检查命中（结果存储在模块级变量，由 skills.ts 读取）
-  if (state.player.relics.has('rhythm_adapt')) {
-    recordKeypressForTaiko();
-    const taikoMult = checkTaikoHit();
-    if (taikoMult > 1) {
-      pulseRelicIcon('rhythm_adapt', '#ffe66d');
-    }
-  }
-
-  // 取消连锁：首字母时检查是否在取消窗口内
-  if (state.player.index === 0 && checkCancelOnFirstLetter()) {
-    const chainLv = getCancelChainCount();
-    pulseRelicIcon('cancel', '#ff6b00');
-    showFeedback(t('battle.cancel', { value: chainLv > 0 ? `+${chainLv * 10}%` : '' }), '#ff6b00');
-  }
-
   // 触发技能（新系统：所有绑定技能都应触发）
   const shouldTrigger = !!skillId;
   if (shouldTrigger) {
@@ -1038,7 +1020,6 @@ function playerCorrect(k: string): void {
   // Charge 按住蓄力：字母推进延迟到释放（releaseCharge）
   if (!_chargeHolding) {
     state.player.index++;
-    updateTaikoJudge(); // 太鼓判定点跟随当前字母
 
     // 小助手：首字母完成后显示 Tab 提示
     if (state.player.index === 1 && state.player.relics.has('little_helper') && isRepeatWord(state.player.word)) {
@@ -1114,13 +1095,6 @@ function playerWrong(pressedKey?: string, expectedKey?: string): void {
 
   // 猎物悬赏：打错通知
   onBountyError();
-
-  // 取消连锁：取消状态下打错 → 连锁归零 + 扣时间（没看清就打的代价）
-  const cancelPenalty = onCancelledWordError();
-  if (cancelPenalty > 0) {
-    state.time -= cancelPenalty;
-    showFeedback(t('battle.cancel_error', { value: cancelPenalty }), '#ff4444');
-  }
 
   if (state.combo > 5) showFeedback('BREAK', '#ff6b6b', 1, { fromElementId: 'combo-display', resource: '', amount: 0 });
 
@@ -1408,16 +1382,6 @@ function completeWord(): void {
     }
   }
 
-  // 消行满贯 — 一词命中一行所有已装备技能时额外触发(50%产出)
-  const lineClearTargets = checkLineClear();
-  if (lineClearTargets.length > 0) {
-    showFeedback(`🎖️ 消行! ×${lineClearTargets.length}`, '#ffd700');
-    pulseRelicIcon('line_clear', '#ffd700');
-    for (const target of lineClearTargets) {
-      triggerSkill(target.skillId, target.key, undefined, LINE_CLEAR_OUTPUT_RATIO);
-    }
-  }
-
   // Story 36.6: 全键风暴 — 每命中1个技能，随机触发1个未命中技能
   const stormTargets = checkKeyStorm(synergy.wordSkillCount, state.player.word, random);
   if (stormTargets.length > 0) {
@@ -1518,11 +1482,6 @@ function completeWord(): void {
 
   // 重置词语基础分
   wordBaseScore = 0;
-
-  // 取消连锁：被取消的词零失误完成 → 连锁+1
-  if (state.wordPerfect) {
-    onCancelledWordComplete();
-  }
 
   // Story 36.2: 完成后记录单词（小助手补全需要"已打过"判定）
   trackWord(state.player.word);
@@ -2054,7 +2013,6 @@ function endLevel(): void {
   releaseBGMTension();
   stopBGM();
   stopScoreRoller(); // Story 31.4
-  stopTaikoSpawner();
   clearPseudoInfinite();
   getElements().container.classList.remove('glow-danger', 'glow-target-reached');
   clearFloatQueue();
@@ -2812,8 +2770,6 @@ export async function startLevel(): Promise<void> {
 
   startTimer();
   startScoreRoller(); // Story 31.4: 分数滚轮动画
-  // 太鼓节拍：有 rhythm_adapt 时启动小球生成器
-  startTaikoSpawner();
 
 }
 
@@ -2895,7 +2851,6 @@ function victory(): void {
   // battle:end 已在 endLevel() 通关分支统一 emit（含最终周目 Boss）；此处不再重复 emit。
   if (timerInterval) clearInterval(timerInterval);
   stopScoreRoller(); // Story 31.4
-  stopTaikoSpawner();
   clearFloatQueue();
   cleanupModifier();
   setRelicGarbleActive(false);

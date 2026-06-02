@@ -235,18 +235,18 @@ describe('RelicBehaviorType', () => {
   it('should cover all behavior types', () => {
     const behaviors: RelicBehaviorType[] = [
       'decelerate_reward', 'accelerate_reward', 'autocomplete',
-      'rhythm_adapt', 'glass_cannon',
-      'double_keystroke', 'combo_detonator', 'cancel', 'immortal_combo',
+      'glass_cannon',
+      'double_keystroke', 'combo_detonator', 'immortal_combo',
       'training_manual', 'jazz_diversity', 'uncrowned_king', 'd_100',
       'fate_fork', 'greedy_inscription',
-      'line_clear', 'hand_alternation', 'key_storm',
+      'hand_alternation', 'key_storm',
       'word_dealer',
       'smuggle_free', 'timed_auction',
       'phoenix',
       'modifier_barrier', 'chaos_roulette', 'modifier_reversal',
       'snowball', 'score_black_hole',
     ]
-    expect(behaviors).toHaveLength(27)
+    expect(behaviors).toHaveLength(24)
   })
 
   it('should be assignable to RelicData.behaviorType', () => {

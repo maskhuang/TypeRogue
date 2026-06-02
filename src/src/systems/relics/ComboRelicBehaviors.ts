@@ -83,121 +83,6 @@ export function resetComboDetonator(): void {
   }
 }
 
-// === 取消连锁 (cancel) ===
-// 灵感：格斗游戏的取消机制。打字游戏中"硬直"= 阅读新词的时间。
-// 在 0.4s 内打对首字母 = "取消"阅读硬直，跳过安全阅读直接打字。
-// 快但没看清 → 打错代价更大。
-
-const CANCEL_WINDOW_MS = 400
-const CANCEL_CHAIN_MAX = 5
-const CANCEL_CHAIN_BONUS_PER_STACK = 0.10
-const CANCEL_ERROR_PENALTY = 0.5 // 秒
-
-let _cancelChainCount = 0
-let _wordAppearTime = 0
-/** 当前词是否已检查过取消窗口（首字母时判定一次） */
-let _cancelCheckedThisWord = false
-/** 当前词是否处于"已取消"状态（打错时加重惩罚） */
-let _wordCancelled = false
-
-/**
- * 新词出现时记录时间戳（由 setWord 调用）
- */
-export function onNewWordForCancel(): void {
-  if (!state.player.relics.has('cancel')) return
-  _wordAppearTime = performance.now()
-  _cancelCheckedThisWord = false
-  _wordCancelled = false
-  // 窗口提示：显示闪烁的取消提示
-  showCancelWindowHint()
-}
-
-/** 显示取消窗口提示（400ms 后消失） */
-function showCancelWindowHint(): void {
-  if (typeof document === 'undefined') return
-  const existing = document.getElementById('cancel-window-hint')
-  if (existing) existing.remove()
-  const hint = document.createElement('div')
-  hint.id = 'cancel-window-hint'
-  hint.textContent = '⚡'
-  const wordZone = document.getElementById('word-zone')
-  if (wordZone) wordZone.appendChild(hint)
-  setTimeout(() => hint.remove(), CANCEL_WINDOW_MS)
-}
-
-/**
- * 首字母正确时检查是否在取消窗口内
- * @returns true 如果成功取消（用于视觉反馈）
- */
-export function checkCancelOnFirstLetter(): boolean {
-  if (!state.player.relics.has('cancel')) return false
-  if (_cancelCheckedThisWord) return false
-  _cancelCheckedThisWord = true
-  if (_wordAppearTime <= 0) return false
-  const elapsed = performance.now() - _wordAppearTime
-  if (elapsed <= CANCEL_WINDOW_MS) {
-    _wordCancelled = true
-    return true
-  }
-  // 超时 → 安全模式，连锁不变
-  return false
-}
-
-/**
- * 完成一个被取消的词且无失误 → 连锁+1
- * 由 completeWord 在 wordPerfect 时调用
- */
-export function onCancelledWordComplete(): void {
-  if (!state.player.relics.has('cancel')) return
-  if (_wordCancelled) {
-    _cancelChainCount = Math.min(_cancelChainCount + 1, CANCEL_CHAIN_MAX)
-  }
-}
-
-/**
- * 获取当前词的取消连锁技能产出加成
- * 只有被取消的词才有加成
- */
-export function getCancelChainBonus(): number {
-  if (!state.player.relics.has('cancel')) return 0
-  if (!_wordCancelled) return 0
-  return _cancelChainCount * CANCEL_CHAIN_BONUS_PER_STACK
-}
-
-/** 当前连锁层数 */
-export function getCancelChainCount(): number {
-  return _cancelChainCount
-}
-
-/** 当前词是否处于取消状态 */
-export function isWordCancelled(): boolean {
-  return _wordCancelled
-}
-
-/**
- * 取消状态下打错 → 连锁归零 + 额外时间惩罚
- * @returns 额外扣除的时间（秒），0 = 非取消词或未持有
- */
-export function onCancelledWordError(): number {
-  if (!state.player.relics.has('cancel')) return 0
-  if (_wordCancelled) {
-    _cancelChainCount = 0
-    _wordCancelled = false
-    return CANCEL_ERROR_PENALTY
-  }
-  return 0
-}
-
-/**
- * 关级别重置
- */
-export function resetCancelChainState(): void {
-  _cancelChainCount = 0
-  _wordAppearTime = 0
-  _cancelCheckedThisWord = false
-  _wordCancelled = false
-}
-
 // === 不灭连击 (immortal_combo) ===
 
 /** 上关结束时的 combo 数（获得不断之链时追溯用） */
@@ -236,7 +121,6 @@ export function getFuryBeatCritRate(): number {
  */
 export function resetComboRelicState(): void {
   resetComboDetonator()
-  resetCancelChainState()
 }
 
 // === 注册所有行为 ===
@@ -251,10 +135,6 @@ export function initComboRelicBehaviors(): void {
 
   registerRelicBehavior('combo_detonator', (_relicId, _context) => {
     // 实际逻辑在 checkComboDetonator() 中，由 battle.ts 直接调用
-  })
-
-  registerRelicBehavior('cancel', (_relicId, _context) => {
-    // 实际逻辑在 checkCancelOnKeystroke() / getCancelChainBonus() 中
   })
 
   registerRelicBehavior('immortal_combo', (_relicId, _context) => {

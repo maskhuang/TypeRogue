@@ -39,7 +39,7 @@ describe('遗物图标脉冲 (Story 37.5)', () => {
   })
 
   it('所有 5 个目标遗物 ID 与 Set 操作兼容', () => {
-    const targetRelics = ['decelerate_reward', 'combo_buffer', 'jazz', 'rhythm_adapt', 'snowball']
+    const targetRelics = ['decelerate_reward', 'combo_buffer', 'jazz', 'little_helper', 'snowball']
     state.player.relics = new Set(targetRelics)
     for (const id of targetRelics) {
       expect(state.player.relics.has(id)).toBe(true)

@@ -14,14 +14,6 @@ import {
   hasImmortalCombo,
   resetComboRelicState,
   initComboRelicBehaviors,
-  onNewWordForCancel,
-  checkCancelOnFirstLetter,
-  getCancelChainBonus,
-  getCancelChainCount,
-  onCancelledWordComplete,
-  onCancelledWordError,
-  isWordCancelled,
-  resetCancelChainState,
 } from '../../../../src/systems/relics/ComboRelicBehaviors'
 import { clearBehaviorHandlers, getRegisteredBehaviors } from '../../../../src/systems/relics/RelicPipeline'
 
@@ -29,7 +21,6 @@ import { clearBehaviorHandlers, getRegisteredBehaviors } from '../../../../src/s
 function clearRelics(): void {
   state.player.relics.clear()
   state.player.relicStates = {}
-  resetCancelChainState()
 }
 
 describe('连击/倍率系统遗物行为 (Story 36.3)', () => {
@@ -184,120 +175,6 @@ describe('连击/倍率系统遗物行为 (Story 36.3)', () => {
   })
 
   // =====================
-  // AC4: 取消连锁（史诗，基于阅读硬直的取消机制）
-  // =====================
-  describe('取消连锁 (cancel)', () => {
-    beforeEach(() => {
-      state.player.relics.add('cancel')
-    })
-
-    it('未持有 → 无效果', () => {
-      state.player.relics.delete('cancel')
-      onNewWordForCancel()
-      expect(checkCancelOnFirstLetter()).toBe(false)
-      expect(getCancelChainBonus()).toBe(0)
-    })
-
-    it('在窗口内打对首字母 → 取消成功', () => {
-      onNewWordForCancel()
-      // performance.now() 在同一 tick 内，elapsed ≈ 0 < 400ms
-      expect(checkCancelOnFirstLetter()).toBe(true)
-      expect(isWordCancelled()).toBe(true)
-    })
-
-    it('首字母只判定一次', () => {
-      onNewWordForCancel()
-      expect(checkCancelOnFirstLetter()).toBe(true)
-      expect(checkCancelOnFirstLetter()).toBe(false) // 第二次不再判定
-    })
-
-    it('取消词零失误完成 → 连锁+1', () => {
-      onNewWordForCancel()
-      checkCancelOnFirstLetter()
-      onCancelledWordComplete() // wordPerfect 时调用
-      expect(getCancelChainCount()).toBe(1)
-    })
-
-    it('连锁叠加至上限 5', () => {
-      for (let i = 0; i < 7; i++) {
-        onNewWordForCancel()
-        checkCancelOnFirstLetter()
-        onCancelledWordComplete()
-      }
-      expect(getCancelChainCount()).toBe(5)
-    })
-
-    it('getCancelChainBonus 返回 层数×0.10（仅取消词有效）', () => {
-      // 先攒 3 层
-      for (let i = 0; i < 3; i++) {
-        onNewWordForCancel()
-        checkCancelOnFirstLetter()
-        onCancelledWordComplete()
-      }
-      expect(getCancelChainCount()).toBe(3)
-      // 新词取消状态下才有加成
-      onNewWordForCancel()
-      checkCancelOnFirstLetter()
-      expect(getCancelChainBonus()).toBeCloseTo(0.30)
-    })
-
-    it('非取消词无加成（即使有层数）', () => {
-      // 攒 2 层
-      for (let i = 0; i < 2; i++) {
-        onNewWordForCancel()
-        checkCancelOnFirstLetter()
-        onCancelledWordComplete()
-      }
-      expect(getCancelChainCount()).toBe(2)
-      // 这次不取消（不调 checkCancelOnFirstLetter）
-      onNewWordForCancel()
-      expect(getCancelChainBonus()).toBe(0) // 非取消词
-      expect(getCancelChainCount()).toBe(2) // 层数不变
-    })
-
-    it('取消词打错 → 连锁归零 + 返回惩罚时间', () => {
-      // 攒 3 层
-      for (let i = 0; i < 3; i++) {
-        onNewWordForCancel()
-        checkCancelOnFirstLetter()
-        onCancelledWordComplete()
-      }
-      // 新词取消
-      onNewWordForCancel()
-      checkCancelOnFirstLetter()
-      // 打错
-      const penalty = onCancelledWordError()
-      expect(penalty).toBe(0.5)
-      expect(getCancelChainCount()).toBe(0)
-      expect(isWordCancelled()).toBe(false)
-    })
-
-    it('非取消词打错 → 无额外惩罚，连锁不变', () => {
-      // 攒 2 层
-      for (let i = 0; i < 2; i++) {
-        onNewWordForCancel()
-        checkCancelOnFirstLetter()
-        onCancelledWordComplete()
-      }
-      // 不取消
-      onNewWordForCancel()
-      const penalty = onCancelledWordError()
-      expect(penalty).toBe(0) // 非取消词无惩罚
-      expect(getCancelChainCount()).toBe(2) // 层数不变
-    })
-
-    it('关级别重置清零所有状态', () => {
-      for (let i = 0; i < 3; i++) {
-        onNewWordForCancel()
-        checkCancelOnFirstLetter()
-        onCancelledWordComplete()
-      }
-      resetCancelChainState()
-      expect(getCancelChainCount()).toBe(0)
-    })
-  })
-
-  // =====================
   // AC5: 不灭连击
   // =====================
   describe('不灭连击 (immortal_combo)', () => {
@@ -325,28 +202,17 @@ describe('连击/倍率系统遗物行为 (Story 36.3)', () => {
       resetComboRelicState()
       expect(checkComboDetonator(15)).toBe(3)
     })
-
-    it('重置 cancel 状态', () => {
-      state.player.relics.add('cancel')
-      onNewWordForCancel()
-      checkCancelOnFirstLetter()
-      onCancelledWordComplete()
-      expect(getCancelChainCount()).toBe(1)
-      resetComboRelicState()
-      expect(getCancelChainCount()).toBe(0)
-    })
   })
 
   // =====================
   // 行为注册
   // =====================
   describe('initComboRelicBehaviors', () => {
-    it('注册 double_keystroke, combo_detonator, cancel 和 immortal_combo 行为', () => {
+    it('注册 double_keystroke, combo_detonator 和 immortal_combo 行为', () => {
       initComboRelicBehaviors()
       const registered = getRegisteredBehaviors()
       expect(registered).toContain('double_keystroke')
       expect(registered).toContain('combo_detonator')
-      expect(registered).toContain('cancel')
       expect(registered).toContain('immortal_combo')
     })
   })
@@ -370,16 +236,5 @@ describe('连击/倍率系统遗物行为 (Story 36.3)', () => {
       expect(hasImmortalCombo()).toBe(true)
     })
 
-    it('cancel + combo_detonator：两者独立运作', () => {
-      state.player.relics.add('cancel')
-      state.player.relics.add('combo_detonator')
-      // 取消连锁攒层
-      onNewWordForCancel()
-      checkCancelOnFirstLetter()
-      onCancelledWordComplete()
-      expect(getCancelChainCount()).toBe(1)
-      // 连击引爆正常触发
-      expect(checkComboDetonator(15)).toBe(3)
-    })
   })
 })

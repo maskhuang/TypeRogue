@@ -648,8 +648,6 @@ const ZH: Record<string, string> = {
   'battle.prism_active': '🔷 棱镜激活 → 技能+20%',
   'battle.combo_buffer': '🛡️ 余韵护盾 → combo {value}',
   'battle.detonate': '💣 ×{value}',
-  'battle.cancel': '⛓️‍💥 CANCEL {value}',
-  'battle.cancel_error': '⛓️‍💥 -{value}s',
   'battle.pattern_repeat': '📝 再来一次！',
 
   // --- skill relic feedback ---
@@ -2169,8 +2167,6 @@ const EN: Record<string, string> = {
   'battle.prism_active': '🔷 Prism Active → Skill +20%',
   'battle.combo_buffer': '🛡️ Buffered → combo {value}',
   'battle.detonate': '💣 ×{value}',
-  'battle.cancel': '⛓️‍💥 CANCEL {value}',
-  'battle.cancel_error': '⛓️‍💥 -{value}s',
   'battle.pattern_repeat': '📝 Repeat!',
 
   // --- skill relic feedback ---
@@ -3117,12 +3113,12 @@ const ITEM_NAMES_EN: Record<string, string> = {
   word_scissors: 'SHERMAN', resonance_mold: 'AUSTIN',
   // Typing subsystem relics
   decelerate_reward: 'VELU', accelerate_reward: 'YO',
-  little_helper: 'PAL', rhythm_adapt: 'NIM CHIMPSKY',
+  little_helper: 'PAL',
   glass_cannon_v2: 'VIKI',
   // Combo subsystem relics
   echo_thimble: 'Echo Thimble',
   combo_buffer: 'GIGI', multiplier_prism: 'BEETHOVEN',
-  combo_detonator: 'PIMU', cancel: 'NTOLOGI',
+  combo_detonator: 'PIMU',
   immortal_combo: 'CANTSBEE', fury_beat: 'FRODO',
   // Skill subsystem relics
   first_strike: 'DAVID GREYBEARD', less_is_more: 'ALOFU',
@@ -3135,7 +3131,7 @@ const ITEM_NAMES_EN: Record<string, string> = {
   rune_spike: 'GOLIATH',
   // Topology subsystem relics
   adjacent_power: 'SEMENDWA', corner_power: 'PAX',
-  row_switch: 'PATTI', line_clear: 'FIGAN',
+  row_switch: 'PATTI',
   dual_concerto: 'GLITTER', precision_strike: 'AI',
   key_storm: 'TITAN',
   // Word subsystem relics
@@ -3271,14 +3267,12 @@ const ITEM_DESCS_EN: Record<string, string> = {
   decelerate_reward: 'Current word slower than last: +0.5s time',
   accelerate_reward: 'Current word faster than last: +2 gold',
   little_helper: 'Repeat words: press Tab after first letter to auto-complete',
-  rhythm_adapt: 'Beat bar below word; hit a beat ball on keypress for +30% skill output',
   glass_cannon_v2: 'Score ×10. Sells all skills on acquire; cannot equip skills.',
   // Combo subsystem relics
   echo_thimble: '+8% crit rate; crits trigger skill again (halves each time)',
   combo_buffer: 'On combo break, keep 50% combo',
   multiplier_prism: 'Mult ≥2.5: skill output +20%',
   combo_detonator: 'At combo 15: randomly trigger 3 equipped skills. Resets on combo break.',
-  cancel: 'Type first letter within 0.4s of word appearing = Cancel. Each flawless cancelled word: chain+1 (max 5), skill output +10%/stack. Error during cancel: chain resets + lose 0.5s.',
   immortal_combo: 'Combo persists across stages (still breaks on error); stage time equals current combo count.',
   fury_beat: 'Combo ≥10: crit rate +10%.',
   // Skill subsystem relics
@@ -3300,7 +3294,6 @@ const ITEM_DESCS_EN: Record<string, string> = {
   adjacent_power: 'On skill trigger: +6% output per adjacent equipped skill',
   corner_power: 'Skills on corner keys (Q/P/Z/M): +20% output',
   row_switch: 'When current key is in a different row than previous key: +1 gold',
-  line_clear: 'Hit all equipped skills (≥2) in a keyboard row: "Line Clear" — all skills in that row trigger again (50% output). Accumulates across words.',
   dual_concerto: 'Each left-right hand alternation on keypress: +0.5s time',
   precision_strike: 'Home row (ASDFGHJKL) keys: crit rate +10%.',
   key_storm: 'Score ×0.5. On word complete, each hit skill randomly triggers 1 unhit equipped skill.',
@@ -3444,12 +3437,10 @@ const ITEM_FLAVORS_EN: Record<string, string> = {
   decelerate_reward: `An aging male of █████. Strike attempts on nuts grew while success rates fell — the group still allowed his use of tools.`,
   accelerate_reward: `When coula nuts were introduced in ████, the only individual at █████ to crack one on first encounter.`,
   little_helper: `Daughter of Pan. Joined Ai's son Ayumu — born the same year — in the second-generation symbol-matching trials of the █████.`,
-  rhythm_adapt: `Acquired 128 █████ signs during █████. █████'s later analysis read most output as rhythmic imitation rather than grammar.`,
   glass_cannon_v2: `Reared at home by the █████, ████–██, in an attempt to teach spoken English. Produced four words in the end: mama / papa / cup / up.`,
   combo_buffer: `A rare "infertile yet dominant" female of █████. With no rearing burden, long cited as a special case in the study of female hierarchy and power.`,
   multiplier_prism: `Dominant silverback of █████ Group 5. Founded the station's largest lineage with Effie.`,
   combo_detonator: `Tyrannical alpha of █████'s M-group. Beaten to death by a coalition with stones and clubs in ████.`,
-  cancel: `Long-term alpha of █████'s M-group. Killed by an in-group coalition in ████.`,
   immortal_combo: `█████ witnessed the birth and misread the mother's sex — hence "Can't be." Died at 38; the last silverback she ever knew.`,
   fury_beat: `Alpha ████–████. 51.2 kg. Attacks on observers and a human infant on record.`,
   first_strike: `First individual █████ observed using a tool (termite-fishing) in ████. Also the first male to approach the researcher.`,
@@ -3461,7 +3452,6 @@ const ITEM_FLAVORS_EN: Record<string, string> = {
   adjacent_power: `Matriarch of █████ Group 1. Her daughter Elikya and grandson Molende were both born at the sanctuary, threading her case into █████'s rescue-and-rear lineage.`,
   corner_power: `Lost his testicles in group conflict. Excluded from the reproductive order, yet long resident on the periphery of █████.`,
   row_switch: `Immigrated into █████ from another group in ████. Later killed by males of the █████ group.`,
-  line_clear: `Son of Flo. From a timid juvenile he grew into █████'s most coalition-savvy alpha — reclaiming authority again and again through allies, kin, and strategy.`,
   dual_concerto: `One of Gremlin's twin daughters, surviving with Golden — an exceedingly rare case in █████ and an exception within the rearing-risk profile of wild chimpanzees.`,
   precision_strike: `First chimpanzee to learn the use of Arabic numerals to denote quantities. Subject of █████'s █████ from ████ onward.`,
   key_storm: `Son of Frodo and Patti. Inherited his father's build and aggression — already throwing stones at researchers as a juvenile.`,

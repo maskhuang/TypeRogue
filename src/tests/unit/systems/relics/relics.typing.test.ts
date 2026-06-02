@@ -13,12 +13,6 @@ import {
   trackWord,
   isRepeatWord,
   initTypingRelicBehaviors,
-  recordKeypressForTaiko,
-  checkTaikoHit,
-  getTaikoBonus,
-  startTaikoSpawner,
-  stopTaikoSpawner,
-  resetTaikoState,
 } from '../../../../src/systems/relics/TypingRelicBehaviors'
 import { clearBehaviorHandlers, getRegisteredBehaviors } from '../../../../src/systems/relics/RelicPipeline'
 
@@ -196,34 +190,6 @@ describe('打字/输入系统遗物行为 (Story 36.2)', () => {
   })
 
   // =====================
-  // AC4: 太鼓节拍 (rhythm_adapt)
-  // =====================
-  describe('太鼓节拍 (rhythm_adapt)', () => {
-    beforeEach(() => {
-      state.player.relics.add('rhythm_adapt')
-    })
-
-    afterEach(() => {
-      resetTaikoState()
-    })
-
-    it('未持有遗物时 checkTaikoHit 返回 1', () => {
-      state.player.relics.delete('rhythm_adapt')
-      expect(checkTaikoHit()).toBe(1)
-      expect(getTaikoBonus()).toBe(0)
-    })
-
-    it('无小球时 checkTaikoHit 返回 1', () => {
-      expect(checkTaikoHit()).toBe(1)
-      expect(getTaikoBonus()).toBe(0)
-    })
-
-    it('recordKeypressForTaiko 不抛错', () => {
-      expect(() => recordKeypressForTaiko()).not.toThrow()
-    })
-  })
-
-  // =====================
   // AC5: 回归基本功 (原玻璃大炮)
   // =====================
   describe('回归基本功 (glass_cannon_v2)', () => {
@@ -250,13 +216,12 @@ describe('打字/输入系统遗物行为 (Story 36.2)', () => {
   // 行为注册
   // =====================
   describe('initTypingRelicBehaviors', () => {
-    it('注册 5 个打字遗物行为', () => {
+    it('注册打字遗物行为', () => {
       initTypingRelicBehaviors()
       const registered = getRegisteredBehaviors()
       expect(registered).toContain('decelerate_reward')
       expect(registered).toContain('accelerate_reward')
       expect(registered).toContain('autocomplete')
-      expect(registered).toContain('rhythm_adapt')
       expect(registered).toContain('glass_cannon')
     })
   })
@@ -265,9 +230,9 @@ describe('打字/输入系统遗物行为 (Story 36.2)', () => {
   // 遗物数据验证
   // =====================
   describe('遗物数据完整性', () => {
-    const TYPING_RELICS = ['decelerate_reward', 'accelerate_reward', 'little_helper', 'rhythm_adapt', 'glass_cannon_v2']
+    const TYPING_RELICS = ['decelerate_reward', 'accelerate_reward', 'little_helper', 'glass_cannon_v2']
 
-    it('所有 5 个打字遗物存在', () => {
+    it('所有打字遗物存在', () => {
       for (const id of TYPING_RELICS) {
         expect(RELICS[id], `${id} should exist`).toBeDefined()
       }

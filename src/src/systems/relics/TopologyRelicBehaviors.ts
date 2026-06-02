@@ -22,14 +22,9 @@ export const DUAL_CONCERTO_TIME = 0.5
 /** 换行奖励：跨行金币 */
 export const ROW_SWITCH_GOLD = 1
 
-/** 消行满贯：额外触发的产出比例 */
-export const LINE_CLEAR_OUTPUT_RATIO = 0.5
-
 // === 模块级状态 ===
 let _lastKeyHand: 'left' | 'right' | null = null
 let _lastKeyRow: number | null = null
-/** 消行追踪：本词每行已命中的已装备技能键集合 */
-let _wordRowHits: Map<number, Set<string>> = new Map()
 
 // === 邻键之力 (adjacent_power) ===
 
@@ -77,53 +72,6 @@ export function checkRowSwitch(key: string): number {
   const bonus = (_lastKeyRow !== null && _lastKeyRow !== currentRow) ? ROW_SWITCH_GOLD : 0
   _lastKeyRow = currentRow
   return bonus
-}
-
-// === 消行满贯 (line_clear) ===
-
-/**
- * 记录本词技能命中（由 battle.ts 在技能触发后调用）
- */
-export function recordLineClearHit(triggerKey: string): void {
-  if (!state.player.relics.has('line_clear')) return
-  const row = ROW_MAP[triggerKey]
-  if (row === undefined) return
-  if (!state.player.bindings.has(triggerKey)) return
-  if (!_wordRowHits.has(row)) _wordRowHits.set(row, new Set())
-  _wordRowHits.get(row)!.add(triggerKey)
-}
-
-/**
- * 检查消行满贯触发（在单词完成时调用）
- * @returns 要额外触发的 {skillId, key}[]，空数组表示未触发
- */
-export function checkLineClear(): { skillId: string; key: string }[] {
-  if (!state.player.relics.has('line_clear')) return []
-  const result: { skillId: string; key: string }[] = []
-  const clearedRows: number[] = []
-
-  for (const [row, hitKeys] of _wordRowHits) {
-    // 获取该行所有已装备技能的键
-    const rowEquippedKeys: string[] = []
-    for (const [key] of state.player.bindings) {
-      if (ROW_MAP[key] === row) rowEquippedKeys.push(key)
-    }
-    // 该行至少有2个已装备技能，且全部命中 → 消行
-    if (rowEquippedKeys.length >= 2 && rowEquippedKeys.every(k => hitKeys.has(k))) {
-      for (const key of rowEquippedKeys) {
-        const skillId = state.player.bindings.get(key)
-        if (skillId) result.push({ skillId, key })
-      }
-      clearedRows.push(row)
-    }
-  }
-
-  // 消行后清除已消行的记录，允许重新积累
-  for (const row of clearedRows) {
-    _wordRowHits.delete(row)
-  }
-
-  return result
 }
 
 // === 双手协奏 (dual_concerto) ===
@@ -213,7 +161,6 @@ export function getPrecisionStrikeCritRate(triggerKey: string): number {
 export function resetTopologyRelicState(): void {
   _lastKeyHand = null
   _lastKeyRow = null
-  _wordRowHits.clear()
 }
 
 // === 注册所有行为 ===
@@ -222,10 +169,6 @@ export function resetTopologyRelicState(): void {
  * 初始化拓扑子系统遗物行为注册
  */
 export function initTopologyRelicBehaviors(): void {
-  registerRelicBehavior('line_clear', (_relicId, _context) => {
-    // 实际逻辑在 checkLineClear() 中，由 battle.ts 调用
-  })
-
   registerRelicBehavior('hand_alternation', (_relicId, _context) => {
     // 实际逻辑在 checkDualConcerto() 中，由 battle.ts 调用
   })

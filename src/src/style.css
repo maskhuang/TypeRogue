@@ -1045,16 +1045,6 @@ html[lang^="en"] .menu-style-cover .menu-title {
     align-items: center;
 }
 
-/* 太鼓节拍条 */
-#taiko-bar { position: relative; height: 12px; width: 100%; max-width: 400px; margin-top: 2px; display: none; overflow: hidden; border-radius: 0; background: rgba(255,255,255,0.05); }
-#taiko-bar.active { display: block; }
-.taiko-judge { position: absolute; left: 0; width: 4px; height: 100%; background: #4ecdc4; border-radius: 0; z-index: 2; transition: left 0.1s ease-out, background 0.15s; }
-.taiko-judge.flash { background: #fff; box-shadow: 0 0 8px #4ecdc4; }
-.taiko-ball { position: absolute; width: 8px; height: 8px; border-radius: 0; background: #ffe66d; top: 2px; right: 0; animation: taikoBallMove var(--duration) linear forwards; }
-@keyframes taikoBallMove { from { left: var(--start-left, 100%); } to { left: var(--target-left, 0px); } }
-.taiko-ball.hit { background: #4ecdc4; animation: taikoHit 0.2s ease-out forwards; }
-@keyframes taikoHit { to { transform: scale(2); opacity: 0; } }
-
 #word-display {
     font-size: 40px;
     letter-spacing: 10px;
@@ -1771,21 +1761,6 @@ body.shop-preview-active .drag-ghost .shape-preview-r3 .shape-cell.filled {
     border-color: #4ecdc4;
     background: rgba(78, 205, 196, 0.2);
 }
-#cancel-window-hint {
-    position: absolute;
-    top: -8px;
-    right: -20px;
-    font-size: 18px;
-    animation: cancelHintPulse 0.4s steps(1) forwards;
-    pointer-events: none;
-    z-index: 10;
-}
-@keyframes cancelHintPulse {
-    0% { opacity: 1; transform: scale(1.2); }
-    60% { opacity: 0.8; transform: scale(1); }
-    100% { opacity: 0; transform: scale(0.8); }
-}
-
 .craft-queue-item {
     position: relative;
     padding: 6px 8px;

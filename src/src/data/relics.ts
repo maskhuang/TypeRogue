@@ -106,12 +106,10 @@ export type RelicBehaviorType =
   | 'decelerate_reward'    // 减速津贴：当前词比上个词慢时+时间
   | 'accelerate_reward'    // 加速奖金：当前词比上个词快时+金币
   | 'autocomplete'         // 小助手：Tab 自动补全重复单词
-  | 'rhythm_adapt'         // 节奏适应：太鼓节拍系统
   | 'glass_cannon'         // 玻璃大炮：得分×2，打错即死
   // 连击/倍率系统
   | 'double_keystroke'     // 回声指套：正确击键概率算两次
   | 'combo_detonator'      // 连击引爆：combo 达阈值时触发技能
-  | 'cancel'         // 取消连锁：连续无失误完成单词叠层，每层技能+8%
   | 'immortal_combo'       // 不灭连击：combo 永不中断，禁止 multiplier 产出
   // 技能系统
   | 'training_manual'      // 集训手册：一次性升级所有 Lv.1 技能
@@ -122,7 +120,6 @@ export type RelicBehaviorType =
   | 'fate_fork'            // 命运三岔：附魔选择变 3 选 1
   | 'greedy_inscription'   // 贪婪铭刻：附魔必定成功，每附魔目标×2
   // 键盘拓扑系统
-  | 'line_clear'           // 消行满贯：命中一行所有技能→额外触发（跨词累积）
   | 'hand_alternation'     // 双手协奏：左右手交替击键加时间
   | 'punctuation_liberation' // 标点解放：解锁标点键位+词语混入标点
   // 单词/词库系统
