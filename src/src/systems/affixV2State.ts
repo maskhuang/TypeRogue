@@ -273,6 +273,8 @@ export function clearSkillAggregates(): void {
 // ============================================
 // 极速层 · per-skill 累加 float · consume floor(1) per key press
 // ============================================
+// 本段是极速系遗物的【数据层】。player 级编排中枢见 relics/StackingRelicBehaviors.ts
+// （含三层架构图与不变式）。grantHaste 是 haste:granted 的唯一 emit 源。
 
 const _hasteBySkill: Map<string, number> = new Map()
 

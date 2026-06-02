@@ -1,21 +1,64 @@
 // ============================================
-// 打字肉鸽 - 极速系遗物行为
+// 打字肉鸽 - 极速系遗物 · player 级编排层
 // ============================================
-// 原叠层子系统遗物（旧 affix 系统）已随 V2 重做废弃 →
-// 1:1 复用 relic ID / 槽位 / 名字 / flavor，行为层重写为 V2 极速机制。
-// 10 个遗物按触发钩子分组：
-//   极速消耗 (haste:consumed)：stack_momentum / inscription_flow / overload_circuit / surge
-//   极速获得 (haste:granted) ：stack_dividend / neighbor_watch
-//   combo 里程碑            ：drum_pass
-//   完词                   ：word_resonance
-//   暴击 fire              ：crit_overflow
-//   跨关持久（addHaste/clearAllHaste 内部处理）：perpetual_engine
+// 本文件是 11 个极速(haste)系遗物的【编排中枢】。它们共用 affixV2 的 haste 数据
+// 模型，但本身是 player 级（挂 state.player.relics，无 host skill），故【刻意不走】
+// affixV2 EffectSpec：
+//   · EffectSpec(grant_haste/stack_*/fire_target) 需要 host skill + instance state 作锚；
+//     遗物无宿主技能，强接需造"虚拟宿主"基建，机制零收益。
+//   · 其中 4 个触发于"极速被消耗时"，而 affixV2 无 on_haste_consumed trigger。
+// 结论（2026-06，B 方案）：承认遗物 = player 级编排，保留命令式，只把分布式编排
+// 收敛为一张清晰系统图 + 单一事实源清单(HASTE_RELIC_MANIFEST)，不动机制。
+//
+// ── 三层架构（编排横跨 4 文件）─────────────────────────────────────────────
+//   [数据层]  affixV2State.ts      : _hasteBySkill 计数 / grantHaste / consumeHasteOne /
+//                                    clearHasteForSkill / clearAllHaste(perpetual_engine 跳过)
+//   [编排层]  本文件               : 监听 haste 事件 + combo/完词/暴击 钩子，驱动 11 遗物
+//   [外部钩子] battle.ts           : applyDrumPass(playerCorrect) / applyWordResonance(completeWord)
+//                                    / setRelicTriggerSkill 注入 / consumeHasteFireIfAny(逐键)
+//             affixV2BattleIntegration.ts : crit_overflow 调用 + stack_crit(_inHasteFire) +
+//                                    haste:consumed 的【唯一】emit 点(consumeHasteFireIfAny)
+//
+// ── 事件拓扑（单一 emit 源）────────────────────────────────────────────────
+//   haste:granted  ← affixV2State.grantHaste()        （affixV2 effect / 4 个遗物 grantHaste）
+//   haste:consumed ← affixV2BattleIntegration.consumeHasteFireIfAny() （仅此一处，逐键）
+//
+// ── 不变式 ────────────────────────────────────────────────────────────────
+//   I1 onHasteConsumed 天然不重入：overload/surge 用普通 triggerSkill(不消耗极速)，
+//      不会重新 emit haste:consumed，无递归。
+//   I2 onHasteGranted 一跳防递归：neighbor_watch 再 grantHaste 会重入 → _inHasteRelicDispatch 守。
+//   I3 重置归属分两家：编排态(_outputBonuses 等) → resetStackingRelicBattleState；
+//      极速计数本身 → affixV2State.clearAllHaste（perpetual_engine 跳过，实现跨关保留）。
+//   I4 stack_crit / perpetual_engine 真实逻辑在外部文件，本文件仅 no-op 登记（见 MANIFEST.impl）。
+//
+// 各遗物的触发相位与逻辑落点见 HASTE_RELIC_MANIFEST（下方·单一事实源，并驱动登记）。
 
 import { state } from '../../core/state'
 import { eventBus } from '../../core/events/EventBus'
 import { grantHaste, clearHasteForSkill, addSkillCumFactor } from '../affixV2State'
 import { hasRelation, PositionRelation } from '../../data/keyboardTopology'
 import { registerRelicBehavior } from './RelicPipeline'
+
+// === 极速系遗物编排清单（单一事实源）===
+// phase = 触发相位；impl = 真实逻辑落点。initStackingRelicBehaviors 据此登记 no-op 行为。
+// 改动遗物集时只改这里：新增/移除条目即同步登记表与文档。
+export const HASTE_RELIC_MANIFEST: Record<string, { phase: string; impl: string }> = {
+  // 极速被消耗时（onHasteConsumed，本文件）
+  stack_momentum:   { phase: 'haste:consumed', impl: 'onHasteConsumed' },
+  inscription_flow: { phase: 'haste:consumed', impl: 'onHasteConsumed' },
+  overload_circuit: { phase: 'haste:consumed', impl: 'onHasteConsumed + _triggerSkill(邻居)' },
+  surge:            { phase: 'haste:consumed', impl: 'onHasteConsumed + _triggerSkill(邻居·scale)' },
+  // 极速被获得时（onHasteGranted，本文件）
+  stack_dividend:   { phase: 'haste:granted',  impl: 'onHasteGranted' },
+  neighbor_watch:   { phase: 'haste:granted',  impl: 'onHasteGranted + _inHasteRelicDispatch 防递归' },
+  // 外部钩子触发（本文件导出函数，由 battle/affixV2BattleIntegration 调）
+  drum_pass:        { phase: 'combo 每+5',      impl: 'applyDrumPass ← battle.playerCorrect' },
+  word_resonance:   { phase: '完词',           impl: 'applyWordResonance ← battle.completeWord' },
+  crit_overflow:    { phase: '暴击 fire',       impl: 'applyCritOverflow ← affixV2BattleIntegration.onSkillFireV2' },
+  // 真实逻辑在外部文件，本文件仅 no-op 登记（I4）
+  stack_crit:       { phase: '极速 fire',       impl: 'affixV2BattleIntegration.onSkillFireV2 (_inHasteFire)' },
+  perpetual_engine: { phase: 'addHaste/关末',   impl: 'affixV2State.addHaste(×0.5) / clearAllHaste(跳过)' },
+}
 
 // === 常量 ===
 export const MOMENTUM_OUTPUT_PER_CONSUME = 0.03  // 层层递进：每次消耗极速 → 该技能本关产出 +3%
@@ -91,7 +134,8 @@ export function getHasteRelicOutputBonus(skillId: string): number {
 
 // === 事件处理 ===
 
-/** haste:granted → 积少成多累计 + 邻里守望传导 */
+/** haste:granted → 积少成多累计 + 邻里守望传导
+ *  I2 一跳防递归：neighbor_watch 内再 grantHaste 会重入本回调 → _inHasteRelicDispatch 守一跳。*/
 function onHasteGranted(skillId: string, amount: number): void {
   // 积少成多 (stack_dividend)：累计获得量每过 10 层 → 该技能本关产出 +5%
   if (state.player.relics.has('stack_dividend')) {
@@ -118,7 +162,9 @@ function onHasteGranted(skillId: string, amount: number): void {
   }
 }
 
-/** haste:consumed → 层层递进 / 铭文涌流 / 过载电路 / 浪涌 */
+/** haste:consumed → 层层递进 / 铭文涌流 / 过载电路 / 浪涌
+ *  I1 不重入：本回调仅由 consumeHasteFireIfAny 触发；overload/surge 的 _triggerSkill 是普通
+ *  fire（不消耗极速），不会再 emit haste:consumed，故无需重入守卫。*/
 function onHasteConsumed(skillId: string, _sourceKey: string): void {
   // 层层递进 (stack_momentum)：消耗极速 → 该技能本关产出 +3%（逐次递进）
   if (state.player.relics.has('stack_momentum')) {
@@ -197,20 +243,10 @@ export function resetStackingRelicBattleState(): void {
   _inHasteRelicDispatch = false
 }
 
-/** 注册极速系遗物行为 + 挂事件监听（幂等）*/
+/** 注册极速系遗物行为 + 挂事件监听（幂等）·
+ *  登记表据 HASTE_RELIC_MANIFEST 驱动——真实逻辑落点见各条目 .impl（含外部文件，I4）*/
 export function initStackingRelicBehaviors(): void {
-  registerRelicBehavior('stack_momentum', () => {})
-  registerRelicBehavior('stack_dividend', () => {})
-  registerRelicBehavior('overload_circuit', () => {})
-  registerRelicBehavior('surge', () => {})
-  registerRelicBehavior('perpetual_engine', () => {})
-  registerRelicBehavior('drum_pass', () => {})
-  registerRelicBehavior('word_resonance', () => {})
-  registerRelicBehavior('crit_overflow', () => {})
-  registerRelicBehavior('inscription_flow', () => {})
-  registerRelicBehavior('neighbor_watch', () => {})
-  // stack_crit 行为在 affixV2BattleIntegration.onSkillFireV2 内（极速 fire 必定暴击），此处仅登记
-  registerRelicBehavior('stack_crit', () => {})
+  for (const id of Object.keys(HASTE_RELIC_MANIFEST)) registerRelicBehavior(id, () => {})
 
   if (_initialized) return
   _initialized = true

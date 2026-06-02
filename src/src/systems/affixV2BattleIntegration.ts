@@ -798,7 +798,8 @@ export function removeTransientSkills(): void {
 // 多重释放 · 防递归：MULTI_FIRE aura 触发的额外 fire 不再叠加 multi_fire（否则无限）
 let _inMultiFireExtra = false
 
-// 极速 fire 标记：consumeHasteFireIfAny 触发的额外 fire 期间为 true（stack_crit 遗物用）
+// 极速 fire 标记：consumeHasteFireIfAny 触发的额外 fire 期间为 true。
+// stack_crit 遗物的【真实逻辑落点】（极速 fire 必定暴击）；编排中枢见 relics/StackingRelicBehaviors.ts
 let _inHasteFire = false
 
 /** 在 triggerAffixSkillWithFeedback 中调，传 fire event 信息 */
@@ -904,7 +905,8 @@ export function consumeHasteFireIfAny(skillId: string, sourceKey: string): boole
   } finally {
     _inHasteFire = false
   }
-  // 3. 通知极速消耗（极速系遗物监听：overload_circuit / surge / momentum / inscription_flow）
+  // 3. 通知极速消耗 · haste:consumed 的【唯一 emit 源】
+  //    编排中枢 StackingRelicBehaviors.onHasteConsumed 监听：overload_circuit / surge / momentum / inscription_flow
   eventBus.emit('haste:consumed', { skillId, sourceKey })
   return true
 }
