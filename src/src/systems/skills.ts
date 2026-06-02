@@ -4,7 +4,7 @@
 // Epic 35 清理：仅保留词条制技能触发逻辑
 
 import { state, synergy } from '../core/state';
-import { onSkillFireV2 } from './affixV2BattleIntegration';
+import { onSkillFireV2, grantRolledRelicResource } from './affixV2BattleIntegration';
 import { isSkillConsumed } from './affixV2State';
 import { RESOURCE_COLORS } from '../core/constants';
 import type { ResourceType, PseudoInfiniteState } from '../core/types';
@@ -380,12 +380,9 @@ function triggerAffixSkillWithFeedback(
   const hasEnchantment = skill.enchantmentIds.length > 0;
   const enchantBoost = getEnchantBoostBonus(hasEnchantment);
   if (enchantBoost > 0) relicBonus += enchantBoost;
-  // 附魔红利：已附魔技能触发时+2金币
-  const enchantGold = getEnchantDividendGold(hasEnchantment);
-  if (enchantGold > 0) {
-    state.player.gold += enchantGold;
-    state.resources.gold += enchantGold;
-    showFeedback(`💰 +${enchantGold}`, RESOURCE_COLORS.gold, undefined, undefined, { relicId: 'enchant_dividend', resource: 'gold', amount: enchantGold });
+  // 附魔红利：已附魔技能触发时产出（资源类型获取时随机赋值）
+  if (getEnchantDividendGold(hasEnchantment) > 0) {
+    grantRolledRelicResource('enchant_dividend', triggerKey);
   }
 
   // 注：积少成多 / 浪涌等已 V2 重做为极速系遗物（产出加成走 emitV2SkillBaseOutput）
@@ -475,17 +472,10 @@ function triggerAffixSkillWithFeedback(
           }
         }
       }
-      // 产出分红 + 续命涓流：正产出后触发（非乘算）
+      // 产出分红 + 续命涓流：正产出后触发（非乘算）。资源类型获取时随机赋值
       if (amount > 0 && !isMultiplyOp) {
-        const dividendGold = rollProductionDividend();
-        if (dividendGold > 0) {
-          state.player.gold += dividendGold;
-          state.resources.gold += dividendGold;
-        }
-        const trickleTime = getTimeTrickle();
-        if (trickleTime > 0) {
-          state.time = Math.min(state.time + trickleTime, state.timeMax);
-        }
+        if (rollProductionDividend() > 0) grantRolledRelicResource('production_dividend', triggerKey);
+        if (getTimeTrickle() > 0) grantRolledRelicResource('time_trickle', triggerKey);
       }
       if (resource === 'energy') {
         state.classResourceProduced.energy = (state.classResourceProduced.energy ?? 0) + Math.abs(amount);
@@ -664,11 +654,9 @@ function triggerAffixSkillWithFeedback(
 
     // §12 暴击遗物：暴击奖金 + 风暴计数 + 蓄力推进
     if (tr.isCrit) {
-      const critGold = getCritBonusGold();
-      if (critGold > 0) {
-        state.player.gold += critGold;
-        state.resources.gold += critGold;
-        showFeedback(t('battle.crit_bonus', { value: critGold }), RESOURCE_COLORS.gold, undefined, undefined, { relicId: 'crit_bonus', resource: 'gold', amount: critGold });
+      // 暴击奖金：资源类型获取时随机赋值
+      if (getCritBonusGold() > 0) {
+        grantRolledRelicResource('crit_bonus', triggerKey, true);
       }
       recordWordCrit();
       // 学徒·暴击：暴击时全场拥有该附魔的技能永久成长

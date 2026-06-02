@@ -44,6 +44,7 @@ import { listActiveAuras, peekInstanceState, getSkillCumBase, getSkillCumFactor,
 import { BASE_VALUES, createSkillRuntimeState } from '../data/affixes'
 import type { AffixSkillInstance } from '../data/affixes'
 import { getAscendBaseScale } from '../data/affixTrigger'
+import { getRelicRolledGrant } from './relics/ResourceRelicBehaviors'
 import { triggerSkill, recordSkillTrigger } from './skills'
 import { getBindingState, getSkillKeys, bindShapeToKeys, unbindSkill } from './bindingManager'
 import { getWordEffectCritRate } from './letters/LetterFrequencySystem'
@@ -110,7 +111,7 @@ export function defaultGetPlayerResource(resource: string): number {
  * state.resources 上的 multiplier / time / shield 由 Object.defineProperty 代理到 state.{multiplier,time,shield}
  * （详 state.ts:100-119），写一次自动同步。score / gold 无 proxy，需手动镜像。
  */
-function applyResourceAmount(resource: string, amount: number, anchorKey: string, skillId: string, isCrit = false): void {
+export function applyResourceAmount(resource: string, amount: number, anchorKey: string, skillId: string, isCrit = false): void {
   if (amount === 0) return
   // base / multiplier 走 synergy 通道（per-word 累加器，词末 baseChips × mult 才进 state.score）
   // 直接写 state.resources.{base,multiplier} 会被 battle.ts:1430 updateSettlementLive 覆盖
@@ -137,7 +138,17 @@ function applyResourceAmount(resource: string, amount: number, anchorKey: string
   if (typeof document !== 'undefined') updateHUD()
   emitFloatFeedback(resource, amount, anchorKey, isCrit)
   // 统计接入：INF /STATS 上一战每个技能的贡献（与 legacy recordSkillTrigger 同通道）
-  recordSkillTrigger(skillId, anchorKey, resource as ResourceType, amount, false)
+  // skillId 为空（如遗物产资源）时跳过，避免在技能统计里造幽灵条目
+  if (skillId) recordSkillTrigger(skillId, anchorKey, resource as ResourceType, amount, false)
+}
+
+/** 产资源遗物统一注入：按 roll 出的资源类型 + 归一额度产出（anchorKey 供浮字锚定）。
+ *  返回实际产出的 {资源, 数量}（供调用方更新结算 tracker），未产出返回 null */
+export function grantRolledRelicResource(relicId: string, anchorKey = '', isCrit = false): { resource: string; amount: number } | null {
+  const g = getRelicRolledGrant(relicId)
+  if (!g || g.amount === 0) return null
+  applyResourceAmount(g.resource, g.amount, anchorKey, '', isCrit)
+  return g
 }
 
 /** 浮字反馈 · 模仿 skills.ts:587 模板（+X · 资源色 · letterIndex 锚点 · getFloatScale 大小缩放）*/

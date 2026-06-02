@@ -867,6 +867,7 @@ const ZH: Record<string, string> = {
   'resource.gold': '金币',
   'resource.energy': '能量',
   'resource.mutagen': '变异素',
+  'resource.random': '随机资源',
   'resource.base.desc': '每个单词的基础分数，由产出技能累积',
   'resource.score.desc': '直接加入总分的分数资源',
   'resource.multiplier.desc': '乘以基数来放大单词最终得分',
@@ -2386,6 +2387,7 @@ const EN: Record<string, string> = {
   'resource.gold': 'Gold',
   'resource.energy': 'Energy',
   'resource.mutagen': 'Mutagen',
+  'resource.random': 'a random resource',
   'resource.base.desc': 'Base score per word, accumulated by producer skills',
   'resource.score.desc': 'Points added directly to total score',
   'resource.multiplier.desc': 'Multiplied with base to amplify final word score',
@@ -3264,8 +3266,8 @@ const ITEM_DESCS_EN: Record<string, string> = {
   word_scissors: 'Disassemble crafted words, refund all fragments',
   resonance_mold: 'Duplicate letter slots in pipeline cost -50% energy',
   // Typing subsystem relics
-  decelerate_reward: 'Current word slower than last: +0.5s time',
-  accelerate_reward: 'Current word faster than last: +2 gold',
+  decelerate_reward: 'Current word slower than last: produces {resource}',
+  accelerate_reward: 'Current word faster than last: produces {resource}',
   little_helper: 'Repeat words: press Tab after first letter to auto-complete',
   glass_cannon_v2: 'Score ×10. Sells all skills on acquire; cannot equip skills.',
   // Combo subsystem relics
@@ -3283,7 +3285,7 @@ const ITEM_DESCS_EN: Record<string, string> = {
   uncrowned_king: 'Common rarity skills gain +30% output',
   d_100: 'On acquire and every 5 battles: replace all skill affixes with random ones (preserving count/level/enchantments)',
   // Enchantment subsystem relics
-  enchant_dividend: 'Triggering an enchanted skill grants +2 gold',
+  enchant_dividend: 'Triggering an enchanted skill produces {resource}',
   enchant_boost: 'Enchanted skills gain +15% output',
   apprentice_robe: 'All Apprentice enchantment growth ×1.3',
   trial_badge: 'Quest enchantment required equipped skill count -1 (min 1)',
@@ -3293,21 +3295,21 @@ const ITEM_DESCS_EN: Record<string, string> = {
   // Topology subsystem relics
   adjacent_power: 'On skill trigger: +6% output per adjacent equipped skill',
   corner_power: 'Skills on corner keys (Q/P/Z/M): +20% output',
-  row_switch: 'When current key is in a different row than previous key: +1 gold',
-  dual_concerto: 'Each left-right hand alternation on keypress: +0.5s time',
+  row_switch: 'When current key is in a different row than previous key: produces {resource}',
+  dual_concerto: 'Each left-right hand alternation on keypress: produces {resource}',
   precision_strike: 'Home row (ASDFGHJKL) keys: crit rate +10%.',
   key_storm: 'Score ×0.5. On word complete, each hit skill randomly triggers 1 unhit equipped skill.',
   // Word subsystem relics
-  word_collection: 'First time completing a word: +3 gold',
+  word_collection: 'First time completing a word: produces {resource}',
   short_sprint: '≤4-letter words: skill output +20%',
   thick_deck: 'Every 5 words in deck: word packs cost 1 less gold',
-  long_word_master: '6+ letter words on complete: +1s time',
+  long_word_master: '6+ letter words on complete: produces {resource}',
   long_word_crit: '≥6-letter words: crit rate +12%.',
   word_dealer: 'After selling a word, next shop refresh is free',
   punctuation_liberation: 'Unlock ;,./[] keys for skill binding. Words include random punctuation.',
   // Resource subsystem relics
-  production_dividend: 'Each skill resource output: 5% chance for +2 gold',
-  time_trickle: 'Each skill resource output: +0.05s time',
+  production_dividend: 'Each skill resource output: 5% chance to produce {resource}',
+  time_trickle: 'Each skill resource output: produces {resource}',
   resource_focus: 'The most common resource type among equipped skills gets +25% output',
   resource_diversity: 'When equipped skills cover 3+ resource types, all skill output +20%',
   resource_tide: '4-word tide cycle: base → mult → time → gold, each +80%',
@@ -3336,7 +3338,7 @@ const ITEM_DESCS_EN: Record<string, string> = {
   score_black_hole: 'Scores do not settle automatically. Press Enter to settle — pass to win with gold reward (closer to target = richer reward), fail = game over.',
   // Crit subsystem relics
   lucky_strike: 'All skills gain +8% base crit rate.',
-  crit_bonus: '+3 gold per crit.',
+  crit_bonus: 'Produces {resource} per crit.',
   crit_charge: 'After 5 non-crit skill triggers, next trigger is guaranteed crit.',
   crit_storm: 'When ≥2 crits in a word, all skill output for that word +50%.',
   fate_coin: 'Crit rate capped at 50%. Excess crit rate converts to crit multiplier bonus (+2% per 1% excess).',
@@ -3545,9 +3547,15 @@ export function localizeItemName(id: string, zhName: string): string {
   return ITEM_NAMES_EN[id] ?? zhName
 }
 
+/** 遗物描述占位符解析钩子（由 ResourceRelicBehaviors 在 init 时注册，避免循环依赖） */
+let _relicPlaceholderResolver: ((id: string, desc: string) => string) | null = null
+export function setRelicPlaceholderResolver(fn: (id: string, desc: string) => string): void {
+  _relicPlaceholderResolver = fn
+}
+
 export function localizeItemDesc(id: string, zhDesc: string): string {
-  if (currentLocale === 'zh') return zhDesc
-  return ITEM_DESCS_EN[id] ?? zhDesc
+  const base = currentLocale === 'zh' ? zhDesc : (ITEM_DESCS_EN[id] ?? zhDesc)
+  return _relicPlaceholderResolver ? _relicPlaceholderResolver(id, base) : base
 }
 
 export function localizeItemFlavor(id: string, zhFlavor: string | undefined): string {

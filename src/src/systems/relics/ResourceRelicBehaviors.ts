@@ -6,6 +6,71 @@
 import { state } from '../../core/state'
 import { registerRelicBehavior } from './RelicPipeline'
 import { GENERIC_RESOURCES } from '../classes/ClassResourceFilter'
+import { eventBus } from '../../core/events/EventBus'
+import { t, setRelicPlaceholderResolver } from '../../demo/demo-i18n'
+import type { ResourceType } from '../../core/types'
+
+// ============================================
+// 产资源遗物 · 生成时赋值资源类型（A 方案：ratio × 资源Lv1基数 归一）
+// ============================================
+// 这些遗物原本写死产出 gold / time；改为获取时从 RESOURCE_ROLL_POOL 随机 roll
+// 一种资源类型，存入 relicStates[relicId]（索引，随存档持久化）。
+// 数量经 ratio × 资源Lv1基数 归一，使 roll 到原资源时数值不变（与 affixV2 gain_resource 一致）。
+
+/** 可 roll 的通用资源池（= resource_tide 同款四资源；不含 score/shield） */
+export const RESOURCE_ROLL_POOL: readonly ResourceType[] = ['base', 'multiplier', 'time', 'gold']
+
+/** 资源 Lv1 基数（与 affixV2BattleIntegration DEFAULT_LV1_BASES 对齐；本地副本避免循环依赖） */
+const RESOURCE_LV1_BASE: Record<string, number> = { base: 4, multiplier: 0.35, time: 0.2, gold: 3 }
+
+/** 各产资源遗物的 ratio（= 原固定额度 ÷ 原资源Lv1基数）。注释列出原值。 */
+const RESOURCE_ROLL_RATIO: Record<string, number> = {
+  production_dividend: 2 / 3,     // 原 +2 金币
+  time_trickle:        0.05 / 0.2,// 原 +0.05s
+  crit_bonus:          3 / 3,     // 原 +3 金币
+  enchant_dividend:    2 / 3,     // 原 +2 金币
+  word_collection:     3 / 3,     // 原 +3 金币
+  long_word_master:    1 / 0.2,   // 原 +1s
+  accelerate_reward:   2 / 3,     // 原 +2 金币
+  decelerate_reward:   0.5 / 0.2, // 原 +0.5s
+  row_switch:          1 / 3,     // 原 +1 金币
+  dual_concerto:       0.5 / 0.2, // 原 +0.5s
+}
+
+/** 该遗物是否走"生成时赋资源"机制 */
+export function isResourceRollRelic(relicId: string): boolean {
+  return relicId in RESOURCE_ROLL_RATIO
+}
+
+/** 获取遗物 roll 到的资源类型（未赋值时回退 gold） */
+export function getRelicRolledResource(relicId: string): ResourceType {
+  const idx = state.player.relicStates[relicId]
+  if (idx === undefined || idx < 0 || idx >= RESOURCE_ROLL_POOL.length) return 'gold'
+  return RESOURCE_ROLL_POOL[idx]
+}
+
+/** 获取遗物本次应产出的 {资源, 数量}；非产资源遗物或未持有返回 null */
+export function getRelicRolledGrant(relicId: string): { resource: ResourceType; amount: number } | null {
+  const ratio = RESOURCE_ROLL_RATIO[relicId]
+  if (ratio === undefined) return null
+  const resource = getRelicRolledResource(relicId)
+  return { resource, amount: ratio * (RESOURCE_LV1_BASE[resource] ?? 1) }
+}
+
+/** 获取时随机赋资源类型（幂等：已赋值则不动，保证存档稳定） */
+export function assignRolledResource(relicId: string, randomFn: () => number = Math.random): void {
+  if (RESOURCE_ROLL_RATIO[relicId] === undefined) return
+  if (state.player.relicStates[relicId] === undefined) {
+    state.player.relicStates[relicId] = Math.floor(randomFn() * RESOURCE_ROLL_POOL.length)
+  }
+}
+
+/** 描述占位符 {resource} 解析：已赋值→实际资源名；未赋值（商店预览）→"随机资源" */
+function resolveRolledResourceLabel(relicId: string): string {
+  const idx = state.player.relicStates[relicId]
+  if (idx === undefined || !state.player.relics.has(relicId)) return t('resource.random')
+  return t(`resource.${getRelicRolledResource(relicId)}`)
+}
 
 // === 产出分红 (production_dividend) ===
 export const DIVIDEND_CHANCE = 0.05
@@ -140,4 +205,14 @@ export function initResourceRelicBehaviors(): void {
   registerRelicBehavior('resource_tide', () => {
     // 行为逻辑由 getResourceTideBonus 在 applyResource 中直接调用
   })
+
+  // 产资源遗物：获取时随机赋资源类型
+  eventBus.on('relic:acquired', ({ relicId }) => assignRolledResource(relicId))
+
+  // 描述 {resource} 占位符解析（localizeItemDesc 渲染时回调）
+  setRelicPlaceholderResolver((id, desc) =>
+    isResourceRollRelic(id) && desc.includes('{resource}')
+      ? desc.replace(/\{resource\}/g, resolveRolledResourceLabel(id))
+      : desc
+  )
 }

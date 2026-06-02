@@ -6,7 +6,7 @@ import { state, synergy, calculateTargetScore, resetResources, createBattleStats
 import { rebuildBigramFreq } from '../data/bigramFrequency';
 import { resolveRelicEffects, resolveRelicEffectsWithBehaviors, queryRelicFlag } from './relics/RelicPipeline';
 import { eventBus } from '../core/events/EventBus';
-import { onKeyV2, consumeHasteFireIfAny } from './affixV2BattleIntegration';
+import { onKeyV2, consumeHasteFireIfAny, grantRolledRelicResource } from './affixV2BattleIntegration';
 import { getHaste, isAllied, getAllianceSize, isFocused, isSkillConsumed } from './affixV2State';
 import { ALLIANCE_BONUS_PCT } from '../data/affixV2Trigger';
 import { inputHandler } from './typing/InputHandler';
@@ -909,18 +909,13 @@ function playerCorrect(k: string): void {
     const hand = HAND_MAP[k];
     if (hand === 'left') leftHandTriggered = true;
     else if (hand === 'right') rightHandTriggered = true;
-    // Story 36.6: 双手协奏 — 左右手交替击键加时间
-    const concertoBonus = checkDualConcerto(k);
-    if (concertoBonus > 0) {
-      state.time += concertoBonus;
-      showFeedback(t('battle.dual_concerto', { value: concertoBonus }), '#00ff88', undefined, undefined, { relicId: 'dual_concerto', resource: 'time', amount: concertoBonus });
+    // Story 36.6: 双手协奏 — 左右手交替击键产出（资源类型获取时随机赋值）
+    if (checkDualConcerto(k) > 0) {
+      grantRolledRelicResource('dual_concerto', k);
     }
-    // 换行奖励 — 跨行按键+1金币
-    const rowSwitchGold = checkRowSwitch(k);
-    if (rowSwitchGold > 0) {
-      state.player.gold += rowSwitchGold;
-      state.resources.gold += rowSwitchGold;
-      showFeedback(`↕️ +${rowSwitchGold}`, RESOURCE_COLORS.gold, undefined, undefined, { relicId: 'row_switch', resource: 'gold', amount: rowSwitchGold });
+    // 换行奖励 — 跨行按键产出（资源类型获取时随机赋值）
+    if (checkRowSwitch(k) > 0) {
+      grantRolledRelicResource('row_switch', k);
     }
     // Charge: 按住蓄力，暂停字母推进
     if (isChargeSkill(skillId)) {
@@ -1211,17 +1206,14 @@ function completeWord(): void {
     pulseRelicIcon('jazz', '#ffaa00');
   }
 
-  // Story 36.2: 减速津贴 / 加速奖金 — 当前词与上个词用时比较
+  // Story 36.2: 减速津贴 / 加速奖金 — 当前词与上个词用时比较（资源类型获取时随机赋值）
   const speedResult = checkSpeedRelics(wordElapsed);
   if (speedResult.timeBonus > 0) {
-    state.time += speedResult.timeBonus;
-    showFeedback(t('battle.decelerate_reward', { value: speedResult.timeBonus }), '#00ff88', undefined, undefined, { relicId: 'decelerate_reward', resource: 'time', amount: speedResult.timeBonus });
+    grantRolledRelicResource('decelerate_reward');
     pulseRelicIcon('decelerate_reward', '#00ff88');
   }
   if (speedResult.goldBonus > 0) {
-    state.player.gold += speedResult.goldBonus;
-    state.resources.gold += speedResult.goldBonus;
-    showFeedback(t('battle.accelerate_reward', { value: speedResult.goldBonus }), '#ffe66d', undefined, undefined, { relicId: 'accelerate_reward', resource: 'gold', amount: speedResult.goldBonus });
+    grantRolledRelicResource('accelerate_reward');
     pulseRelicIcon('accelerate_reward', '#ffe66d');
   }
 
@@ -1405,20 +1397,15 @@ function completeWord(): void {
   }
   incrementWordParity();
 
-  // Story 36.7: 词汇收藏 — 首次完成的单词+3金币
-  const collectionGold = checkWordCollection(state.player.word);
-  if (collectionGold > 0) {
-    state.gold += collectionGold;
-    state.resources.gold += collectionGold;
-    _battleRelicGold += collectionGold;
-    showFeedback(`📚 +${collectionGold}💰`, '#ffe66d', undefined, undefined, { relicId: 'word_collection', resource: 'gold', amount: collectionGold });
+  // Story 36.7: 词汇收藏 — 首次完成的单词产出（资源类型获取时随机赋值）
+  if (checkWordCollection(state.player.word) > 0) {
+    const g = grantRolledRelicResource('word_collection');
+    if (g?.resource === 'gold') _battleRelicGold += g.amount; // 结算面板：遗物金需单独计
   }
 
-  // Story 36.7: 长词达人 — 6+字母单词完成时+1s
-  const longWordTime = checkLongWordMaster(state.player.word.length);
-  if (longWordTime > 0) {
-    state.time += longWordTime;
-    showFeedback(t('battle.long_word_time', { value: longWordTime }), '#00ff88', undefined, undefined, { relicId: 'long_word_master', resource: 'time', amount: longWordTime });
+  // Story 36.7: 长词达人 — 6+字母单词完成时产出（资源类型获取时随机赋值）
+  if (checkLongWordMaster(state.player.word.length) > 0) {
+    grantRolledRelicResource('long_word_master');
   }
 
   // 修饰器屏障：前 3 词完成后激活延迟的临时修饰器
