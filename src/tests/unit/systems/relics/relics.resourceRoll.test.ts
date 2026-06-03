@@ -11,6 +11,8 @@ import {
   getRelicRolledGrant,
   assignRolledResource,
   preRollOfferedResources,
+  getFurnaceConfig,
+  applyFurnaceConversion,
 } from '../../../../src/systems/relics/ResourceRelicBehaviors'
 
 // 资源 Lv1 基数（与实现一致）
@@ -115,5 +117,47 @@ describe('产资源遗物 · 生成时赋值资源类型', () => {
       state.player.relicStates['crit_bonus'] = idx
       expect(getRelicRolledGrant('crit_bonus')!.amount).toBeCloseTo(expected[res])
     })
+  })
+})
+
+describe('贤者之石 universal_furnace · 与产资源遗物统一（relicStates 后端）', () => {
+  beforeEach(reset)
+
+  it('未赋值时 getFurnaceConfig 返回 null（商店预览前）', () => {
+    expect(getFurnaceConfig()).toBeNull()
+  })
+
+  it('preRollOfferedResources 处理 furnace：上架即赋源资源（购买前可见）', () => {
+    expect(state.player.relics.has('universal_furnace')).toBe(false)
+    preRollOfferedResources(['universal_furnace'])
+    const cfg = getFurnaceConfig()
+    expect(cfg).not.toBeNull()
+    expect(cfg!.to).toBe('gold')
+    expect(cfg!.from).not.toBe('gold') // 源资源池排除 gold
+  })
+
+  it('源资源池排除 gold（不会出现 gold→gold 的无效转化）', () => {
+    for (let i = 0; i < 5; i++) {
+      state.player.relicStates = {}
+      preRollOfferedResources(['universal_furnace'])
+      expect(getFurnaceConfig()!.from).not.toBe('gold')
+    }
+  })
+
+  it('applyFurnaceConversion：拥有时把源资源转 gold，其它资源不变', () => {
+    preRollOfferedResources(['universal_furnace'])
+    state.player.relics.add('universal_furnace')
+    const from = getFurnaceConfig()!.from
+    expect(applyFurnaceConversion(from)).toBe('gold')
+    // 非源资源不变（取一个不等于 from 的资源）
+    const other = from === 'time' ? 'base' : 'time'
+    expect(applyFurnaceConversion(other as any)).toBe(other)
+  })
+
+  it('未拥有时 applyFurnaceConversion 不转化（即使已 preRoll）', () => {
+    preRollOfferedResources(['universal_furnace'])
+    const from = getFurnaceConfig()!.from
+    expect(state.player.relics.has('universal_furnace')).toBe(false)
+    expect(applyFurnaceConversion(from)).toBe(from)
   })
 })

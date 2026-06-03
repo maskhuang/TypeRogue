@@ -68,9 +68,12 @@ export function assignRolledResource(relicId: string, randomFn: () => number = s
 }
 
 /** 生成时预 roll：给一批"将要展示给玩家"的遗物（商店上架 / 奖励候选）提前赋值，
- *  使其在【购买/选取前】即可见资源类型。幂等 + seeded；非产资源遗物自动跳过。 */
+ *  使其在【购买/选取前】即可见资源类型。幂等 + seeded；非相关遗物自动跳过。 */
 export function preRollOfferedResources(relicIds: readonly string[]): void {
-  for (const id of relicIds) assignRolledResource(id)
+  for (const id of relicIds) {
+    if (id === 'universal_furnace') assignFurnaceFrom()
+    else assignRolledResource(id)
+  }
 }
 
 /** 描述占位符 {resource} 解析：已赋值（商店上架即赋值）→实际资源名；从未赋值→"随机资源" */
@@ -169,30 +172,42 @@ export function getResourceTideBonus(resource: string): number {
 }
 
 // === 贤者之石 (universal_furnace) ===
+// 与产资源遗物统一：源资源同样存 relicStates（索引），生成时赋值、商店预览即可见。
+// 区别：furnace 是"转化"（from→gold），池为「非金币通用资源」，故用独立 FURNACE_POOL。
 
-/** 熔炉源/目标资源（获取遗物时随机赋值） */
-let _furnaceFrom: import('../../core/types').ResourceType | null = null
-let _furnaceTo: import('../../core/types').ResourceType | null = null
+/** 熔炉源资源池：所有通用资源排除转换目标（金币） */
+const FURNACE_POOL: readonly ResourceType[] = GENERIC_RESOURCES.filter(r => r !== 'gold')
 
-/** 获取熔炉配置 */
-export function getFurnaceConfig(): { from: string; to: string } | null {
-  if (!state.player.relics.has('universal_furnace') || !_furnaceFrom || !_furnaceTo) return null
-  return { from: _furnaceFrom, to: _furnaceTo }
+/** 获取熔炉配置（读 relicStates；已赋值即返回，不要求已拥有——供商店预览）*/
+export function getFurnaceConfig(): { from: ResourceType; to: ResourceType } | null {
+  const idx = state.player.relicStates['universal_furnace']
+  if (idx === undefined || idx < 0 || idx >= FURNACE_POOL.length) return null
+  return { from: FURNACE_POOL[idx], to: 'gold' }
 }
 
-/** 初始化熔炉资源（获取遗物时调用） */
-export function initFurnace(randomFn: () => number = Math.random): void {
-  // 熔炉源资源池：所有通用资源排除转换目标（金币）
-  const pool = GENERIC_RESOURCES.filter(r => r !== 'gold')
-  _furnaceFrom = pool[Math.floor(randomFn() * pool.length)]
-  _furnaceTo = 'gold'
+/** 赋熔炉源资源（幂等·seeded）。生成时由 preRollOfferedResources 调；获取时 initFurnace 兜底 */
+export function assignFurnaceFrom(randomFn: () => number = seededRandom): void {
+  if (state.player.relicStates['universal_furnace'] === undefined) {
+    state.player.relicStates['universal_furnace'] = Math.floor(randomFn() * FURNACE_POOL.length)
+  }
 }
 
-/** 资源转化：如果是熔炉源资源，转为目标资源 */
-export function applyFurnaceConversion(resource: import('../../core/types').ResourceType): import('../../core/types').ResourceType {
+/** @deprecated 名称保留兼容旧调用点；等价于 assignFurnaceFrom（幂等） */
+export function initFurnace(randomFn: () => number = seededRandom): void {
+  assignFurnaceFrom(randomFn)
+}
+
+/** 资源转化：如果是熔炉源资源，转为 gold（需已拥有）*/
+export function applyFurnaceConversion(resource: ResourceType): ResourceType {
   if (!state.player.relics.has('universal_furnace')) return resource
-  if (resource === _furnaceFrom && _furnaceTo) return _furnaceTo
-  return resource
+  const cfg = getFurnaceConfig()
+  return cfg && resource === cfg.from ? cfg.to : resource
+}
+
+/** 描述占位符 {from} 解析（universal_furnace）：已赋值→源资源名；未赋值→"随机资源" */
+function resolveFurnaceFromLabel(): string {
+  const cfg = getFurnaceConfig()
+  return cfg ? t(`resource.${cfg.from}`) : t('resource.random')
 }
 
 /** @deprecated 旧版万物熔炉金币覆盖，已重设计 */
@@ -213,13 +228,20 @@ export function initResourceRelicBehaviors(): void {
     // 行为逻辑由 getResourceTideBonus 在 applyResource 中直接调用
   })
 
-  // 产资源遗物：获取时随机赋资源类型
-  eventBus.on('relic:acquired', ({ relicId }) => assignRolledResource(relicId))
+  // 产资源遗物 + 熔炉：获取时兜底赋资源类型（生成时通常已 preRoll）
+  eventBus.on('relic:acquired', ({ relicId }) => {
+    if (relicId === 'universal_furnace') assignFurnaceFrom()
+    else assignRolledResource(relicId)
+  })
 
-  // 描述 {resource} 占位符解析（localizeItemDesc 渲染时回调）
-  setRelicPlaceholderResolver((id, desc) =>
-    isResourceRollRelic(id) && desc.includes('{resource}')
-      ? desc.replace(/\{resource\}/g, resolveRolledResourceLabel(id))
-      : desc
-  )
+  // 描述占位符解析（localizeItemDesc 渲染时回调）：产资源遗物 {resource} / 熔炉 {from}
+  setRelicPlaceholderResolver((id, desc) => {
+    if (isResourceRollRelic(id) && desc.includes('{resource}')) {
+      return desc.replace(/\{resource\}/g, resolveRolledResourceLabel(id))
+    }
+    if (id === 'universal_furnace' && desc.includes('{from}')) {
+      return desc.replace(/\{from\}/g, resolveFurnaceFromLabel())
+    }
+    return desc
+  })
 }
