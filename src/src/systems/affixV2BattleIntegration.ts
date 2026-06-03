@@ -47,7 +47,7 @@ import { getAscendBaseScale } from '../data/affixTrigger'
 import { getRelicRolledGrant } from './relics/ResourceRelicBehaviors'
 import { triggerSkill, recordSkillTrigger } from './skills'
 import { getBindingState, getSkillKeys, bindShapeToKeys, unbindSkill } from './bindingManager'
-import { getWordEffectCritRate } from './letters/LetterFrequencySystem'
+import { getWordEffectCritRate, calculateLetterFrequency, FREQ_UNLOCK_THRESHOLD } from './letters/LetterFrequencySystem'
 import { getHasteRelicOutputBonus, applyCritOverflow } from './relics/StackingRelicBehaviors'
 import {
   getRelicCritRate, isCritChargeReady, consumeCritCharge, advanceCritCharge,
@@ -754,11 +754,21 @@ function findEmptyKeysInScope(placement: TargetSelector, hostSkillId: string, ho
 }
 
 /** 把一个临时技能绑定到 placement 内的随机空键位 · 标 transient · 注册 runtimeState（否则零产出）。
- *  无空位 → 放弃该次（尊重「在 scope 内生成」约束）。 */
+ *  落位优化（筑巢有效性）：
+ *   1) neighbors 全占满时回退到 all_skills——否则就近作用域一满即静默空放（宿主邻位常已绑满）。
+ *   2) 空位中优先「可打出」键位（字母频率达解锁阈值）——临时技能落在永不被敲的死键上＝零产出；
+ *      仅当无可打出空位时才退回死键（保留 supplant 取食死键的玩法，不硬性排除）。
+ *  全程仍尊重「在 scope 内生成」：只有 neighbors 完全无空位才扩到 all_skills。 */
 function placeTempSkill(skill: AffixSkillInstance, placement: TargetSelector, hostSkillId: string, hostKey: string): void {
-  const empties = findEmptyKeysInScope(placement, hostSkillId, hostKey)
+  let empties = findEmptyKeysInScope(placement, hostSkillId, hostKey)
+  if (empties.length === 0 && placement.type === 'neighbors') {
+    empties = findEmptyKeysInScope({ type: 'all_skills' } as TargetSelector, hostSkillId, hostKey)
+  }
   if (empties.length === 0) return
-  const key = empties[Math.floor(random() * empties.length)]
+  const freqs = calculateLetterFrequency(state.player.wordDeck)
+  const typeable = empties.filter(k => (freqs.get(k) ?? 0) >= FREQ_UNLOCK_THRESHOLD)
+  const pickFrom = typeable.length > 0 ? typeable : empties
+  const key = pickFrom[Math.floor(random() * pickFrom.length)]
   // 强制单格 · 保证落位可靠（spawn 出来的技能可能带多格形状，单键空位放不下）
   skill.shapeId = 'monomino'
   skill.rotation = 0
