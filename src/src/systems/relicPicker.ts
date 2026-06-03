@@ -10,6 +10,7 @@ import type { RelicRarity } from '../data/relics';
 import { renderRelicDisplay, showFeedback } from './battle';
 import { playSound, playDeskSound } from '../effects/sound';
 import { random } from '../core/seededRandom';
+import { preRollOfferedResources } from './relics/ResourceRelicBehaviors';
 import { t, getLocale, localizeItemName, localizeItemDesc, localizeItemFlavor } from '../demo/demo-i18n';
 import { CLASS_DEFINITIONS } from '../data/classes';
 
@@ -160,6 +161,8 @@ export function showRelicPicker(
     onComplete();
     return;
   }
+  // 产资源遗物：候选展示即赋资源类型，使三选一卡面在选取前即可见（同商店）
+  preRollOfferedResources(candidates);
 
   const modal = document.getElementById('relic-picker-modal');
   if (!modal) {

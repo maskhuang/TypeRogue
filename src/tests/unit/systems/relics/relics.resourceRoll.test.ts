@@ -10,6 +10,7 @@ import {
   getRelicRolledResource,
   getRelicRolledGrant,
   assignRolledResource,
+  preRollOfferedResources,
 } from '../../../../src/systems/relics/ResourceRelicBehaviors'
 
 // 资源 Lv1 基数（与实现一致）
@@ -56,6 +57,23 @@ describe('产资源遗物 · 生成时赋值资源类型', () => {
   it('非目标遗物不被赋值', () => {
     assignRolledResource('resource_tide', () => 0.5)
     expect(state.player.relicStates['resource_tide']).toBeUndefined()
+  })
+
+  it('preRollOfferedResources：商店/奖励上架即赋值（未拥有也赋），只赋目标遗物', () => {
+    expect(state.player.relics.has('production_dividend')).toBe(false) // 未拥有
+    preRollOfferedResources(['production_dividend', 'enchant_boost', 'time_trickle'])
+    // 目标遗物已赋值（购买前即可见）
+    expect(state.player.relicStates['production_dividend']).toBeGreaterThanOrEqual(0)
+    expect(state.player.relicStates['time_trickle']).toBeGreaterThanOrEqual(0)
+    // 非产资源遗物跳过
+    expect(state.player.relicStates['enchant_boost']).toBeUndefined()
+  })
+
+  it('preRollOfferedResources 幂等：再上架不改已赋值（roll 稳定）', () => {
+    state.player.relicStates['row_switch'] = 2 // time
+    preRollOfferedResources(['row_switch'])
+    expect(state.player.relicStates['row_switch']).toBe(2)
+    expect(getRelicRolledResource('row_switch')).toBe('time')
   })
 
   it('未赋值时 getRelicRolledResource 回退 gold', () => {

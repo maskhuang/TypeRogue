@@ -8,6 +8,7 @@ import { registerRelicBehavior } from './RelicPipeline'
 import { GENERIC_RESOURCES } from '../classes/ClassResourceFilter'
 import { eventBus } from '../../core/events/EventBus'
 import { t, setRelicPlaceholderResolver } from '../../demo/demo-i18n'
+import { random as seededRandom } from '../../core/seededRandom'
 import type { ResourceType } from '../../core/types'
 
 // ============================================
@@ -57,18 +58,24 @@ export function getRelicRolledGrant(relicId: string): { resource: ResourceType; 
   return { resource, amount: ratio * (RESOURCE_LV1_BASE[resource] ?? 1) }
 }
 
-/** 获取时随机赋资源类型（幂等：已赋值则不动，保证存档稳定） */
-export function assignRolledResource(relicId: string, randomFn: () => number = Math.random): void {
+/** 随机赋资源类型（幂等：已赋值则不动，保证存档稳定 + 回放确定性）·
+ *  默认用 seeded random；roll 时机见 preRollOfferedResources（生成时）与 relic:acquired（兜底） */
+export function assignRolledResource(relicId: string, randomFn: () => number = seededRandom): void {
   if (RESOURCE_ROLL_RATIO[relicId] === undefined) return
   if (state.player.relicStates[relicId] === undefined) {
     state.player.relicStates[relicId] = Math.floor(randomFn() * RESOURCE_ROLL_POOL.length)
   }
 }
 
-/** 描述占位符 {resource} 解析：已赋值→实际资源名；未赋值（商店预览）→"随机资源" */
+/** 生成时预 roll：给一批"将要展示给玩家"的遗物（商店上架 / 奖励候选）提前赋值，
+ *  使其在【购买/选取前】即可见资源类型。幂等 + seeded；非产资源遗物自动跳过。 */
+export function preRollOfferedResources(relicIds: readonly string[]): void {
+  for (const id of relicIds) assignRolledResource(id)
+}
+
+/** 描述占位符 {resource} 解析：已赋值（商店上架即赋值）→实际资源名；从未赋值→"随机资源" */
 function resolveRolledResourceLabel(relicId: string): string {
-  const idx = state.player.relicStates[relicId]
-  if (idx === undefined || !state.player.relics.has(relicId)) return t('resource.random')
+  if (state.player.relicStates[relicId] === undefined) return t('resource.random')
   return t(`resource.${getRelicRolledResource(relicId)}`)
 }
 

@@ -27,7 +27,7 @@ import type { RelicWeights } from './relicPicker';
 import { generateRelicCandidates, showRelicReplaceUI } from './relicPicker';
 // row_medal deleted — autoSelectRowMedal/getRowMedalRowName removed
 import { setWordDealerFlag, consumeWordDealerFreeRefresh } from './relics/WordRelicBehaviors';
-import { checkUniversalFurnace, initFurnace, getFurnaceConfig } from './relics/ResourceRelicBehaviors';
+import { checkUniversalFurnace, initFurnace, getFurnaceConfig, preRollOfferedResources } from './relics/ResourceRelicBehaviors';
 import { checkBountyOnStageEnd } from './relics/StageRelicBehaviors';
 import { getBountyHunterDiscount } from './relics/BossModifierRelicBehaviors';
 import { getSRankTrophyGold, consumeDeadlyGiftFreeRefresh } from './relics/ScoringRelicBehaviors';
@@ -432,6 +432,8 @@ export function generateShopRelicItem(act: number, itemId?: number): ShopItem | 
   const relicId = candidates[0];
   const relic = RELICS[relicId];
   if (!relic) return null;
+  // 产资源遗物：上架即赋资源类型，使商店预览即可见（购买前）
+  preRollOfferedResources([relicId]);
 
   return {
     id: `si-${itemId ?? Date.now()}-relic`,
