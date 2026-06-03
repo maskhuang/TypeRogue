@@ -10153,6 +10153,27 @@ html[lang^="en"] .desk-paper.duty-roster .roster-row .role .section-en {
 .wordpack-desk-overlay .desk-paper.requisition .req-row .desc .wp-dur {
   color: var(--desk-stamp-red); font-weight: 700;
 }
+/* 「获得技能」词的 filter 条件预览：盖章式说明条，只揭示约束（产出资源）不揭示具体技能 */
+.wordpack-desk-overlay .desk-paper.requisition .req-row .wp-skill-preview {
+  display: flex; align-items: center; flex-wrap: wrap; gap: 6px;
+  margin-top: 5px; padding: 3px 7px;
+  border: 1px dashed var(--desk-ink-dim);
+  font-size: 11px; letter-spacing: 0.04em;
+  background: rgba(0, 0, 0, 0.03);
+}
+.wordpack-desk-overlay .desk-paper.requisition .req-row .wp-skill-preview .sk-tag {
+  font-weight: 700; letter-spacing: 0.06em; color: var(--desk-ink-dim);
+}
+.wordpack-desk-overlay .desk-paper.requisition .req-row .wp-skill-preview .sk-cond {
+  font-weight: 700; color: var(--desk-ink);
+}
+.wordpack-desk-overlay .desk-paper.requisition .req-row .wp-skill-preview .sk-sec {
+  display: inline-block; padding: 0 5px; border: 1px solid currentColor; border-radius: 2px;
+  font-weight: 700; letter-spacing: 0.04em; line-height: 1.5;
+}
+.wordpack-desk-overlay .desk-paper.requisition .req-row .wp-skill-preview .sk-full {
+  color: var(--desk-stamp-red); font-weight: 700;
+}
 .desk-paper.requisition .req-row .checkbox {
   width: 18px; height: 18px;
   border: 2px solid var(--desk-ink);

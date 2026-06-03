@@ -22,6 +22,7 @@ import { getNextBattleNode, isSecondHalf, getPositionInCycle } from './stage/sta
 import { calculateLetterFrequency, calculateLetterScores, FREQ_UNLOCK_THRESHOLD } from './letters/LetterFrequencySystem';
 import { getCandidatePool, widenSkillFilter, spawnSkillFromSeed } from './affixV2SkillFilter';
 import type { SkillFilter } from '../data/affixV2Trigger';
+import { getSectionName, SECTION_COLORS, type SectionTag } from '../data/affixTags';
 import { RELICS, MAX_RELIC_SLOTS } from '../data/relics';
 import type { RelicWeights } from './relicPicker';
 import { generateRelicCandidates, showRelicReplaceUI } from './relicPicker';
@@ -2335,23 +2336,99 @@ function showWordPicker(words: string[], onPick: (word: string) => void, wordEff
   modal.classList.remove('word-picker-hidden');
 }
 
-/** 一次性元效果：获得 1 个随机技能，派入收件槽（玩家在随后的商店工作台绑定）。
- *  复用 teach 的 gain_skill 管线：recipe_pool 候选 → SkillFilter → widen 兜底 → spawnSkillFromSeed。
- *  skillRarity = 触发该效果的词的稀有度（技能稀有度与词稀有度一致）。
- *  state 写入与 affixV2BattleIntegration 的 gain_skill 同款（含 affixSkillStates，否则 rarity0 技能零产出）。收件槽满则放弃。 */
-function grantRandomSkill(skillRarity: number): void {
-  if (state.player.inbox.length >= INBOX_MAX) return;
+/** 为「获得技能」奖励掷一个 SkillFilter **条件**：从该稀有度实际可用的两类维度
+ *  （产出资源 / 段落 tag）里随机挑一个维度、再挑一个值作为约束，把奖励从"纯随机技能"
+ *  收紧为"随机但限定 资源 或 段落 的技能"。条件在选择前即定下并展示，但具体掉哪把仍随机。
+ *  两维度都无候选时退化为仅稀有度约束。 */
+function rollGrantSkillFilter(skillRarity: number): SkillFilter {
+  const rarity = Math.max(0, Math.min(3, skillRarity));
   const pool = getCandidatePool('recipe_pool');
-  if (pool.length === 0) return;
-  const filter: SkillFilter = { rarity: Math.max(0, Math.min(3, skillRarity)) };
+  const base = widenSkillFilter({ rarity }, pool);
+  const resSet = new Set<string>();
+  const tagSet = new Set<SectionTag>();
+  for (const s of base.matches) {
+    if (s.resourcePool) for (const r of s.resourcePool) resSet.add(r);
+    if (s.section) tagSet.add(s.section);
+  }
+  const resList = [...resSet];
+  const tagList = [...tagSet];
+  const dims: ('resource' | 'tag')[] = [];
+  if (resList.length > 0) dims.push('resource');
+  if (tagList.length > 0) dims.push('tag');
+  if (dims.length === 0) return { rarity };
+  const dim = dims[Math.floor(random() * dims.length)];
+  if (dim === 'resource') return { rarity, resource: resList[Math.floor(random() * resList.length)] };
+  return { rarity, hasTag: tagList[Math.floor(random() * tagList.length)] };
+}
+
+/** 按已定 SkillFilter 掷出一把随机技能（recipe_pool 候选 → widen 兜底 → spawnSkillFromSeed），
+ *  返回实例但**不写入 state**。无候选返回 null。 */
+function rollRandomSkill(filter: SkillFilter): AffixSkillInstance | null {
+  const pool = getCandidatePool('recipe_pool');
+  if (pool.length === 0) return null;
   const widen = widenSkillFilter(filter, pool);
-  if (widen.matches.length === 0) return;
-  const seed = widen.matches[Math.floor(random() * widen.matches.length)];
-  const skill = spawnSkillFromSeed(seed, 1, widen.filter);
+  let matches = widen.matches;
+  // filter 指定产出资源时优先选 resourcePool 明确含该资源的 seed：
+  // 无约束池（resourcePool=undefined）的 seed 虽过 filter，但 spawnSkillFromSeed 会让 generateSkill 随机改资源，
+  // 与预览条件不符。挑明确含资源的 seed 可保证产出资源 == 预览条件。
+  const wantRes = typeof widen.filter.resource === 'string' ? [widen.filter.resource]
+    : Array.isArray(widen.filter.resource) ? widen.filter.resource : null;
+  if (wantRes) {
+    const strict = matches.filter(s => s.resourcePool && s.resourcePool.some(r => wantRes.includes(r)));
+    if (strict.length > 0) matches = strict;
+  }
+  if (matches.length === 0) return null;
+  const seed = matches[Math.floor(random() * matches.length)];
+  return spawnSkillFromSeed(seed, 1, widen.filter);
+}
+
+/** 把掷出的技能落入 state 并派入收件槽（玩家在随后的商店工作台绑定）。
+ *  state 写入与 affixV2BattleIntegration 的 gain_skill 同款（含 affixSkillStates，否则 rarity0 技能零产出）。
+ *  收件槽满则返回 false 放弃；对同一技能重复 commit 幂等。 */
+function commitGrantedSkill(skill: AffixSkillInstance): boolean {
+  if (state.player.inbox.includes(skill.id)) return true;
+  if (state.player.inbox.length >= INBOX_MAX) return false;
   state.affixSkills.set(skill.id, skill);
   state.player.skills.set(skill.id, { level: skill.level });
-  state.affixSkillStates.set(skill.id, createSkillRuntimeState(skill.id));
+  if (!state.affixSkillStates.has(skill.id)) state.affixSkillStates.set(skill.id, createSkillRuntimeState(skill.id));
   state.player.inbox.push(skill.id);
+  return true;
+}
+
+/** 一次性元效果：获得 1 个随机技能，派入收件槽。复用 teach 的 gain_skill 管线（filter → roll → commit）。 */
+function grantRandomSkill(filter: SkillFilter): void {
+  const skill = rollRandomSkill(filter);
+  if (skill) commitGrantedSkill(skill);
+}
+
+/** 「获得技能」词在补录单上的**条件**预览：只揭示 filter 约束（产出资源 或 段落 tag），不揭示具体技能实例。 */
+function buildGrantSkillFilterPreviewHtml(filter: SkillFilter): string {
+  const zhLocal = getLocale() === 'zh';
+  // 段落 tag 条件优先（若有）：按 section 染色显示段名
+  const tagVal = typeof filter.hasTag === 'string' ? filter.hasTag
+    : Array.isArray(filter.hasTag) ? filter.hasTag[0] : undefined;
+  let cond: string;
+  if (tagVal) {
+    const sec = tagVal as SectionTag;
+    const color = SECTION_COLORS[sec] || 'var(--desk-ink)';
+    cond = `<span class="sk-sec" style="color:${color};border-color:${color}">${getSectionName(sec)}</span>`;
+  } else {
+    const res = typeof filter.resource === 'string' ? filter.resource
+      : Array.isArray(filter.resource) ? filter.resource[0] : undefined;
+    const resIcon = res ? (RESOURCE_ICONS[res as keyof typeof RESOURCE_ICONS] || '') : '';
+    const resName = res ? (t('resource.' + res) || res) : (zhLocal ? '不限资源' : 'ANY');
+    cond = `${resIcon}${resName}`;
+  }
+  // 单句式：获得 …条件… 技能 / GAIN …cond… SKILL
+  const phrase = zhLocal
+    ? `获得 <span class="sk-cond">${cond}</span> 技能`
+    : `GAIN <span class="sk-cond">${cond}</span> SKILL`;
+  const full = state.player.inbox.length >= INBOX_MAX
+    ? `<span class="sk-full">${zhLocal ? '· 收件槽已满' : '· INBOX FULL'}</span>` : '';
+  return `<div class="wp-skill-preview">`
+    + `<span class="sk-tag">${phrase}</span>`
+    + full
+    + `</div>`;
 }
 
 // === 每关结束 · 词语补录（文牍式三选一 · 免费 · 可跳过） ===
@@ -2370,7 +2447,7 @@ export function showWordPackReward(onComplete: () => void): void {
 
   // 拍平为单词候选：取每个牌包首词 + 其词效；按词去重
   const seen = new Set<string>();
-  const candidates: { word: string; rarity: 0 | 1 | 2 | 3; effect?: WordEffect }[] = [];
+  const candidates: { word: string; rarity: 0 | 1 | 2 | 3; effect?: WordEffect; grantFilter?: SkillFilter }[] = [];
   for (const pack of packs) {
     const word = pack.words[0];
     if (!word || seen.has(word)) continue;
@@ -2380,6 +2457,12 @@ export function showWordPackReward(onComplete: () => void): void {
   if (candidates.length === 0) {
     onComplete();
     return;
+  }
+
+  // 「获得技能」词：选择前即掷定 SkillFilter 条件（产出资源约束），卡片上预览该条件；
+  // 选定后再按同一条件掷出随机技能。条件确定但实例随机。
+  for (const c of candidates) {
+    if (c.effect?.type === 'grant_skill') c.grantFilter = rollGrantSkillFilter(c.rarity);
   }
 
   const zh = getLocale() === 'zh';
@@ -2477,7 +2560,7 @@ export function showWordPackReward(onComplete: () => void): void {
     onComplete();
   };
 
-  candidates.forEach(({ word, rarity, effect }, idx) => {
+  candidates.forEach(({ word, rarity, effect, grantFilter }, idx) => {
     const letter = letters[idx] ?? String(idx + 1);
     const rarityClass = RARITY_KEYS[rarity] ?? 'common';
     const freqHint = getFreqHints(word);
@@ -2503,6 +2586,7 @@ export function showWordPackReward(onComplete: () => void): void {
       <div>
         <div class="name">${renderWordName(word)}</div>
         <div class="desc">${descParts.join(' · ')}</div>
+        ${grantFilter ? buildGrantSkillFilterPreviewHtml(grantFilter) : ''}
       </div>
       <div class="clr">${rarityLabel(rarity)}</div>
     `;
@@ -2538,7 +2622,7 @@ export function showWordPackReward(onComplete: () => void): void {
       // 一次性元效果（收录瞬间结算）：
       if (chosen.effect.type === 'init_time') state.player.timeBonus += chosen.effect.value;  // 永久 +初始时间（startTimer 读 timeMax + timeBonus）
       if (chosen.effect.type === 'init_gold') state.gold = (state.gold ?? 0) + chosen.effect.value;  // 按词长入账金币
-      if (chosen.effect.type === 'grant_skill') grantRandomSkill(chosen.rarity);  // 技能稀有度 = 词稀有度
+      if (chosen.effect.type === 'grant_skill') grantRandomSkill(chosen.grantFilter ?? { rarity: chosen.rarity });  // 按预览条件掷出（稀有度=词稀有度 · 资源受 filter 约束）
       // 一次性「下一关」buff：累加到 nextLevelBuff，仅作用紧接的下一关（battle.startLevel 应用 + endLevel 清空）
       const nlb = (state.player.nextLevelBuff ??= { initMult: 0, targetReduce: 0, skillOutput: 0, shield: 0 });
       if (chosen.effect.type === 'init_mult') nlb.initMult += chosen.effect.value;       // +初始倍率
